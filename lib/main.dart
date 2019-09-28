@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:jammerz/HomeScreen.dart';
+import 'package:jammerz/views/HomeScreen.dart';
 
 void main() => runApp(MyApp());
 
