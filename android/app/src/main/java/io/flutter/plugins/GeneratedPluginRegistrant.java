@@ -1,6 +1,10 @@
 package io.flutter.plugins;
 
 import io.flutter.plugin.common.PluginRegistry;
+import io.flutter.plugins.firebaseauth.FirebaseAuthPlugin;
+import io.flutter.plugins.firebase.core.FirebaseCorePlugin;
+import io.flutter.plugins.firebase.database.FirebaseDatabasePlugin;
+import io.flutter.plugins.firebase.storage.FirebaseStoragePlugin;
 
 /**
  * Generated file. Do not edit.
@@ -10,6 +14,10 @@ public final class GeneratedPluginRegistrant {
     if (alreadyRegisteredWith(registry)) {
       return;
     }
+    FirebaseAuthPlugin.registerWith(registry.registrarFor("io.flutter.plugins.firebaseauth.FirebaseAuthPlugin"));
+    FirebaseCorePlugin.registerWith(registry.registrarFor("io.flutter.plugins.firebase.core.FirebaseCorePlugin"));
+    FirebaseDatabasePlugin.registerWith(registry.registrarFor("io.flutter.plugins.firebase.database.FirebaseDatabasePlugin"));
+    FirebaseStoragePlugin.registerWith(registry.registrarFor("io.flutter.plugins.firebase.storage.FirebaseStoragePlugin"));
   }
 
   private static boolean alreadyRegisteredWith(PluginRegistry registry) {
