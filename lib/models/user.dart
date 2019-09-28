@@ -1,15 +1,30 @@
+import 'package:meta/meta.dart';
+
+import 'package:geolocator/geolocator.dart';
+import 'package:jammerz/models/instrument.dart';
+
+enum PRAC_SPACE_OPTIONS { yes, no, maybe }
+
 class User {
+  User(
+      {@required this.email,
+      @required this.name,
+      @required this.age,
+      @required this.practiceSpace,
+      @required this.transportation});
+
   final String name;
   final String email;
+  final String age;
+  final List<String> genres = [];
+  final List<String> gear = [];
+  final List<String> influences = [];
+  final List<Instrument> instruments = [];
 
-  User(this.name, this.email);
+  // Clips
 
-  User.fromJson(Map<String, dynamic> json)
-      : name = json['name'],
-        email = json['email'];
+  final PRAC_SPACE_OPTIONS practiceSpace;
+  final bool transportation;
 
-  Map<String, dynamic> toJson() => {
-        'name': name,
-        'email': email,
-      };
+  final Position location = null;
 }
