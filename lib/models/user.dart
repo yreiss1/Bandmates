@@ -16,7 +16,6 @@ class User {
   final String name;
   final String email;
   final String age;
-  final List<String> genres = [];
   final List<String> gear = [];
   final List<String> influences = [];
   final List<Instrument> instruments = [];
@@ -27,4 +26,9 @@ class User {
   final bool transportation;
 
   final Position location = null;
+
+  // Genres
+  void set genres {
+
+  }
 }
