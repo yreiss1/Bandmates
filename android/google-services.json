@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "941787552243",
+    "firebase_url": "https://jammerz.firebaseio.com",
+    "project_id": "jammerz",
+    "storage_bucket": "jammerz.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:941787552243:android:cf7d20018f448a0b881a86",
+        "android_client_info": {
+          "package_name": "com.yriess.jammerz"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "941787552243-v5fv7udari84uuifcqulcpqv022a4jvg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCwsT2IGiT4gHexU8_5OCnRM1PWLbIotvE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "941787552243-v5fv7udari84uuifcqulcpqv022a4jvg.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
