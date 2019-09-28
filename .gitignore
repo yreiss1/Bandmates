@@ -377,3 +377,4 @@ doc/api/
 
 local.properties
 .gradle/buildOutputCleanup/cache.properties
+.flutter-plugins
