@@ -372,3 +372,7 @@ doc/api/
 *.js_
 *.js.deps
 *.js.map
+
+
+local.properties
+.gradle/buildOutputCleanup/cache.properties
