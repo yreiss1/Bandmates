@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:jammerz/views/HomeScreen.dart';
 
 import 'package:jammerz/views/LoginScreen.dart';
+import 'package:jammerz/views/UserScreen.dart';
 import './views/ChatScreen.dart';
 
 void main() => runApp(MyApp());
@@ -15,12 +16,13 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: HomeScreen(),
+      home: UserScreen(),
       routes: {
         // Here we add routes to different pages
         HomeScreen.routeName: (ctx) => HomeScreen(),
         LoginScreen.routeName: (ctx) => LoginScreen(),
-        ChatScreen.routeName: (ctx) => ChatScreen()
+        ChatScreen.routeName: (ctx) => ChatScreen(),
+        UserScreen.routeName: (ctx) => UserScreen()
       },
     );
   }
