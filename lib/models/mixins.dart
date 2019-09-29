@@ -1,17 +1,37 @@
 import 'package:jammerz/constants/genres.dart';
+import 'package:jammerz/constants/instruments.dart';
 
-class GenreMixin {
+class GenresMixin {
+  List<String> _genres;
   set genres(List<String> g) {
     if (!g.every((genre) => ALLOWED_GENRES.contains(genre))) {
       var missing = g.where((genre) => !ALLOWED_GENRES.contains(genre));
 
-      throw new ArgumentError("$missing are not valid genres");
+      throw new ArgumentError(missing);
     }
 
-    genres = g;
+    _genres = g;
   }
 
   List<String> get genres {
-    return genres;
+    return _genres;
+  }
+}
+
+class InstrumentsMixin {
+  List<String> _instruments;
+  set genres(List<String> i) {
+    if (!i.every((instrument) => ALLOWED_INSTRUMENTS.contains(instrument))) {
+      var missing =
+          i.where((instrument) => !ALLOWED_INSTRUMENTS.contains(instrument));
+
+      throw new ArgumentError(missing);
+    }
+
+    _instruments = i;
+  }
+
+  List<String> get genres {
+    return _instruments;
   }
 }

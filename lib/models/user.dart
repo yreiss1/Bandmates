@@ -1,3 +1,4 @@
+import 'package:jammerz/models/mixins.dart';
 import 'package:meta/meta.dart';
 
 import 'package:geolocator/geolocator.dart';
@@ -5,7 +6,7 @@ import 'package:jammerz/models/instrument.dart';
 
 enum PRAC_SPACE_OPTIONS { yes, no, maybe }
 
-class User {
+class User with GenresMixin, InstrumentsMixin {
   User(
       {@required this.email,
       @required this.name,
@@ -17,7 +18,6 @@ class User {
   final String email;
   final String age;
   final List<String> gear = [];
-  final List<String> influences = [];
   final List<Instrument> instruments = [];
 
   // Clips
