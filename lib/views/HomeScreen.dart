@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:jammerz/views/EditProfileScreen.dart';
 import 'package:jammerz/views/LoginScreen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -15,6 +16,14 @@ class HomeScreen extends StatelessWidget {
             ),
             onPressed: () {
               Navigator.pushReplacementNamed(context, LoginScreen.routeName);
+            },
+          ),
+          IconButton(
+            icon: Icon(
+              Icons.edit,
+            ),
+            onPressed: () {
+              Navigator.pushReplacementNamed(context, EditProfile.routeName);
             },
           )
         ],

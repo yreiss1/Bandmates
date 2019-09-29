@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:jammerz/views/EditProfileScreen.dart';
 import 'package:jammerz/views/HomeScreen.dart';
 
 import 'package:jammerz/views/LoginScreen.dart';
@@ -20,7 +21,8 @@ class MyApp extends StatelessWidget {
         // Here we add routes to different pages
         HomeScreen.routeName: (ctx) => HomeScreen(),
         LoginScreen.routeName: (ctx) => LoginScreen(),
-        ChatScreen.routeName: (ctx) => ChatScreen()
+        ChatScreen.routeName: (ctx) => ChatScreen(),
+        EditProfile.routeName: (ctx) => EditProfile()
       },
     );
   }
