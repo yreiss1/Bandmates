@@ -26,9 +26,4 @@ class User {
   final bool transportation;
 
   final Position location = null;
-
-  // Genres
-  void set genres {
-
-  }
 }
