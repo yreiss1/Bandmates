@@ -1,4 +1,4 @@
-const List<String> instruments = [
+const List<String> ALLOWED_INSTRUMENTS = [
   "guitar",
   "drums",
   "banjo",

@@ -1,4 +1,4 @@
-const List<String> genres = [
+const List<String> ALLOWED_GENRES = [
   "2 tone",
   "2-step garage",
   "4-beat",

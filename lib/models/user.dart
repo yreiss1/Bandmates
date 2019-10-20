@@ -1,10 +1,11 @@
 import 'package:flutter/widgets.dart';
+
 import 'package:meta/meta.dart';
 
 import 'package:geolocator/geolocator.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class User {
+class User with GenresMixin, InstrumentsMixin {
   User(
       {@required this.uid,
       @required this.name,
@@ -32,6 +33,7 @@ class User {
   final List<dynamic> genres;
   final List<dynamic> instruments;
   final String photoUrl;
+
 
   // Clips
 
