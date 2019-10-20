@@ -8,12 +8,20 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:941787552243:android:cf7d20018f448a0b881a86",
+        "mobilesdk_app_id": "1:941787552243:android:83789bf82c5d5926881a86",
         "android_client_info": {
-          "package_name": "com.example.jammerz"
+          "package_name": "com.yuvalreiss.bandmates"
         }
       },
       "oauth_client": [
+        {
+          "client_id": "941787552243-21ir2rtqo4f8hqdsuabbtloekdnrfhvs.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.yuvalreiss.bandmates",
+            "certificate_hash": "b9d3153e1231514971a557726b769d7dafde58ce"
+          }
+        },
         {
           "client_id": "941787552243-v5fv7udari84uuifcqulcpqv022a4jvg.apps.googleusercontent.com",
           "client_type": 3
@@ -30,6 +38,13 @@
             {
               "client_id": "941787552243-v5fv7udari84uuifcqulcpqv022a4jvg.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "941787552243-ojitp7ddo11v13f71fau4gsc5uluccno.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.yuvalreiss.bandmates"
+              }
             }
           ]
         }

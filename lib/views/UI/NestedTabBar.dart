@@ -46,8 +46,8 @@ class _NestedTabBarState extends State<NestedTabBar>
       children: <Widget>[
         TabBar(
           controller: _nestedTabController,
-          indicatorColor: Colors.teal,
-          labelColor: Colors.teal,
+          indicatorColor: Theme.of(context).accentColor,
+          labelColor: Theme.of(context).accentColor,
           unselectedLabelColor: Colors.black54,
           isScrollable: true,
           tabs: <Widget>[
@@ -69,7 +69,7 @@ class _NestedTabBarState extends State<NestedTabBar>
           ],
         ),
         Container(
-          height: screenHeight * 0.25,
+          height: screenHeight * 0.20,
           margin: EdgeInsets.symmetric(horizontal: 5),
           child: TabBarView(
             controller: _nestedTabController,
