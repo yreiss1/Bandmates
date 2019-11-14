@@ -1,7 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:jammerz/views/UI/Progress.dart';
-import './UI/Header.dart';
 
 final usersRef = Firestore.instance.collection('users');
 
@@ -38,7 +36,6 @@ class _TimelineScreenState extends State<TimelineScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: header("Timeline"),
       body: Center(
         child: Text(""),
       ),

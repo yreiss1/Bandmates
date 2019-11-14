@@ -1,10 +1,15 @@
-import 'package:meta/meta.dart';
-import 'package:json_annotation/json_annotation.dart';
+import 'package:flutter/material.dart';
 
-@JsonSerializable(nullable: false)
 class Instrument {
-  Instrument({@required this.name, @required this.proficency});
-
   final String name;
-  final int proficency;
+  final String value;
+  final Icon icon;
+
+  Instrument({this.name, this.value, this.icon});
+
+  String get instrumentName => this.name;
+
+  String get instrumentValue => this.value;
+
+  Icon get instrumentIcon => this.icon;
 }

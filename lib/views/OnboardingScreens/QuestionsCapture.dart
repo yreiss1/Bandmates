@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
+import 'package:geocoder/geocoder.dart' as prefix1;
+import 'package:geoflutterfire/geoflutterfire.dart' as prefix0;
 import 'package:intl/intl.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:jammerz/views/OnboardingScreens/ImageCapture.dart';
@@ -7,9 +9,12 @@ import 'dart:io';
 import 'package:line_icons/line_icons.dart';
 import 'Uploader.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:geoflutterfire/geoflutterfire.dart';
+import 'package:location/location.dart';
+import 'package:geocoder/geocoder.dart';
 
 class QuestionsCapture extends StatefulWidget {
-  final GlobalKey<FormBuilderState> fbKey;
+  GlobalKey<FormBuilderState> fbKey;
 
   QuestionsCapture({@required this.getInfo, @required this.fbKey});
   final Function getInfo;
@@ -20,6 +25,11 @@ class QuestionsCapture extends StatefulWidget {
 
 class _QuestionsCaptureState extends State<QuestionsCapture> {
   File _imageFile;
+  GeoFirePoint point;
+  Geoflutterfire geo = Geoflutterfire();
+  Location location = new Location();
+
+  TextEditingController locationController = new TextEditingController();
 
   final _birthdayFocusNode = FocusNode();
 
@@ -50,6 +60,22 @@ class _QuestionsCaptureState extends State<QuestionsCapture> {
     });
   }
 
+  Future<LocationData> _getLocation() async {
+    var pos = await location.getLocation();
+    setState(() {
+      point = geo.point(latitude: pos.latitude, longitude: pos.longitude);
+    });
+    final coordinates = new prefix1.Coordinates(pos.latitude, pos.longitude);
+    var address =
+        await Geocoder.local.findAddressesFromCoordinates(coordinates);
+    var first = address.first;
+
+    print(
+        "${first.featureName} : ${first.addressLine} : ${first.subLocality} : ${first.subThoroughfare} : ${first.subAdminArea}");
+
+    locationController.text = first.subAdminArea;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -61,8 +87,14 @@ class _QuestionsCaptureState extends State<QuestionsCapture> {
               FormBuilder(
                 onChanged: (val) => {
                   widget.fbKey.currentState.save(),
-                  widget.getInfo(val['name'], val['birthday'], val['bio'],
-                      val['gender'], val['transportation'], val['practice'])
+                  widget.getInfo(
+                      val['name'],
+                      val['birthday'],
+                      val['bio'],
+                      val['gender'],
+                      val['transportation'],
+                      val['practice'],
+                      point)
                 },
                 key: widget.fbKey,
                 autovalidate: false,
@@ -151,9 +183,33 @@ class _QuestionsCaptureState extends State<QuestionsCapture> {
                       maxLines: 3,
                       validators: [FormBuilderValidators.required()],
                     ),
+                    FormBuilderTextField(
+                      attribute: 'location',
+                      decoration: InputDecoration(
+                        labelText: "Hit the button to find your location",
+                      ),
+                      readOnly: true,
+                      controller: locationController,
+                      validators: [FormBuilderValidators.required()],
+                    ),
+                    SizedBox(
+                      height: 20,
+                    ),
+                    FlatButton.icon(
+                        shape: RoundedRectangleBorder(
+                            side: BorderSide(
+                                color: Colors.white,
+                                width: 1,
+                                style: BorderStyle.solid),
+                            borderRadius: BorderRadius.circular(50)),
+                        color: Theme.of(context).primaryColor,
+                        icon: Icon(LineIcons.camera),
+                        textColor: Colors.white,
+                        label: Text("Get My Location"),
+                        onPressed: () => _getLocation()),
                     SizedBox(
                       height: 40,
-                    )
+                    ),
                   ],
                 ),
               ),

@@ -40,16 +40,4 @@ class AuthService with ChangeNotifier {
     notifyListeners();
     return result;
   }
-
-  Future<bool> isSignedIn() async {
-    final currentUser = await _firebaseAuth.currentUser();
-    return currentUser != null;
-  }
-
-  Future<FirebaseUser> getUser() async {
-    //TODO: File out and return user model
-    FirebaseUser user = await _firebaseAuth.currentUser();
-
-    return user;
-  }
 }

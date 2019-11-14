@@ -6,7 +6,6 @@ class ChatsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: header("Chats"),
       body: Center(
         child: Text("Chats"),
       ),

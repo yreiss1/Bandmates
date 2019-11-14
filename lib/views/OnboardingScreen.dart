@@ -6,20 +6,21 @@ import 'package:jammerz/views/OnboardingScreens/QuestionsCapture.dart';
 import 'package:jammerz/views/UI/IntroButton.dart';
 import 'package:jammerz/views/UI/PageViewModels.dart';
 import 'package:line_icons/line_icons.dart';
-import './OnboardingScreens/ImageCapture.dart';
 import 'package:dots_indicator/dots_indicator.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import './UI/IntroPage.dart';
 import 'dart:async';
 import 'dart:math';
 import 'package:jammerz/Utils.dart';
 import '../models/user.dart';
+import 'package:provider/provider.dart';
 import 'HomeScreen.dart';
 
-final GlobalKey<FormBuilderState> genreKey = GlobalKey<FormBuilderState>();
-final GlobalKey<FormBuilderState> instrumentKey = GlobalKey<FormBuilderState>();
-final GlobalKey<FormBuilderState> personalKey = GlobalKey<FormBuilderState>();
-final _scaffoldKey = GlobalKey<ScaffoldState>();
+import 'package:geoflutterfire/geoflutterfire.dart';
+
+final GlobalKey<FormBuilderState> personalKey =
+    GlobalKey<FormBuilderState>(debugLabel: "PersonalCapture");
 
 class OnboardingScreen extends StatefulWidget {
   @override
@@ -28,6 +29,14 @@ class OnboardingScreen extends StatefulWidget {
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
   Map<String, dynamic> _userData;
+
+  GlobalKey<FormBuilderState> genreKey =
+      GlobalKey<FormBuilderState>(debugLabel: "GenreCapture");
+  GlobalKey<FormBuilderState> instrumentKey =
+      GlobalKey<FormBuilderState>(debugLabel: "InstrumentCapture");
+
+  final _scaffoldKey =
+      GlobalKey<ScaffoldState>(debugLabel: "OnboardingScreenScaffold");
 
   int _currentPage;
 
@@ -46,7 +55,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       'transportation': false,
       'practice': false,
       'genres': [],
-      'instruments': []
+      'instruments': [],
+      'location': null,
     };
     _currentPage = 0;
 
@@ -86,19 +96,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   getGenresData(List<dynamic> genres) {
     print('In OnboardingScreen' + genres.toString());
     setState(() {
-      _userData['genres'] = genres;
+      _userData['genres'] =
+          Map.fromIterable(genres, key: (k) => k, value: (v) => true);
     });
   }
 
   getInstrumentsData(List<dynamic> instruments) {
     print("In OnBoarding Screen: " + instruments.toString());
+
     setState(() {
-      _userData['instruments'] = instruments;
+      _userData['instruments'] =
+          Map.fromIterable(instruments, key: (k) => k, value: (v) => true);
     });
   }
 
   getUserData(String name, DateTime birthday, String bio, String gender,
-      bool hasTransportation, bool hasPracticeSpace) {
+      bool hasTransportation, bool hasPracticeSpace, GeoFirePoint point) {
     setState(() {
       _userData['name'] = name;
       _userData['birthday'] = birthday;
@@ -109,6 +122,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       _userData['practice'] =
           hasPracticeSpace == null ? false : hasPracticeSpace;
       _userData['timestamp'] = null;
+      _userData['location'] = point;
     });
   }
 
@@ -212,9 +226,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           ? IntroButton(
                               child: Icon(LineIcons.check),
                               onPressed: () {
+                                var userAuth =
+                                    Provider.of<FirebaseUser>(context);
                                 User user = new User(
-                                  uid: Utils.getUid(),
-                                  email: Utils.getEmail(),
+                                  uid: userAuth.uid,
+                                  email: userAuth.email,
                                   birthday: _userData['birthday'],
                                   bio: _userData['bio'],
                                   name: _userData['name'],
@@ -223,6 +239,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                   genres: _userData['genres'],
                                   transportation: _userData['transportation'],
                                   practiceSpace: _userData['practice'],
+                                  location: _userData['location'],
                                   created: DateTime.now(),
                                 );
                                 Utils.uploadUser(context, user);

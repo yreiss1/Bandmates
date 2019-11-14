@@ -3,7 +3,7 @@ import 'package:flutter_form_builder/flutter_form_builder.dart';
 import '../../presentation/InstrumentIcons.dart';
 
 class InstrumentCapture extends StatelessWidget {
-  final GlobalKey<FormBuilderState> fbKey;
+  GlobalKey<FormBuilderState> fbKey;
 
   InstrumentCapture({this.getInstruments, @required this.fbKey});
   final Function(List<dynamic> instruments) getInstruments;
@@ -56,7 +56,7 @@ class InstrumentCapture extends StatelessWidget {
                               Text("Electric Guitar")
                             ],
                           ),
-                          value: 1,
+                          value: 'guitar',
                         ),
                         FormBuilderFieldOption(
                           child: Row(
@@ -71,7 +71,7 @@ class InstrumentCapture extends StatelessWidget {
                               Text("Piano")
                             ],
                           ),
-                          value: 2,
+                          value: 'piano',
                         ),
                         FormBuilderFieldOption(
                           child: Row(
@@ -86,7 +86,7 @@ class InstrumentCapture extends StatelessWidget {
                               Text("Bass Guitar")
                             ],
                           ),
-                          value: 3,
+                          value: 'bass',
                         ),
                         FormBuilderFieldOption(
                           child: Row(
@@ -101,7 +101,7 @@ class InstrumentCapture extends StatelessWidget {
                               Text("Drums")
                             ],
                           ),
-                          value: 4,
+                          value: 'drums',
                         ),
                         FormBuilderFieldOption(
                           child: Row(
@@ -116,7 +116,7 @@ class InstrumentCapture extends StatelessWidget {
                               Text("Flute")
                             ],
                           ),
-                          value: 5,
+                          value: 'flute',
                         ),
                         FormBuilderFieldOption(
                           child: Row(
@@ -131,7 +131,7 @@ class InstrumentCapture extends StatelessWidget {
                               Text("Harmonica")
                             ],
                           ),
-                          value: 6,
+                          value: 'harmonica',
                         ),
                         FormBuilderFieldOption(
                           child: Row(
@@ -146,7 +146,7 @@ class InstrumentCapture extends StatelessWidget {
                               Text("Violin")
                             ],
                           ),
-                          value: 7,
+                          value: 'violin',
                         ),
                         FormBuilderFieldOption(
                           child: Row(
@@ -161,7 +161,7 @@ class InstrumentCapture extends StatelessWidget {
                               Text("Ukelele")
                             ],
                           ),
-                          value: 8,
+                          value: 'ukelele',
                         ),
                         FormBuilderFieldOption(
                           child: Row(
@@ -176,7 +176,7 @@ class InstrumentCapture extends StatelessWidget {
                               Text("Banjo")
                             ],
                           ),
-                          value: 9,
+                          value: 'banjo',
                         ),
                         FormBuilderFieldOption(
                           child: Row(
@@ -191,7 +191,7 @@ class InstrumentCapture extends StatelessWidget {
                               Text("Xylophone")
                             ],
                           ),
-                          value: 10,
+                          value: 'xylophone',
                         ),
                         FormBuilderFieldOption(
                           child: Row(
@@ -206,7 +206,7 @@ class InstrumentCapture extends StatelessWidget {
                               Text("Saxaphone")
                             ],
                           ),
-                          value: 11,
+                          value: 'sax',
                         ),
                         FormBuilderFieldOption(
                           child: Row(
@@ -221,7 +221,7 @@ class InstrumentCapture extends StatelessWidget {
                               Text("Vocals")
                             ],
                           ),
-                          value: 12,
+                          value: 'vocals',
                         ),
                         FormBuilderFieldOption(
                           child: Row(
@@ -236,7 +236,7 @@ class InstrumentCapture extends StatelessWidget {
                               Text("Accordion")
                             ],
                           ),
-                          value: 13,
+                          value: 'accordion',
                         ),
                         FormBuilderFieldOption(
                           child: Row(
@@ -251,7 +251,7 @@ class InstrumentCapture extends StatelessWidget {
                               Text("Trumpet")
                             ],
                           ),
-                          value: 14,
+                          value: 'trumpet',
                         ),
                         FormBuilderFieldOption(
                           child: Row(
@@ -266,7 +266,7 @@ class InstrumentCapture extends StatelessWidget {
                               Text("Contrabass")
                             ],
                           ),
-                          value: 15,
+                          value: 'contrabass',
                         ),
                         FormBuilderFieldOption(
                           child: Row(
@@ -281,7 +281,7 @@ class InstrumentCapture extends StatelessWidget {
                               Text("Trombone")
                             ],
                           ),
-                          value: 16,
+                          value: 'trombone',
                         ),
                         FormBuilderFieldOption(
                           child: Row(
@@ -296,7 +296,7 @@ class InstrumentCapture extends StatelessWidget {
                               Text("DJ/Turntable")
                             ],
                           ),
-                          value: 17,
+                          value: 'DJ',
                         ),
                         FormBuilderFieldOption(
                           child: Row(
@@ -311,7 +311,22 @@ class InstrumentCapture extends StatelessWidget {
                               Text("Mandolin")
                             ],
                           ),
-                          value: 17,
+                          value: 'mandolin',
+                        ),
+                        FormBuilderFieldOption(
+                          child: Row(
+                            children: <Widget>[
+                              Icon(
+                                InstrumentIcons.harp,
+                                size: 40,
+                              ),
+                              SizedBox(
+                                width: 10,
+                              ),
+                              Text("Harp")
+                            ],
+                          ),
+                          value: 'harp',
                         ),
                       ],
                     ),

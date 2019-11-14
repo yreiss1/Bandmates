@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:jammerz/views/UI/Progress.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:provider/provider.dart';
-import 'package:jammerz/AuthService.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:io';
 import '../../Utils.dart';
 
@@ -22,7 +22,7 @@ class _UploaderState extends State<Uploader> {
   StorageUploadTask _storageUploadTask;
 
   void _startUpload() async {
-    final uid = (await Provider.of<AuthService>(context).getUser()).uid;
+    final uid = Provider.of<FirebaseUser>(context).uid;
     String filePath = '${uid}.png';
 
     setState(() {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'AuthService.dart';
 import './models/user.dart';
 
@@ -9,6 +10,15 @@ class Utils {
 
   static String _uid;
   static String _email;
+  static User _user;
+
+  static void setUser(User currentUser) {
+    _user = currentUser;
+  }
+
+  static User getUser() {
+    return _user;
+  }
 
   static void setUid(String uid) {
     _uid = uid;
@@ -46,25 +56,27 @@ class Utils {
   }
 
   static Future<bool> isNew(context) async {
-    final DocumentSnapshot doc = await _usersRef
-        .document((await Provider.of<AuthService>(context).getUser()).uid)
-        .get();
+    final DocumentSnapshot doc = await _usersRef.document(getUid()).get();
 
     return doc == null;
   }
 
   static void uploadUser(context, User user) async {
+    var userAuth = Provider.of<FirebaseUser>(context);
     print("In uploadUser" + user.instruments.toString());
     await Firestore.instance
         .collection("users")
-        .document((await Provider.of<AuthService>(context).getUser()).uid)
+        .document(userAuth.uid)
         .setData(user.toJson());
   }
 
+  //TODO: make it so that the photo path does not get overwridden by
   static void uploadPhotoPath(context, String path) async {
+    var userAuth = Provider.of<FirebaseUser>(context);
+
     await Firestore.instance
         .collection('users')
-        .document((await Provider.of<AuthService>(context).getUser()).uid)
+        .document(userAuth.uid)
         .setData({
       'img': path,
     });

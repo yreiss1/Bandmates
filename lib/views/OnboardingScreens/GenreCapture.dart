@@ -3,7 +3,7 @@ import 'package:flutter_form_builder/flutter_form_builder.dart';
 import '../../presentation/InstrumentIcons.dart';
 
 class GenreCapture extends StatelessWidget {
-  final GlobalKey<FormBuilderState> fbKey;
+  GlobalKey<FormBuilderState> fbKey;
 
   GenreCapture({this.getGenres, @required this.fbKey});
 
@@ -48,7 +48,7 @@ class GenreCapture extends StatelessWidget {
                               Text("R&B")
                             ],
                           ),
-                          value: 1,
+                          value: 'r&b',
                         ),
                         FormBuilderFieldOption(
                           child: Row(
@@ -63,7 +63,7 @@ class GenreCapture extends StatelessWidget {
                               Text("Metal")
                             ],
                           ),
-                          value: 2,
+                          value: 'metal',
                         ),
                         FormBuilderFieldOption(
                           child: Row(
@@ -78,7 +78,7 @@ class GenreCapture extends StatelessWidget {
                               Text("Blues")
                             ],
                           ),
-                          value: 3,
+                          value: 'blues',
                         ),
                         FormBuilderFieldOption(
                           child: Row(
@@ -93,7 +93,7 @@ class GenreCapture extends StatelessWidget {
                               Text("Blue Grass")
                             ],
                           ),
-                          value: 4,
+                          value: 'bluegrass',
                         ),
                         FormBuilderFieldOption(
                           child: Row(
@@ -108,7 +108,7 @@ class GenreCapture extends StatelessWidget {
                               Text("Punk Rock")
                             ],
                           ),
-                          value: 5,
+                          value: 'punk',
                         ),
                         FormBuilderFieldOption(
                           child: Row(
@@ -123,7 +123,7 @@ class GenreCapture extends StatelessWidget {
                               Text("Classic Rock")
                             ],
                           ),
-                          value: 6,
+                          value: 'classic',
                         ),
                         FormBuilderFieldOption(
                           child: Row(
@@ -138,7 +138,7 @@ class GenreCapture extends StatelessWidget {
                               Text("Ska")
                             ],
                           ),
-                          value: 7,
+                          value: 'ska',
                         ),
                         FormBuilderFieldOption(
                           child: Row(
@@ -153,7 +153,7 @@ class GenreCapture extends StatelessWidget {
                               Text("Pop")
                             ],
                           ),
-                          value: 8,
+                          value: 'pop',
                         ),
                         FormBuilderFieldOption(
                           child: Row(
@@ -168,7 +168,7 @@ class GenreCapture extends StatelessWidget {
                               Text("Alt Rock")
                             ],
                           ),
-                          value: 9,
+                          value: 'alt',
                         ),
                         FormBuilderFieldOption(
                           child: Row(
@@ -183,7 +183,7 @@ class GenreCapture extends StatelessWidget {
                               Text("Arab")
                             ],
                           ),
-                          value: 10,
+                          value: 'arab',
                         ),
                         FormBuilderFieldOption(
                           child: Row(
@@ -198,7 +198,7 @@ class GenreCapture extends StatelessWidget {
                               Text("Classical")
                             ],
                           ),
-                          value: 11,
+                          value: 'classical',
                         ),
                         FormBuilderFieldOption(
                           child: Row(
@@ -213,7 +213,7 @@ class GenreCapture extends StatelessWidget {
                               Text("Jazz")
                             ],
                           ),
-                          value: 12,
+                          value: 'jazz',
                         ),
                         FormBuilderFieldOption(
                           child: Row(
@@ -228,7 +228,7 @@ class GenreCapture extends StatelessWidget {
                               Text("Rap")
                             ],
                           ),
-                          value: 13,
+                          value: 'rap',
                         ),
                         FormBuilderFieldOption(
                           child: Row(
@@ -243,7 +243,7 @@ class GenreCapture extends StatelessWidget {
                               Text("Reggae")
                             ],
                           ),
-                          value: 14,
+                          value: 'reggae',
                         ),
                         FormBuilderFieldOption(
                           child: Row(
@@ -258,7 +258,7 @@ class GenreCapture extends StatelessWidget {
                               Text("Country")
                             ],
                           ),
-                          value: 15,
+                          value: 'country',
                         ),
                         FormBuilderFieldOption(
                           child: Row(
@@ -273,7 +273,7 @@ class GenreCapture extends StatelessWidget {
                               Text("Latin")
                             ],
                           ),
-                          value: 16,
+                          value: 'latin',
                         ),
                         FormBuilderFieldOption(
                           child: Row(
@@ -288,7 +288,7 @@ class GenreCapture extends StatelessWidget {
                               Text("EDM")
                             ],
                           ),
-                          value: 17,
+                          value: 'edm',
                         ),
                         FormBuilderFieldOption(
                           child: Row(
@@ -303,7 +303,7 @@ class GenreCapture extends StatelessWidget {
                               Text("Funk")
                             ],
                           ),
-                          value: 18,
+                          value: 'funk',
                         ),
                         FormBuilderFieldOption(
                           child: Row(
@@ -318,7 +318,7 @@ class GenreCapture extends StatelessWidget {
                               Text("Choir/Accapella")
                             ],
                           ),
-                          value: 18,
+                          value: 'choir',
                         ),
                       ],
                     ),
