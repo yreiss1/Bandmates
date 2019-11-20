@@ -38,7 +38,7 @@ class FeedItem extends StatelessWidget {
                           onPressed: () {}),
                       RawMaterialButton(
                           child: Icon(
-                            FontAwesome.getIconData("heart"),
+                            FontAwesome.heart,
                             color: Colors.white,
                           ),
                           shape: CircleBorder(),

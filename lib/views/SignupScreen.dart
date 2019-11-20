@@ -9,6 +9,10 @@ class SignupScreen extends StatelessWidget {
   static final GlobalKey<FormBuilderState> _fbKey =
       GlobalKey<FormBuilderState>(debugLabel: "SignupScreen");
 
+  FocusNode _emailFocusNode = FocusNode();
+  FocusNode _pass1FocusNode = FocusNode();
+  FocusNode _pass2FocusNode = FocusNode();
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -65,6 +69,11 @@ class SignupScreen extends StatelessWidget {
                       child: Column(
                         children: <Widget>[
                           FormBuilderTextField(
+                            focusNode: _emailFocusNode,
+                            onFieldSubmitted: (val) {
+                              FocusScope.of(context)
+                                  .requestFocus(_pass1FocusNode);
+                            },
                             attribute: 'email',
                             keyboardType: TextInputType.emailAddress,
                             decoration: InputDecoration(
@@ -78,6 +87,11 @@ class SignupScreen extends StatelessWidget {
                             ],
                           ),
                           FormBuilderTextField(
+                            focusNode: _pass1FocusNode,
+                            onFieldSubmitted: (val) {
+                              FocusScope.of(context)
+                                  .requestFocus(_pass2FocusNode);
+                            },
                             attribute: 'password',
                             obscureText: true,
                             keyboardType: TextInputType.text,
@@ -92,6 +106,9 @@ class SignupScreen extends StatelessWidget {
                             ],
                           ),
                           FormBuilderTextField(
+                            focusNode: _pass2FocusNode,
+                            onFieldSubmitted: (_) =>
+                                Focus.of(context).unfocus(),
                             attribute: 'confirm-password',
                             obscureText: true,
                             keyboardType: TextInputType.text,
@@ -156,7 +173,8 @@ class SignupScreen extends StatelessWidget {
                                     try {
                                       FirebaseUser result =
                                           await Provider.of<AuthService>(
-                                                  context)
+                                                  context,
+                                                  listen: false)
                                               .signUp(
                                                   email: _fbKey.currentState
                                                       .value["email"],

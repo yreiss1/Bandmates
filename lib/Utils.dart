@@ -61,18 +61,9 @@ class Utils {
     return doc == null;
   }
 
-  static void uploadUser(context, User user) async {
-    var userAuth = Provider.of<FirebaseUser>(context);
-    print("In uploadUser" + user.instruments.toString());
-    await Firestore.instance
-        .collection("users")
-        .document(userAuth.uid)
-        .setData(user.toJson());
-  }
-
   //TODO: make it so that the photo path does not get overwridden by
   static void uploadPhotoPath(context, String path) async {
-    var userAuth = Provider.of<FirebaseUser>(context);
+    var userAuth = Provider.of<FirebaseUser>(context, listen: false);
 
     await Firestore.instance
         .collection('users')

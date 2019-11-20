@@ -4,7 +4,15 @@ Container circularProgress(context) {
   return Container(
       alignment: Alignment.center,
       padding: EdgeInsets.only(top: 10.0),
-      child: CircularProgressIndicator(
+      child:
+
+          /* LoadingIndicator(
+        indicatorType: Indicator.lineScaleParty,
+        color: Theme.of(context).primaryColor,
+      )
+      */
+
+          CircularProgressIndicator(
         valueColor: AlwaysStoppedAnimation(Theme.of(context).primaryColor),
         backgroundColor: Theme.of(context).primaryColor,
       ));

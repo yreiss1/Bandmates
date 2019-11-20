@@ -10,7 +10,9 @@ import 'package:image_picker/image_picker.dart';
 
 class ImageCapture extends StatefulWidget {
   static const routeName = '/image-capture';
-  ImageCapture({Key key}) : super(key: key);
+  final Function getImageFile;
+  final String imageUrl;
+  ImageCapture({this.getImageFile, this.imageUrl});
 
   _ImageCaptureState createState() => _ImageCaptureState();
 }
@@ -24,11 +26,13 @@ class _ImageCaptureState extends State<ImageCapture> {
     setState(() {
       _imageFile = selected;
     });
+    widget.getImageFile(_imageFile);
   }
 
   /// Remove image
   void _clear() {
     setState(() => _imageFile = null);
+    widget.getImageFile(_imageFile);
   }
 
   Future<void> _cropImage() async {
@@ -39,6 +43,7 @@ class _ImageCaptureState extends State<ImageCapture> {
     setState(() {
       _imageFile = cropped ?? _imageFile;
     });
+    widget.getImageFile(_imageFile);
   }
 
   @override
@@ -56,8 +61,9 @@ class _ImageCaptureState extends State<ImageCapture> {
                     shape: BoxShape.circle,
                     image: new DecorationImage(
                         fit: BoxFit.cover,
-                        image: new AssetImage(
-                            'assets/images/user-placeholder.png')),
+                        image: widget.imageUrl != null
+                            ? NetworkImage(widget.imageUrl)
+                            : AssetImage('assets/images/user-placeholder.png')),
                   ),
                 )
               : Container(
@@ -66,75 +72,75 @@ class _ImageCaptureState extends State<ImageCapture> {
                   decoration: new BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                        color: Theme.of(context).primaryColor, width: 2),
+                        color: Theme.of(context).primaryColor, width: 0),
                     image: new DecorationImage(
                         fit: BoxFit.cover, image: new FileImage(_imageFile)),
                   ),
                 ),
+          SizedBox(
+            height: 20,
+          ),
           _imageFile != null
-              ? Column(
+              ? Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: <Widget>[
-                    SizedBox(
-                      height: 10,
+                    FlatButton.icon(
+                      shape: RoundedRectangleBorder(
+                          side: BorderSide(
+                              color: Colors.white,
+                              width: 1,
+                              style: BorderStyle.solid),
+                          borderRadius: BorderRadius.circular(50)),
+                      color: Theme.of(context).primaryColor,
+                      icon: Icon(LineIcons.crop),
+                      textColor: Colors.white,
+                      label: Text("Crop"),
+                      onPressed: () => _cropImage(),
                     ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: <Widget>[
-                        FlatButton(
-                          child: Icon(Icons.crop),
-                          onPressed: _cropImage,
-                        ),
-                        FlatButton(
-                          child: Icon(Icons.refresh),
-                          onPressed: _clear,
-                        )
-                      ],
-                    ),
-                    SizedBox(
-                      height: 15,
-                    ),
-                    Uploader(
-                      file: _imageFile,
+                    FlatButton.icon(
+                      icon: Icon(LineIcons.refresh),
+                      shape: RoundedRectangleBorder(
+                          side: BorderSide(
+                              color: Theme.of(context).primaryColor,
+                              width: 1,
+                              style: BorderStyle.solid),
+                          borderRadius: BorderRadius.circular(50)),
+                      label: Text("Redo"),
+                      textColor: Theme.of(context).primaryColor,
+                      onPressed: () => _clear(),
                     ),
                   ],
                 )
-              : SizedBox(
-                  height: 100,
-                  child: Center(
-                    child:
-                        Text("Choose and Image from gallery or take a picture"),
-                  ),
+              : Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: <Widget>[
+                    FlatButton.icon(
+                      shape: RoundedRectangleBorder(
+                          side: BorderSide(
+                              color: Colors.white,
+                              width: 1,
+                              style: BorderStyle.solid),
+                          borderRadius: BorderRadius.circular(50)),
+                      color: Theme.of(context).primaryColor,
+                      icon: Icon(LineIcons.camera),
+                      textColor: Colors.white,
+                      label: Text("Camera"),
+                      onPressed: () => _pickImage(ImageSource.camera),
+                    ),
+                    FlatButton.icon(
+                      icon: Icon(LineIcons.file_photo_o),
+                      shape: RoundedRectangleBorder(
+                          side: BorderSide(
+                              color: Theme.of(context).primaryColor,
+                              width: 1,
+                              style: BorderStyle.solid),
+                          borderRadius: BorderRadius.circular(50)),
+                      label: Text("Gallery"),
+                      textColor: Theme.of(context).primaryColor,
+                      onPressed: () => _pickImage(ImageSource.gallery),
+                    ),
+                  ],
                 ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: <Widget>[
-              FlatButton.icon(
-                shape: RoundedRectangleBorder(
-                    side: BorderSide(
-                        color: Colors.white,
-                        width: 1,
-                        style: BorderStyle.solid),
-                    borderRadius: BorderRadius.circular(50)),
-                color: Theme.of(context).primaryColor,
-                icon: Icon(LineIcons.camera),
-                textColor: Colors.white,
-                label: Text("Camera"),
-                onPressed: () => _pickImage(ImageSource.camera),
-              ),
-              FlatButton.icon(
-                icon: Icon(LineIcons.file_photo_o),
-                shape: RoundedRectangleBorder(
-                    side: BorderSide(
-                        color: Theme.of(context).primaryColor,
-                        width: 1,
-                        style: BorderStyle.solid),
-                    borderRadius: BorderRadius.circular(50)),
-                label: Text("Gallery"),
-                textColor: Theme.of(context).primaryColor,
-                onPressed: () => _pickImage(ImageSource.gallery),
-              ),
-            ],
-          ),
         ],
       ),
     );

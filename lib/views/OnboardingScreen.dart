@@ -1,3 +1,4 @@
+import 'package:achievement_view/achievement_widget.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:jammerz/views/OnboardingScreens/GenreCapture.dart';
@@ -9,13 +10,13 @@ import 'package:line_icons/line_icons.dart';
 import 'package:dots_indicator/dots_indicator.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:achievement_view/achievement_view.dart';
 import './UI/IntroPage.dart';
 import 'dart:async';
 import 'dart:math';
-import 'package:jammerz/Utils.dart';
-import '../models/user.dart';
 import 'package:provider/provider.dart';
 import 'HomeScreen.dart';
+import '../models/User.dart';
 
 import 'package:geoflutterfire/geoflutterfire.dart';
 
@@ -75,7 +76,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
           footer: null,
           title: "Your Profile",
-          scroll: false),
+          scroll: true),
       PageViewModels(
           bodyWidget: InstrumentCapture(
               getInstruments: getInstrumentsData, fbKey: instrumentKey),
@@ -94,7 +95,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   getGenresData(List<dynamic> genres) {
-    print('In OnboardingScreen' + genres.toString());
+    print('[OnboardingScreen] genres: ' + genres.toString());
     setState(() {
       _userData['genres'] =
           Map.fromIterable(genres, key: (k) => k, value: (v) => true);
@@ -102,7 +103,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   getInstrumentsData(List<dynamic> instruments) {
-    print("In OnBoarding Screen: " + instruments.toString());
+    print("[OnboardingScreen] instruments: " + instruments.toString());
 
     setState(() {
       _userData['instruments'] =
@@ -225,9 +226,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       child: isLastPage
                           ? IntroButton(
                               child: Icon(LineIcons.check),
-                              onPressed: () {
-                                var userAuth =
-                                    Provider.of<FirebaseUser>(context);
+                              onPressed: () async {
+                                var userAuth = Provider.of<FirebaseUser>(
+                                    context,
+                                    listen: false);
                                 User user = new User(
                                   uid: userAuth.uid,
                                   email: userAuth.email,
@@ -242,17 +244,33 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                   location: _userData['location'],
                                   created: DateTime.now(),
                                 );
-                                Utils.uploadUser(context, user);
+                                Provider.of<UserProvider>(context)
+                                    .uploadUser(userAuth.uid, user);
                                 var name = _userData['name'];
-                                SnackBar snackBar = SnackBar(
-                                  content: Text("Welcome $name!!"),
-                                );
-                                _scaffoldKey.currentState.showSnackBar(
-                                  snackBar,
-                                );
+
+                                AchievementView(context,
+                                        title: "Bandmates",
+                                        subTitle: "Welcome $name!",
+                                        color: Theme.of(context).primaryColor,
+                                        duration: Duration(seconds: 2),
+                                        alignment: Alignment.topCenter,
+                                        icon: Icon(
+                                          LineIcons.trophy,
+                                          color: Colors.white,
+                                        ),
+                                        typeAnimationContent:
+                                            AnimationTypeAchievement
+                                                .fadeSlideToUp,
+                                        listener: (status) {})
+                                    .show();
+
                                 Timer(Duration(seconds: 2), () {
-                                  Navigator.popAndPushNamed(
-                                      context, HomeScreen.routeName);
+                                  Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (ctx) => HomeScreen(
+                                                uid: userAuth.uid,
+                                              )));
                                 });
                               },
                             )

@@ -1,10 +1,12 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/widgets.dart';
 import 'package:geoflutterfire/geoflutterfire.dart';
-
+import 'package:location/location.dart';
+import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:meta/meta.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:geoflutterfire/geoflutterfire.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'dart:io';
 
 class User {
   User(
@@ -53,7 +55,8 @@ class User {
         'followers': this.followers,
         'genres': this.genres,
         'instruments': this.instruments,
-        'location': this.location.data,
+        'location': this.location == null ? null : this.location.data,
+        'photoUrl': this.photoUrl
       };
 
   factory User.fromDocument(DocumentSnapshot doc) {
@@ -70,7 +73,7 @@ class User {
     }
 
     return User(
-        uid: doc.data['id'],
+        uid: doc.documentID,
         email: doc.data['email'],
         name: doc.data['name'],
         photoUrl: doc.data['photoUrl'],
@@ -85,4 +88,63 @@ class User {
   }
 }
 
-class UserProvider with ChangeNotifier {}
+class UserProvider with ChangeNotifier {
+  User currentUser;
+
+  User get user {
+    return currentUser;
+  }
+
+  Location location = new Location();
+  LocationData userLocation;
+  CollectionReference userRef = Firestore.instance.collection("users");
+  StorageReference storageRef = FirebaseStorage.instance.ref();
+
+  Future<User> getUser(String uid) async {
+    print("In getUser");
+    DocumentSnapshot userSnap = await userRef.document(uid).get();
+    if (userSnap.data == null) {
+      return null;
+    }
+    User user = User.fromDocument(userSnap);
+    return user;
+  }
+
+  void setCurrentUser(User user) {
+    currentUser = user;
+  }
+
+  Future<DocumentSnapshot> getSnapshot(String uid) async {
+    print("In getSnapshot");
+    return await userRef.document(uid).get();
+  }
+
+  Future<void> uploadUser(String uid, User userIn) async {
+    print("In uploadUser" + userIn.instruments.toString());
+
+    currentUser = userIn;
+    await Firestore.instance
+        .collection("users")
+        .document(uid)
+        .setData(userIn.toJson());
+  }
+
+  Future<String> uploadProfileImage(File imageFile, String uid) async {
+    String downloadUrl;
+    StorageUploadTask uploadTask =
+        storageRef.child("profilePhotos").child("$uid.jpg").putFile(imageFile);
+    StorageTaskSnapshot storageSnap = await uploadTask.onComplete;
+    downloadUrl = await storageSnap.ref.getDownloadURL();
+
+    return downloadUrl;
+  }
+
+  LocationData getUserLocation() {
+    return userLocation;
+  }
+
+  Future<void> obtainLocation() async {
+    var pos = await location.getLocation();
+    userLocation = pos;
+  }
+}

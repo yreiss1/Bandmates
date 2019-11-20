@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flappy_search_bar/flappy_search_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:jammerz/models/DiscoverScreenArguments.dart';
-import 'package:jammerz/models/user.dart';
+import 'package:jammerz/models/User.dart';
 import 'package:jammerz/presentation/GenreIcons.dart';
 import 'package:jammerz/views/DiscoverScreen.dart';
 import 'package:jammerz/views/TimelineScreen.dart';
@@ -18,6 +18,9 @@ import 'package:pk_skeleton/pk_skeleton.dart';
 
 class SearchScreen extends StatefulWidget {
   static final String routeName = '/search-screen';
+
+  final User currentUser;
+  SearchScreen({this.currentUser});
 
   static final GlobalKey<FormBuilderState> searchKey =
       GlobalKey<FormBuilderState>(debugLabel: 'SearchScreen');
@@ -197,8 +200,8 @@ class _SearchScreenState extends State<SearchScreen>
             "\\");
 
     result = result.substring(1, result.length - 1);
-    if (result.length > 30) {
-      result = result.substring(0, 30);
+    if (result.length > 40) {
+      result = result.substring(0, 40);
       result += "...";
     }
     return result;
@@ -208,22 +211,7 @@ class _SearchScreenState extends State<SearchScreen>
     Alert(
       context: context,
       closeFunction: () => {},
-      buttons: [
-        /*
-        DialogButton(
-            child: Text(
-              "Search",
-              style: TextStyle(color: Colors.white, fontSize: 20),
-            ),
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, DiscoverScreen.routeName,
-                  arguments: DiscoverScreenArguments());
-            },
-            color: Theme.of(context).primaryColor,
-            radius: BorderRadius.circular(0.0)),
-            */
-      ],
+      buttons: [],
       title: "Discover Artists",
       content: SafeArea(
         child: Container(
@@ -355,7 +343,7 @@ class _SearchScreenState extends State<SearchScreen>
                 headerPadding: EdgeInsets.symmetric(horizontal: 10),
                 listPadding: EdgeInsets.symmetric(horizontal: 10),
                 placeHolder: Center(
-                  child: Text("Start typing to search for users or bands!"),
+                  child: Text("Start typing to search for users!"),
                 ),
                 debounceDuration: Duration(milliseconds: 400),
                 loader: PKCardListSkeleton(
@@ -372,7 +360,7 @@ class _SearchScreenState extends State<SearchScreen>
                       radius: 20,
                       backgroundImage: user.photoUrl == null
                           ? AssetImage('assets/images/user-placeholder.png')
-                          : CircularProfileAvatar(user.photoUrl),
+                          : NetworkImage(user.photoUrl),
                     ),
                   );
                 },
@@ -384,8 +372,15 @@ class _SearchScreenState extends State<SearchScreen>
                       ListTile(
                         onTap: () => {},
                         title: Text(user.name),
-                        subtitle: Text(
-                            buildSubtitle(user.instruments) + "\n" + user.bio),
+                        subtitle: Text(buildSubtitle(user.instruments) +
+                            "\n" +
+                            user.location
+                                .distance(
+                                    lat: widget.currentUser.location.latitude,
+                                    lng: widget.currentUser.location.longitude)
+                                .round()
+                                .toString() +
+                            " kilometers away"),
                         isThreeLine: true,
                         enabled: true,
                         leading: Container(
@@ -394,10 +389,7 @@ class _SearchScreenState extends State<SearchScreen>
                             backgroundImage: user.photoUrl == null
                                 ? AssetImage(
                                     'assets/images/user-placeholder.png')
-                                : CircularProfileAvatar(
-                                    user.photoUrl,
-                                    cacheImage: true,
-                                  ),
+                                : NetworkImage(user.photoUrl),
                           ),
                           decoration: new BoxDecoration(),
                         ),

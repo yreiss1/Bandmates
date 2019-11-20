@@ -1,16 +1,25 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:jammerz/views/UI/Header.dart';
+import 'package:jammerz/models/Post.dart';
+import 'package:jammerz/views/UI/Progress.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:geoflutterfire/geoflutterfire.dart';
+import 'package:uuid/uuid.dart';
+import 'package:provider/provider.dart';
+import 'package:image_cropper/image_cropper.dart';
+
+import 'package:image/image.dart' as Im;
 
 import 'dart:io';
 
 import 'package:location/location.dart';
 import 'package:geocoder/geocoder.dart';
 import 'package:geocoder/geocoder.dart' as prefix1;
+import 'package:path_provider/path_provider.dart';
 import '../UI/AspectRatioVideo.dart';
+import '../../models/User.dart';
 
 import 'dart:async';
 
@@ -24,15 +33,19 @@ class PostUploadScreen extends StatefulWidget {
 }
 
 class _PostUploadScreenState extends State<PostUploadScreen> {
-  GlobalKey<FormBuilderState> fbKey = new GlobalKey<FormBuilderState>();
+  GlobalKey<FormBuilderState> _fbKey = new GlobalKey<FormBuilderState>();
   TextEditingController locationController = new TextEditingController();
   GeoFirePoint point;
   Geoflutterfire geo = Geoflutterfire();
   Location location = new Location();
-  String _retrieveDataError;
-  dynamic _pickImageError;
   bool _isVideo = false;
   VideoPlayerController _controller;
+  String _postID = Uuid().v4();
+
+  final _textFocusNode = FocusNode();
+  final _locationFocusNode = FocusNode();
+
+  bool _isUploading = false;
 
   File _imageFile;
   File _videoFile;
@@ -51,6 +64,9 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
       _imageFile = null;
       _videoFile = selected;
     });
+
+    _fbKey.currentState.value['image'] = null;
+    _fbKey.currentState.value['video'] = _videoFile;
   }
 
   Future<void> _pickImage(ImageSource source) async {
@@ -58,8 +74,12 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
 
     setState(() {
       _isVideo = false;
+      _videoFile = null;
       _imageFile = selected;
     });
+
+    _fbKey.currentState.value['video'] = null;
+    _fbKey.currentState.value['image'] = _imageFile;
   }
 
   @override
@@ -71,7 +91,7 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
   }
 
   Future<LocationData> _getLocation() async {
-    var pos = await location.getLocation();
+    var pos = await Provider.of<UserProvider>(context).getUserLocation();
     setState(() {
       point = geo.point(latitude: pos.latitude, longitude: pos.longitude);
     });
@@ -117,14 +137,100 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
     );
   }
 
+  _compressImage() async {
+    final tempDir = await getTemporaryDirectory();
+    final path = tempDir.path;
+    Im.Image imageFile = Im.decodeImage(_imageFile.readAsBytesSync());
+    final compressedImageFile = File('$path/img_$_postID.jpg')
+      ..writeAsBytesSync(Im.encodeJpg(imageFile, quality: 85));
+    setState(() {
+      _imageFile = compressedImageFile;
+    });
+  }
+
+  _handleSubmit() async {
+    FocusScope.of(context).unfocus();
+    _fbKey.currentState.value['loc'] = locationController.text;
+    if (_fbKey.currentState.saveAndValidate()) {
+      setState(() {
+        _isUploading = true;
+      });
+      if (_imageFile != null) {
+        await _compressImage();
+      }
+
+      User userObject = Provider.of<UserProvider>(context).currentUser;
+
+      Post post = new Post(
+          text: _fbKey.currentState.value['text'],
+          file: _imageFile, //TODO: Fix this to add video too!
+          time: DateTime.now(),
+          location: _fbKey.currentState.value['loc']);
+      await Provider.of<PostProvider>(context, listen: false)
+          .uploadPost(post, _postID, userObject.uid, userObject.name);
+
+      setState(() {
+        _isUploading = false;
+        _imageFile = null;
+        _videoFile = null;
+      });
+      Navigator.pop(context);
+    }
+  }
+
+  Future<void> _cropImage() async {
+    File cropped = await ImageCropper.cropImage(
+      sourcePath: _imageFile.path,
+    );
+
+    setState(() {
+      _imageFile = cropped ?? _imageFile;
+    });
+  }
+
+  /// Remove image
+  void _clear() {
+    setState(() => _imageFile = null);
+  }
+
+  AppBar uploadHeader(String text, BuildContext context) {
+    return AppBar(
+      elevation: 0,
+      backgroundColor: Colors.white,
+      title: Text(
+        text,
+        style: TextStyle(color: Color(0xFF1d1e2c), fontSize: 16),
+      ),
+      leading: IconButton(
+        icon: Icon(
+          LineIcons.arrow_left,
+          color: Color(0xFF1d1e2c),
+        ),
+        onPressed: () => Navigator.pop(context),
+      ),
+      actions: <Widget>[
+        IconButton(
+          icon: Icon(
+            LineIcons.check,
+            color: Color(0xFF1d1e2c),
+            size: 30,
+          ),
+          onPressed: _isUploading ? null : () => _handleSubmit(),
+        )
+      ],
+      centerTitle: true,
+    );
+  }
+
   @override
   Widget build(BuildContext parentContext) {
     return Scaffold(
-      appBar: uploadHeader("Upload Post", context, fbKey),
+      appBar: uploadHeader("Upload Post", context),
       body: SafeArea(
         child: ListView(
-          padding: EdgeInsets.all(10),
+          padding: EdgeInsets.only(bottom: 10, right: 10, left: 10),
           children: <Widget>[
+            _isUploading ? linearProgress(context) : Container(),
             Container(
               height: 220,
               width: MediaQuery.of(context).size.width * 0.8,
@@ -206,11 +312,15 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
             ),
             FormBuilder(
               autovalidate: false,
-              key: fbKey,
+              key: _fbKey,
               child: Column(
                 children: <Widget>[
                   FormBuilderTextField(
-                    attribute: "description",
+                    focusNode: _textFocusNode,
+                    onFieldSubmitted: (val) {
+                      FocusScope.of(context).requestFocus(_locationFocusNode);
+                    },
+                    attribute: 'text',
                     decoration: InputDecoration(
                       labelText: "What's on your mind?",
                       hintText: 'Let us know what\'s up',
@@ -231,13 +341,14 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
                       Container(
                         width: MediaQuery.of(context).size.width * .80,
                         child: FormBuilderTextField(
-                          attribute: 'location',
+                          focusNode: _locationFocusNode,
+                          attribute: 'loc',
                           decoration: InputDecoration(
                             labelText: "Your location",
                           ),
                           readOnly: false,
                           controller: locationController,
-                          validators: [FormBuilderValidators.required()],
+                          validators: [],
                         ),
                       ),
                       SizedBox(

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:jammerz/models/ProfileScreenArguments.dart';
 import 'package:jammerz/views/ProfileScreen.dart';
 import 'package:jammerz/views/SearchScreen.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
+import 'package:provider/provider.dart';
+import '../../models/User.dart';
 
 AppBar header(String text, BuildContext context) {
   return AppBar(
@@ -21,8 +24,11 @@ AppBar header(String text, BuildContext context) {
           size: 30,
         ),
         onPressed: () {
+          User user = Provider.of<UserProvider>(context).user;
+          print("[Header] user uid: " + user.uid);
           //Show search screen
-          Navigator.pushNamed(context, ProfileScreen.routeName);
+          Navigator.pushNamed(context, ProfileScreen.routeName,
+              arguments: ProfileScreenArguments(user: user));
         },
       )
     ],

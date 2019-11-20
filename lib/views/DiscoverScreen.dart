@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:jammerz/models/DiscoverScreenArguments.dart';
 import 'package:flutter_swiper/flutter_swiper.dart';
 import 'package:jammerz/models/Instrument.dart';
-import 'package:jammerz/models/user.dart';
+import 'package:jammerz/models/User.dart';
 import 'package:jammerz/views/UI/Progress.dart';
 import 'package:line_icons/line_icons.dart';
+import '../views/UI/ProfileScreenBody.dart';
+
 import 'package:location/location.dart';
 import 'dart:async';
 
@@ -46,12 +48,12 @@ class DiscoverScreen extends StatelessWidget {
                 lat: user.location.coords.latitude,
                 lng: user.location.coords.longitude) <=
             rad) {
-          results.add(User.fromDocument(doc));
+          results.add(user);
         }
       });
     });
 
-    print(results);
+    print("[DiscoverScreen] results: " + results.toString());
     return results;
   }
 
@@ -76,7 +78,6 @@ class DiscoverScreen extends StatelessWidget {
           future: getUsers(),
           builder: (BuildContext context, snapshot) {
             if (snapshot.connectionState == ConnectionState.done) {
-              print("We done");
               if (snapshot.hasError) {
                 return Container(
                   child: Center(
@@ -92,19 +93,7 @@ class DiscoverScreen extends StatelessWidget {
                     : Swiper(
                         itemCount: snapshot.data.length,
                         itemBuilder: (BuildContext context, int index) {
-                          //TODO: Create profile page
-                          return Container(
-                            child: Center(
-                              child: Column(
-                                children: <Widget>[
-                                  Text(snapshot.data[index].name),
-                                  Text(snapshot.data[index].bio),
-                                  Text(snapshot.data[index].email),
-                                  Text(snapshot.data[index].location.toString())
-                                ],
-                              ),
-                            ),
-                          );
+                          return ProfileScreenBody(user: snapshot.data[index]);
                         },
                       );
               } else {
@@ -114,10 +103,8 @@ class DiscoverScreen extends StatelessWidget {
             } else if (snapshot.connectionState == ConnectionState.active) {
               return circularProgress(context);
             } else if (snapshot.connectionState == ConnectionState.waiting) {
-              print("We here mate");
               return circularProgress(context);
             } else {
-              print("end of the line");
               return circularProgress(context);
             }
           },

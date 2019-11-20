@@ -3,11 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:jammerz/AuthService.dart';
 import 'package:provider/provider.dart';
+import '../models/User.dart';
 import '../Utils.dart';
 
 class LoginScreen extends StatelessWidget {
   static final GlobalKey<FormBuilderState> _fbKey =
       GlobalKey<FormBuilderState>(debugLabel: "LoginScreen");
+
+  FocusNode _emailFocusNode = FocusNode();
+  FocusNode _passwordFocusNode = FocusNode();
 
   @override
   Widget build(BuildContext context) {
@@ -64,6 +68,11 @@ class LoginScreen extends StatelessWidget {
                       child: Column(
                         children: <Widget>[
                           FormBuilderTextField(
+                            focusNode: _emailFocusNode,
+                            onFieldSubmitted: (val) {
+                              FocusScope.of(context)
+                                  .requestFocus(_passwordFocusNode);
+                            },
                             attribute: 'email',
                             keyboardType: TextInputType.emailAddress,
                             decoration: InputDecoration(
@@ -77,7 +86,10 @@ class LoginScreen extends StatelessWidget {
                             ],
                           ),
                           FormBuilderTextField(
+                            focusNode: _passwordFocusNode,
                             attribute: 'password',
+                            onFieldSubmitted: (_) =>
+                                Focus.of(context).unfocus(),
                             obscureText: true,
                             keyboardType: TextInputType.text,
                             decoration: InputDecoration(
@@ -129,18 +141,24 @@ class LoginScreen extends StatelessWidget {
                                 child: Text("SIGN IN"),
                                 onPressed: () async {
                                   if (_fbKey.currentState.saveAndValidate()) {
-                                    print(_fbKey.currentState.value);
-
                                     try {
                                       FirebaseUser result =
                                           await Provider.of<AuthService>(
-                                                  context)
+                                                  context,
+                                                  listen: false)
                                               .signInWithCredentials(
                                                   email: _fbKey.currentState
                                                       .value['email'],
                                                   password: _fbKey.currentState
                                                       .value['password']);
-                                      print(result);
+
+                                      User user =
+                                          await Provider.of<UserProvider>(
+                                                  context)
+                                              .getUser(result.uid);
+
+                                      Provider.of<UserProvider>(context)
+                                          .setCurrentUser(user);
                                     } on AuthException catch (error) {
                                       Utils.buildErrorDialog(
                                           context, error.message);
