@@ -13,22 +13,29 @@ import 'dart:async';
 
 import 'package:geoflutterfire/geoflutterfire.dart';
 
-class DiscoverScreen extends StatelessWidget {
+class DiscoverScreen extends StatefulWidget {
   static final String routeName = '/discovery-screen';
 
   final DiscoverScreenArguments searchParams;
 
   DiscoverScreen(this.searchParams);
-  Location location = new Location();
 
-  Future<List<dynamic>> getUsers() async {
+  @override
+  _DiscoverScreenState createState() => _DiscoverScreenState();
+}
+
+class _DiscoverScreenState extends State<DiscoverScreen> {
+  Location location = new Location();
+  Future<List<User>> _data;
+
+  Future<List<User>> getUsers() async {
     List<User> results = [];
     Geoflutterfire geo = Geoflutterfire();
 
-    Instrument instrument = searchParams.instrument;
-    bool transportation = searchParams.transportation;
-    bool practiceSpace = searchParams.practiceSpace;
-    double rad = searchParams.radius;
+    Instrument instrument = widget.searchParams.instrument;
+    bool transportation = widget.searchParams.transportation;
+    bool practiceSpace = widget.searchParams.practiceSpace;
+    double rad = widget.searchParams.radius;
 
     LocationData loc = await location.getLocation();
     GeoFirePoint myPoint =
@@ -58,6 +65,12 @@ class DiscoverScreen extends StatelessWidget {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _data = getUsers();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
@@ -75,7 +88,7 @@ class DiscoverScreen extends StatelessWidget {
           ),
         ),
         body: FutureBuilder(
-          future: getUsers(),
+          future: _data,
           builder: (BuildContext context, snapshot) {
             if (snapshot.connectionState == ConnectionState.done) {
               if (snapshot.hasError) {
@@ -97,7 +110,6 @@ class DiscoverScreen extends StatelessWidget {
                         },
                       );
               } else {
-                print("Where we at?");
                 return circularProgress(context);
               }
             } else if (snapshot.connectionState == ConnectionState.active) {

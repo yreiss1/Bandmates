@@ -17,7 +17,9 @@ import 'dart:math';
 import 'package:provider/provider.dart';
 import 'HomeScreen.dart';
 import '../models/User.dart';
-
+import 'dart:io';
+import 'package:image/image.dart' as Im;
+import 'package:path_provider/path_provider.dart';
 import 'package:geoflutterfire/geoflutterfire.dart';
 
 final GlobalKey<FormBuilderState> personalKey =
@@ -43,6 +45,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   PageController _controller;
   bool _isScrolling = false;
+  File _imageFile;
 
   List<PageViewModels> _listPagesViewModel;
   @override
@@ -111,8 +114,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     });
   }
 
-  getUserData(String name, DateTime birthday, String bio, String gender,
-      bool hasTransportation, bool hasPracticeSpace, GeoFirePoint point) {
+  getUserData(
+      String name,
+      DateTime birthday,
+      String bio,
+      String gender,
+      bool hasTransportation,
+      bool hasPracticeSpace,
+      GeoFirePoint point,
+      File imageFile) {
     setState(() {
       _userData['name'] = name;
       _userData['birthday'] = birthday;
@@ -124,6 +134,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           hasPracticeSpace == null ? false : hasPracticeSpace;
       _userData['timestamp'] = null;
       _userData['location'] = point;
+
+      _imageFile = imageFile;
+    });
+  }
+
+  _compressImage() async {
+    final tempDir = await getTemporaryDirectory();
+    final path = tempDir.path;
+    final uid = currentUser.uid;
+    Im.Image imageFile = Im.decodeImage(_imageFile.readAsBytesSync());
+    final compressedImageFile = File('$path/img_$uid.jpg')
+      ..writeAsBytesSync(Im.encodeJpg(imageFile, quality: 85));
+    setState(() {
+      _imageFile = compressedImageFile;
     });
   }
 
@@ -230,6 +254,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                 var userAuth = Provider.of<FirebaseUser>(
                                     context,
                                     listen: false);
+                                String downloadUrl;
+                                if (_imageFile != null) {
+                                  await _compressImage();
+                                  downloadUrl =
+                                      await Provider.of<UserProvider>(context)
+                                          .uploadProfileImage(
+                                              _imageFile, userAuth.uid);
+                                }
                                 User user = new User(
                                   uid: userAuth.uid,
                                   email: userAuth.email,
@@ -243,6 +275,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                   practiceSpace: _userData['practice'],
                                   location: _userData['location'],
                                   created: DateTime.now(),
+                                  photoUrl: downloadUrl,
                                 );
                                 Provider.of<UserProvider>(context)
                                     .uploadUser(userAuth.uid, user);

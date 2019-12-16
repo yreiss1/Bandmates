@@ -94,6 +94,12 @@ class _QuestionsCaptureState extends State<QuestionsCapture> {
     _locationController.text = first.subAdminArea;
   }
 
+  getImage(File imageFile) {
+    setState(() {
+      _imageFile = imageFile;
+    });
+  }
+
   List<Step> _mySteps() {
     List<Step> _steps = [
       Step(
@@ -116,7 +122,9 @@ class _QuestionsCaptureState extends State<QuestionsCapture> {
       ),
       Step(
         title: Text('Your Profile Image'),
-        content: ImageCapture(),
+        content: ImageCapture(
+          getImageFile: getImage,
+        ),
         isActive: _currentStep >= 1,
       ),
       Step(
@@ -198,8 +206,15 @@ class _QuestionsCaptureState extends State<QuestionsCapture> {
       child: FormBuilder(
         onChanged: (val) => {
           widget.fbKey.currentState.save(),
-          widget.getInfo(val['name'], val['birthday'], val['bio'],
-              val['gender'], val['transportation'], val['practice'], point)
+          widget.getInfo(
+              val['name'],
+              val['birthday'],
+              val['bio'],
+              val['gender'],
+              val['transportation'],
+              val['practice'],
+              point,
+              _imageFile)
         },
         key: widget.fbKey,
         autovalidate: false,

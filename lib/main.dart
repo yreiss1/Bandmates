@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:jammerz/models/Chat.dart';
 import 'package:jammerz/models/Post.dart';
 import 'package:jammerz/models/User.dart';
 import 'package:jammerz/views/DiscoverScreen.dart';
@@ -48,6 +49,11 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider<EventProvider>(
           builder: (_) {
             return EventProvider();
+          },
+        ),
+        ChangeNotifierProvider<ChatProvider>(
+          builder: (_) {
+            return ChatProvider();
           },
         )
       ],

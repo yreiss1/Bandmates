@@ -2,9 +2,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flappy_search_bar/flappy_search_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:jammerz/models/DiscoverScreenArguments.dart';
+import 'package:jammerz/models/ProfileScreenArguments.dart';
 import 'package:jammerz/models/User.dart';
 import 'package:jammerz/presentation/GenreIcons.dart';
 import 'package:jammerz/views/DiscoverScreen.dart';
+import 'package:jammerz/views/ProfileScreen.dart';
 import 'package:jammerz/views/TimelineScreen.dart';
 import 'package:circular_profile_avatar/circular_profile_avatar.dart';
 import 'package:line_icons/line_icons.dart';
@@ -362,6 +364,9 @@ class _SearchScreenState extends State<SearchScreen>
                           ? AssetImage('assets/images/user-placeholder.png')
                           : NetworkImage(user.photoUrl),
                     ),
+                    onTap: () => Navigator.pushNamed(
+                        context, ProfileScreen.routeName,
+                        arguments: ProfileScreenArguments(user: user)),
                   );
                 },
                 crossAxisSpacing: 10,
@@ -370,7 +375,9 @@ class _SearchScreenState extends State<SearchScreen>
                       child: Column(
                     children: <Widget>[
                       ListTile(
-                        onTap: () => {},
+                        onTap: () => Navigator.pushNamed(
+                            context, ProfileScreen.routeName,
+                            arguments: ProfileScreenArguments(user: user)),
                         title: Text(user.name),
                         subtitle: Text(buildSubtitle(user.instruments) +
                             "\n" +

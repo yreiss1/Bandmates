@@ -9,6 +9,8 @@ PODS:
     - Firebase/Core
     - Firebase/Firestore (~> 6.0)
     - Flutter
+  - file_picker (0.0.1):
+    - Flutter
   - Firebase/Auth (6.5.0):
     - Firebase/CoreOnly
     - FirebaseAuth (~> 6.2.1)
@@ -192,6 +194,7 @@ PODS:
 
 DEPENDENCIES:
   - cloud_firestore (from `.symlinks/plugins/cloud_firestore/ios`)
+  - file_picker (from `.symlinks/plugins/file_picker/ios`)
   - firebase_auth (from `.symlinks/plugins/firebase_auth/ios`)
   - firebase_core (from `.symlinks/plugins/firebase_core/ios`)
   - firebase_database (from `.symlinks/plugins/firebase_database/ios`)
@@ -241,6 +244,8 @@ SPEC REPOS:
 EXTERNAL SOURCES:
   cloud_firestore:
     :path: ".symlinks/plugins/cloud_firestore/ios"
+  file_picker:
+    :path: ".symlinks/plugins/file_picker/ios"
   firebase_auth:
     :path: ".symlinks/plugins/firebase_auth/ios"
   firebase_core:
@@ -283,6 +288,7 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   BoringSSL-GRPC: db8764df3204ccea016e1c8dd15d9a9ad63ff318
   cloud_firestore: c9493dd01ad88934d926e18cc5a92a0129bf2c32
+  file_picker: 408623be2125b79a4539cf703be3d4b3abe5e245
   Firebase: dedc9e48ea3f3649ad5f6b982f8a0c73508a14b5
   firebase_auth: 00d6e1ab6d890cd6d3c624df61702e3a7072d1e3
   firebase_core: ae55ea92448ec8675d325da4db22cf3b4d58a54d

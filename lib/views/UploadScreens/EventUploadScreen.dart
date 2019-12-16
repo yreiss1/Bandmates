@@ -396,7 +396,7 @@ class _EventUploadScreenState extends State<EventUploadScreen> {
                         ),
                       ),
                       SizedBox(
-                        width: 10,
+                        width: 5,
                       ),
                       FloatingActionButton(
                         mini: true,

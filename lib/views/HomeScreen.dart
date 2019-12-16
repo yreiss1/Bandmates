@@ -52,11 +52,17 @@ class _HomeScreenState extends State<HomeScreen>
     DocumentSnapshot snapshot =
         await Provider.of<UserProvider>(context, listen: false)
             .getSnapshot(widget.uid);
-    User user = User.fromDocument(snapshot);
-    setState(() {
-      _currentUser = user;
-    });
-    Provider.of<UserProvider>(context).setCurrentUser(user);
+
+    if (snapshot.data != null) {
+      User user = User.fromDocument(snapshot);
+
+      setState(() {
+        _currentUser = user;
+      });
+      print("[HomeScreen] user: " + user.name);
+      Provider.of<UserProvider>(context).setCurrentUser(user);
+    }
+
     return snapshot;
   }
 

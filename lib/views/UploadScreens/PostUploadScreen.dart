@@ -160,11 +160,15 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
       }
 
       User userObject = Provider.of<UserProvider>(context).currentUser;
+      String downloadURL =
+          await Provider.of<PostProvider>(context, listen: false)
+              .uploadMedia(_imageFile, _postID);
 
       Post post = new Post(
           text: _fbKey.currentState.value['text'],
-          file: _imageFile, //TODO: Fix this to add video too!
+          mediaUrl: downloadURL,
           time: DateTime.now(),
+          likes: {},
           location: _fbKey.currentState.value['loc']);
       await Provider.of<PostProvider>(context, listen: false)
           .uploadPost(post, _postID, userObject.uid, userObject.name);
@@ -228,7 +232,7 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
       appBar: uploadHeader("Upload Post", context),
       body: SafeArea(
         child: ListView(
-          padding: EdgeInsets.only(bottom: 10, right: 10, left: 10),
+          padding: EdgeInsets.all(10),
           children: <Widget>[
             _isUploading ? linearProgress(context) : Container(),
             Container(

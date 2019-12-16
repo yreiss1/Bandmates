@@ -3,15 +3,38 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
 
-import 'package:geoflutterfire/geoflutterfire.dart';
-
 class Post {
   final String text;
+  final String ownerId;
+  final String postId;
+  final String username;
+  final Map likes;
   final DateTime time;
-  final File file;
+  final String mediaUrl;
   final String location;
 
-  Post({@required this.text, @required this.time, this.file, this.location});
+  Post(
+      {@required this.text,
+      @required this.time,
+      this.mediaUrl,
+      this.location,
+      this.likes,
+      this.ownerId,
+      this.postId,
+      this.username});
+
+  factory Post.fromDocument(DocumentSnapshot doc) {
+    return Post(
+      postId: doc.data['postId'],
+      ownerId: doc.data['ownerId'],
+      username: doc.data['user'],
+      text: doc.data['text'],
+      mediaUrl: doc.data['media'],
+      likes: doc.data['likes'],
+      location: doc.data['loc'],
+      time: doc.data['time'].toDate(),
+    );
+  }
 }
 
 class PostProvider with ChangeNotifier {
@@ -25,21 +48,25 @@ class PostProvider with ChangeNotifier {
 
   CollectionReference postRef = Firestore.instance.collection("posts");
 
-  Future<void> uploadPost(
-      Post post, String postId, String uid, String name) async {
+  Future<String> uploadMedia(File file, String postId) async {
     String downloadUrl;
-    if (post.file != null) {
+    if (file != null) {
       StorageUploadTask uploadTask =
-          storageRef.child("post_$postId.jpg").putFile(post.file);
+          storageRef.child("post_$postId.jpg").putFile(file);
       StorageTaskSnapshot storageSnap = await uploadTask.onComplete;
       downloadUrl = await storageSnap.ref.getDownloadURL();
     }
 
+    return downloadUrl;
+  }
+
+  Future<void> uploadPost(
+      Post post, String uid, String name, String postId) async {
     postRef.document(uid).collection("userPosts").document(postId).setData({
-      "postId": postId,
+      "postId": post.postId,
       "ownerId": uid,
       "user": name,
-      "media": downloadUrl,
+      "media": post.mediaUrl,
       "text": post.text,
       "loc": post.location,
       "time": post.time,
@@ -49,31 +76,16 @@ class PostProvider with ChangeNotifier {
 
   Future<List<Post>> getUsersPosts(String uid) async {
     List<Post> results = [];
-    QuerySnapshot querySnap =
-        await postRef.document(uid).collection("userPosts").getDocuments();
+    QuerySnapshot querySnap = await postRef
+        .document(uid)
+        .collection("userPosts")
+        .orderBy("time", descending: true)
+        .getDocuments();
 
     List<DocumentSnapshot> snaps = querySnap.documents;
     snaps.forEach((snapshot) {
-      /*
-      Geoflutterfire geo = Geoflutterfire();
-      GeoFirePoint loc;
-      if (snapshot.data['loc'] != null) {
-        GeoPoint point = snapshot.data['loc']['geopoint'];
-
-        loc = point == null
-            ? null
-            : geo.point(latitude: point.latitude, longitude: point.longitude);
-      } else {
-        loc = null;
-      }
-      */
-
-      print("[PostProvider] snapshotData: " + snapshot.data.toString());
-      results.add(Post(
-        text: snapshot.data['text'],
-        time: snapshot.data['time'].toDate(),
-        location: snapshot.data['loc'],
-      ));
+      //print("[PostProvider] snapshotData: " + snapshot.data.toString());
+      results.add(Post.fromDocument(snapshot));
     });
 
     return results;

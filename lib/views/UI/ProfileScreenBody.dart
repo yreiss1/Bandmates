@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:jammerz/AuthService.dart';
+import 'package:jammerz/views/UI/PostItem.dart';
 import 'package:jammerz/views/UI/Progress.dart';
 import '../../models/User.dart';
 import 'package:line_icons/line_icons.dart';
@@ -13,6 +14,8 @@ import '../UploadScreens/EventUploadScreen.dart';
 import '../UploadScreens/PostUploadScreen.dart';
 import '../../models/Post.dart';
 import 'package:pk_skeleton/pk_skeleton.dart';
+import '../ChatRoomScreen.dart';
+import '../../models/Chat.dart';
 
 class ProfileScreenBody extends StatefulWidget {
   final User user;
@@ -83,8 +86,9 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody>
   @override
   Widget build(BuildContext context) {
     print("[ProfileScreenBody] uid: " + widget.user.uid.toString());
-    return SafeArea(
-      child: ListView(
+
+    return SingleChildScrollView(
+      child: Column(
         children: <Widget>[
           Container(
             child: Column(
@@ -101,7 +105,13 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody>
                       ? [
                           FloatingActionButton(
                             heroTag: 'chatBtn',
-                            onPressed: () {},
+                            onPressed: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (BuildContext context) {
+                                return ChatRoomScreen(otherUser: widget.user);
+                              }),
+                            ),
                             backgroundColor: Theme.of(context).primaryColor,
                             child: Icon(LineIcons.comments),
                           ),
@@ -156,18 +166,18 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody>
                       height: 40,
                     ),
                     /*
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: <Widget>[
-                        Text(
-                          "About Me:",
-                          style: TextStyle(
-                              fontWeight: FontWeight.w600, fontSize: 16),
-                        ),
-                        Text(widget.user.bio),
-                      ],
-                    ),
-                    */
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: <Widget>[
+                          Text(
+                            "About Me:",
+                            style: TextStyle(
+                                fontWeight: FontWeight.w600, fontSize: 16),
+                          ),
+                          Text(widget.user.bio),
+                        ],
+                      ),
+                      */
                     if (widget.user.uid ==
                         Provider.of<UserProvider>(context, listen: false)
                             .currentUser
@@ -290,10 +300,9 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody>
               ),
             ],
           ),
-          Divider(),
           SizedBox(
+            height: MediaQuery.of(context).size.height,
             width: double.infinity,
-            height: MediaQuery.of(context).size.height - 500,
             child: TabBarView(
               controller: _tabController,
               children: <Widget>[
@@ -302,20 +311,16 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody>
                       .getUsersPosts(widget.user.uid),
                   builder: (BuildContext context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.done) {
-                      return ListView(
-                          children: snapshot.data
-                              .map((post) => Card(
-                                    child: Column(
-                                      children: <Widget>[
-                                        if (post.text != null) Text(post.text),
-                                        if (post.time != null)
-                                          Text(post.time.toString()),
-                                        if (post.location != null)
-                                          Text(post.location)
-                                      ],
-                                    ),
-                                  ))
-                              .toList());
+                      return ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: snapshot.data.length,
+                        itemBuilder: (BuildContext context, index) {
+                          return PostItem(
+                            post: snapshot.data[index],
+                            user: widget.user,
+                          );
+                        },
+                      );
                     } else if (snapshot.connectionState ==
                             ConnectionState.waiting ||
                         snapshot.connectionState == ConnectionState.active) {
@@ -326,8 +331,8 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody>
                     }
                   },
                 ),
-                Text("Goodbye"),
-                Text("You again?")
+                Text("Hello"),
+                Text("Hello again"),
               ],
             ),
           ),
