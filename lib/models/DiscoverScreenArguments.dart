@@ -1,4 +1,4 @@
-import 'package:jammerz/models/Instrument.dart';
+import 'package:bandmates/models/Instrument.dart';
 
 class DiscoverScreenArguments {
   Instrument instrument;

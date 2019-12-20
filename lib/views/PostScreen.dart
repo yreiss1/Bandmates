@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:jammerz/models/User.dart';
-import 'package:jammerz/views/UI/Header.dart';
-import 'package:jammerz/views/UI/PostItem.dart';
-import 'package:jammerz/views/UI/Progress.dart';
+import 'package:bandmates/models/User.dart';
+import 'package:bandmates/views/UI/Header.dart';
+import 'package:bandmates/views/UI/PostItem.dart';
+import 'package:bandmates/views/UI/Progress.dart';
 import 'package:provider/provider.dart';
 import '../models/Post.dart';
 

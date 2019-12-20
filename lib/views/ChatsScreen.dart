@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:circular_profile_avatar/circular_profile_avatar.dart';
-import 'package:jammerz/views/ChatRoomScreen.dart';
-import 'package:jammerz/views/UI/Progress.dart';
+import 'package:bandmates/views/ChatRoomScreen.dart';
+import 'package:bandmates/views/UI/Progress.dart';
 import 'package:pk_skeleton/pk_skeleton.dart';
 import '../models/Chat.dart';
 import '../models/User.dart';

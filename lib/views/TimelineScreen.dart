@@ -1,11 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:jammerz/models/Post.dart';
-import 'package:jammerz/models/ProfileScreenArguments.dart';
-import 'package:jammerz/views/HomeScreen.dart' as prefix0;
-import 'package:jammerz/views/ProfileScreen.dart';
-import 'package:jammerz/views/UI/PostItem.dart';
-import 'package:jammerz/views/UI/Progress.dart';
+import 'package:bandmates/models/Post.dart';
+import 'package:bandmates/models/ProfileScreenArguments.dart';
+import 'package:bandmates/views/HomeScreen.dart' as prefix0;
+import 'package:bandmates/views/ProfileScreen.dart';
+import 'package:bandmates/views/UI/PostItem.dart';
+import 'package:bandmates/views/UI/Progress.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:provider/provider.dart';
 

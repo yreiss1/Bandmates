@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:jammerz/models/Follow.dart';
-import 'package:jammerz/views/HomeScreen.dart' as prefix0;
-import 'package:jammerz/views/UI/PostItem.dart';
+import 'package:bandmates/models/Follow.dart';
+import 'package:bandmates/views/HomeScreen.dart' as prefix0;
+import 'package:bandmates/views/UI/PostItem.dart';
 import '../../models/User.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:circular_profile_avatar/circular_profile_avatar.dart';

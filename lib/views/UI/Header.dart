@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:jammerz/models/ProfileScreenArguments.dart';
-import 'package:jammerz/views/ProfileScreen.dart';
-import 'package:jammerz/views/SearchScreen.dart';
+import 'package:bandmates/models/ProfileScreenArguments.dart';
+import 'package:bandmates/views/ProfileScreen.dart';
+import 'package:bandmates/views/SearchScreen.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:provider/provider.dart';

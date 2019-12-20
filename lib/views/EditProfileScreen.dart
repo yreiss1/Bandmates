@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:jammerz/views/HomeScreen.dart';
-import 'package:jammerz/views/UI/Progress.dart';
+import 'package:bandmates/views/HomeScreen.dart';
+import 'package:bandmates/views/UI/Progress.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:location/location.dart';

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:jammerz/views/LoginScreen.dart';
-import 'package:jammerz/views/SignupScreen.dart';
+import 'package:bandmates/views/LoginScreen.dart';
+import 'package:bandmates/views/SignupScreen.dart';
 
 class StartScreen extends StatefulWidget {
   static const routeName = '/start-screen';

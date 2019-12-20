@@ -1,11 +1,11 @@
 import 'package:achievement_view/achievement_widget.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:jammerz/views/OnboardingScreens/GenreCapture.dart';
-import 'package:jammerz/views/OnboardingScreens/InstrumentCapture.dart';
-import 'package:jammerz/views/OnboardingScreens/QuestionsCapture.dart';
-import 'package:jammerz/views/UI/IntroButton.dart';
-import 'package:jammerz/views/UI/PageViewModels.dart';
+import 'package:bandmates/views/OnboardingScreens/GenreCapture.dart';
+import 'package:bandmates/views/OnboardingScreens/InstrumentCapture.dart';
+import 'package:bandmates/views/OnboardingScreens/QuestionsCapture.dart';
+import 'package:bandmates/views/UI/IntroButton.dart';
+import 'package:bandmates/views/UI/PageViewModels.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:dots_indicator/dots_indicator.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
@@ -238,7 +238,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     child: Center(
                       child: DotsIndicator(
                         dotsCount: _listPagesViewModel.length,
-                        position: _currentPage,
+                        position: _currentPage.toDouble(),
                         decorator: DotsDecorator(
                           activeColor: const Color(0xff53172c),
                         ),

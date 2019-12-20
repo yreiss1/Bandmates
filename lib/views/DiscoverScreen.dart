@@ -1,10 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:jammerz/models/DiscoverScreenArguments.dart';
+import 'package:bandmates/models/DiscoverScreenArguments.dart';
 import 'package:flutter_swiper/flutter_swiper.dart';
-import 'package:jammerz/models/Instrument.dart';
-import 'package:jammerz/models/User.dart';
-import 'package:jammerz/views/UI/Progress.dart';
+import 'package:bandmates/models/Instrument.dart';
+import 'package:bandmates/models/User.dart';
+import 'package:bandmates/views/UI/Progress.dart';
 import 'package:line_icons/line_icons.dart';
 import '../views/UI/ProfileScreenBody.dart';
 

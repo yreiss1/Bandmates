@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:jammerz/AuthService.dart';
-import 'package:jammerz/models/ProfileScreenArguments.dart';
-import 'package:jammerz/models/User.dart';
-import 'package:jammerz/views/UI/Header.dart';
-import 'package:jammerz/views/UI/ProfileScreenBody.dart';
-import 'package:jammerz/views/UI/Progress.dart';
+import 'package:bandmates/AuthService.dart';
+import 'package:bandmates/models/ProfileScreenArguments.dart';
+import 'package:bandmates/models/User.dart';
+import 'package:bandmates/views/UI/Header.dart';
+import 'package:bandmates/views/UI/ProfileScreenBody.dart';
+import 'package:bandmates/views/UI/Progress.dart';
 import 'package:provider/provider.dart';
 import 'package:line_icons/line_icons.dart';
 import 'EditProfileScreen.dart';

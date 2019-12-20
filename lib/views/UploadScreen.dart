@@ -2,7 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:circular_profile_avatar/circular_profile_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
-import 'package:jammerz/views/UploadScreens/PostUploadScreen.dart';
+import 'package:bandmates/views/UploadScreens/PostUploadScreen.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';

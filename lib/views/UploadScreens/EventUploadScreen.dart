@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:search_map_place/search_map_place.dart';
-import 'package:jammerz/views/UI/Progress.dart';
-import 'package:jammerz/models/User.dart';
+import 'package:bandmates/views/UI/Progress.dart';
+import 'package:bandmates/models/User.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:jammerz/models/Event.dart';
+import 'package:bandmates/models/Event.dart';
 import 'package:intl/intl.dart';
 
 import 'package:google_maps_flutter/google_maps_flutter.dart';

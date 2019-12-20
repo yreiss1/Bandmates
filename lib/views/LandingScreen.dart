@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:jammerz/views/HomeScreen.dart';
-import 'package:jammerz/views/StartScreen.dart';
+import 'package:bandmates/views/HomeScreen.dart';
+import 'package:bandmates/views/StartScreen.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';

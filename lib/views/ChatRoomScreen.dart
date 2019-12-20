@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:jammerz/views/UI/ChatMessage.dart';
+import 'package:bandmates/views/UI/ChatMessage.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/User.dart';

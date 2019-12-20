@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:geocoder/geocoder.dart' as prefix1;
 import 'package:image_cropper/image_cropper.dart';
-import 'package:jammerz/views/OnboardingScreens/ImageCapture.dart';
+import 'package:bandmates/views/OnboardingScreens/ImageCapture.dart';
 import 'dart:io';
 import 'package:line_icons/line_icons.dart';
 import 'package:image_picker/image_picker.dart';

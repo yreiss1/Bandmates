@@ -1,4 +1,4 @@
-package com.example.jammerz
+package com.bandmates.bandmates
 
 import android.os.Bundle
 

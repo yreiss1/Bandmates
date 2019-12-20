@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:jammerz/models/Post.dart';
-import 'package:jammerz/views/UI/Progress.dart';
+import 'package:bandmates/models/Post.dart';
+import 'package:bandmates/views/UI/Progress.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:image_picker/image_picker.dart';

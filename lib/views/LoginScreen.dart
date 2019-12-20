@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
-import 'package:jammerz/AuthService.dart';
+import 'package:bandmates/AuthService.dart';
 import 'package:provider/provider.dart';
 import '../models/User.dart';
 import '../Utils.dart';
@@ -90,7 +90,7 @@ class LoginScreen extends StatelessWidget {
                             attribute: 'password',
                             onFieldSubmitted: (_) =>
                                 Focus.of(context).unfocus(),
-                            obscureText: true,
+                            //obscureText: true,
                             keyboardType: TextInputType.text,
                             decoration: InputDecoration(
                               labelText: "Password",

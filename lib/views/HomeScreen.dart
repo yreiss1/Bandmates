@@ -1,9 +1,9 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:jammerz/views/OnboardingScreen.dart';
-import 'package:jammerz/views/SearchScreen.dart';
-import 'package:jammerz/views/UI/Header.dart';
+import 'package:bandmates/views/OnboardingScreen.dart';
+import 'package:bandmates/views/SearchScreen.dart';
+import 'package:bandmates/views/UI/Header.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../presentation/InstrumentIcons.dart';
@@ -14,8 +14,6 @@ import './ActivityScreen.dart';
 import './UI/Progress.dart';
 import 'package:provider/provider.dart';
 import '../models/User.dart';
-import 'ProfileScreen.dart';
-import '../models/ProfileScreenArguments.dart';
 import 'dart:async';
 import 'dart:io';
 

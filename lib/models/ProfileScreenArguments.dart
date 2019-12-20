@@ -1,4 +1,4 @@
-import 'package:jammerz/models/User.dart';
+import 'package:bandmates/models/User.dart';
 
 class ProfileScreenArguments {
   String userId;

@@ -1,10 +1,10 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
-import 'package:jammerz/models/ProfileScreenArguments.dart';
-import 'package:jammerz/views/CommentsScreen.dart';
-import 'package:jammerz/views/HomeScreen.dart' as prefix0;
-import 'package:jammerz/views/UI/CustomNetworkImage.dart';
+import 'package:bandmates/models/ProfileScreenArguments.dart';
+import 'package:bandmates/views/CommentsScreen.dart';
+import 'package:bandmates/views/HomeScreen.dart' as prefix0;
+import 'package:bandmates/views/UI/CustomNetworkImage.dart';
 import '../ProfileScreen.dart';
 import '../../models/Post.dart';
 import 'package:provider/provider.dart';

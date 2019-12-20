@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:jammerz/views/UI/Header.dart';
+import 'package:bandmates/views/UI/Header.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:jammerz/views/UI/Progress.dart';
+import 'package:bandmates/views/UI/Progress.dart';
 import 'package:line_icons/line_icons.dart';
 import '../models/User.dart';
 import '../models/Comment.dart';

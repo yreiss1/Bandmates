@@ -1,10 +1,10 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:jammerz/models/ProfileScreenArguments.dart';
-import 'package:jammerz/views/HomeScreen.dart';
-import 'package:jammerz/views/PostScreen.dart';
-import 'package:jammerz/views/ProfileScreen.dart';
+import 'package:bandmates/models/ProfileScreenArguments.dart';
+import 'package:bandmates/views/HomeScreen.dart';
+import 'package:bandmates/views/PostScreen.dart';
+import 'package:bandmates/views/ProfileScreen.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:line_icons/line_icons.dart';
 import 'package:provider/provider.dart';
@@ -51,7 +51,7 @@ class FeedItem extends StatefulWidget {
 class _FeedItemState extends State<FeedItem> {
   Widget mediaPreview;
 
-  bool _isFollowing = false;
+  bool _isFollowing;
   String activityItemText;
 
   @override
@@ -60,9 +60,8 @@ class _FeedItemState extends State<FeedItem> {
     _checkIfFollowing();
   }
 
-  _checkIfFollowing() {
-    bool _isFollowing = false;
-    Firestore.instance
+  _checkIfFollowing() async {
+    await Firestore.instance
         .collection("following")
         .document(currentUser.uid)
         .collection("following")
@@ -70,14 +69,14 @@ class _FeedItemState extends State<FeedItem> {
         .get()
         .then((doc) {
       if (doc.exists) {
-        _isFollowing = true;
+        setState(() {
+          this._isFollowing = true;
+        });
       } else {
-        _isFollowing = false;
+        setState(() {
+          this._isFollowing = false;
+        });
       }
-    });
-
-    setState(() {
-      this._isFollowing = _isFollowing;
     });
   }
 
@@ -112,13 +111,16 @@ class _FeedItemState extends State<FeedItem> {
               decoration: BoxDecoration(
                   image: DecorationImage(
                       fit: BoxFit.cover,
-                      image: CachedNetworkImageProvider(widget.mediaUrl))),
+                      image: widget.mediaUrl == null
+                          ? CachedNetworkImageProvider(
+                              "https://www.whittierfirstday.org/wp-content/uploads/default-user-image-e1501670968910.png")
+                          : CachedNetworkImageProvider(widget.mediaUrl))),
             ),
           ),
         ),
       );
     } else {
-      mediaPreview = _isFollowing
+      mediaPreview = _isFollowing == true
           ? FlatButton.icon(
               shape: RoundedRectangleBorder(
                   side: BorderSide(
