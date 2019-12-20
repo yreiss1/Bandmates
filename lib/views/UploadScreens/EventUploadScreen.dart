@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
-import 'package:jammerz/views/UI/Header.dart';
 import 'package:search_map_place/search_map_place.dart';
 import 'package:jammerz/views/UI/Progress.dart';
 import 'package:jammerz/models/User.dart';
@@ -70,7 +69,7 @@ class _EventUploadScreenState extends State<EventUploadScreen> {
     var first = address.first;
 
     print(
-        "${first.featureName} : ${first.addressLine} : ${first.subLocality} : ${first.subThoroughfare} : ${first.subAdminArea}");
+        "[EventUploadScreen] ${first.featureName} : ${first.addressLine} : ${first.subLocality} : ${first.subThoroughfare} : ${first.subAdminArea}");
     locationController.text = first.subAdminArea;
     markers.clear();
     markers.add(Marker(
@@ -111,8 +110,6 @@ class _EventUploadScreenState extends State<EventUploadScreen> {
     FocusScope.of(context).unfocus();
 
     if (fbKey.currentState.saveAndValidate()) {
-      print(fbKey.currentState.value['audition'].toString());
-      print(fbKey.currentState.value['text'].toString());
       setState(() {
         _isUploading = true;
       });
@@ -139,8 +136,6 @@ class _EventUploadScreenState extends State<EventUploadScreen> {
           }
           break;
       }
-
-      print("Datetime: " + fbKey.currentState.value['datetime'].toString());
 
       Map<String, bool> audition = _isAudition == false
           ? null

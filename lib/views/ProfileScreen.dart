@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:jammerz/AuthService.dart';
 import 'package:jammerz/models/ProfileScreenArguments.dart';
+import 'package:jammerz/models/User.dart';
+import 'package:jammerz/views/UI/Header.dart';
 import 'package:jammerz/views/UI/ProfileScreenBody.dart';
+import 'package:jammerz/views/UI/Progress.dart';
 import 'package:provider/provider.dart';
 import 'package:line_icons/line_icons.dart';
 import 'EditProfileScreen.dart';
@@ -16,42 +19,17 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          iconTheme: IconThemeData(color: Color(0xFF1d1e2c)),
-          leading: IconButton(
-            icon: Icon(LineIcons.arrow_left),
-            onPressed: () => Navigator.pop(context),
-          ),
-          actions: <Widget>[
-            IconButton(
-              icon: Icon(
-                LineIcons.edit,
-                color: Color(0xFF1d1e2c),
-                size: 30,
-              ),
-              onPressed: () => Navigator.of(context)
-                  .pushReplacementNamed(EditProfileScreen.routeName),
-            ),
-            IconButton(
-              icon: Icon(
-                LineIcons.sign_out,
-                color: Color(0xFF1d1e2c),
-                size: 30,
-              ),
-              onPressed: () {
-                Provider.of<AuthService>(context).signOut();
-                Navigator.pop(context);
-              },
-            ),
-          ],
-          elevation: 0,
-          centerTitle: true,
-          backgroundColor: Colors.white,
-          title: Text(
-            "Profile",
-            style: TextStyle(color: Color(0xFF1d1e2c), fontSize: 16),
-          ),
-        ),
-        body: ProfileScreenBody(user: profileParams.user));
+      appBar: header("My Profile", context),
+      body: FutureBuilder<User>(
+        future:
+            Provider.of<UserProvider>(context).getUser(profileParams.userId),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return circularProgress(context);
+          }
+          return ProfileScreenBody(user: snapshot.data);
+        },
+      ),
+    );
   }
 }

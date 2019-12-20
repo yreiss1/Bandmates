@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import '../models/User.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LandingScreen extends StatelessWidget {
   @override
@@ -15,6 +16,7 @@ class LandingScreen extends StatelessWidget {
 
     Provider.of<UserProvider>(context).obtainLocation();
     var user = Provider.of<FirebaseUser>(context);
+
     return user != null ? HomeScreen(uid: user.uid) : StartScreen();
   }
 }

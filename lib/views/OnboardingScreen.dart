@@ -265,16 +265,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                 User user = new User(
                                   uid: userAuth.uid,
                                   email: userAuth.email,
-                                  birthday: _userData['birthday'],
                                   bio: _userData['bio'],
                                   name: _userData['name'],
                                   instruments: _userData['instruments'],
-                                  gender: _userData['gender'],
                                   genres: _userData['genres'],
                                   transportation: _userData['transportation'],
                                   practiceSpace: _userData['practice'],
                                   location: _userData['location'],
-                                  created: DateTime.now(),
+                                  time: DateTime.now(),
                                   photoUrl: downloadUrl,
                                 );
                                 Provider.of<UserProvider>(context)

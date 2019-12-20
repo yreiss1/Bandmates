@@ -79,13 +79,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         practiceSpace: practice ?? currentUser.practiceSpace,
         photoUrl: downloadUrl,
         uid: uid,
-        created: currentUser.created,
+        time: currentUser.time,
         instruments: currentUser.instruments,
         genres: currentUser.genres,
         email: currentUser.email,
-        followers: currentUser.followers,
-        gender: null,
-        birthday: null,
         location: location);
 
     print("[EditProfileScreen] photoUrl: " + user.photoUrl);

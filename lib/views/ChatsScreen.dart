@@ -1,18 +1,18 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:circular_profile_avatar/circular_profile_avatar.dart';
 import 'package:jammerz/views/ChatRoomScreen.dart';
 import 'package:jammerz/views/UI/Progress.dart';
 import 'package:pk_skeleton/pk_skeleton.dart';
 import '../models/Chat.dart';
-import 'package:intl/intl.dart';
 import '../models/User.dart';
 import 'package:provider/provider.dart';
+import 'package:timeago/timeago.dart' as timeago;
 
 class ChatsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     String uid = Provider.of<UserProvider>(context).currentUser.uid;
+    print("[ChatScreen] Rebuilding the widget");
 
     return Scaffold(
       body: StreamBuilder(
@@ -61,6 +61,18 @@ class ChatsScreen extends StatelessWidget {
                                   padding: EdgeInsets.all(10.0),
                                   child: Row(
                                     children: <Widget>[
+                                      futureSnapshot.data.photoUrl != null
+                                          ? CircularProfileAvatar(
+                                              futureSnapshot.data.photoUrl,
+                                              radius: 26,
+                                              cacheImage: true,
+                                            )
+                                          : CircularProfileAvatar(
+                                              "https://llhh.org/pps-medias/14714.jpg",
+                                              radius: 26,
+                                              cacheImage: true,
+                                            ),
+                                      /*
                                       Material(
                                         child: CachedNetworkImage(
                                           placeholder: (context, url) =>
@@ -72,8 +84,8 @@ class ChatsScreen extends StatelessWidget {
                                                       Theme.of(context)
                                                           .primaryColor),
                                             ),
-                                            width: 35.0,
-                                            height: 35.0,
+                                            width: 45.0,
+                                            height: 45.0,
                                             padding: EdgeInsets.all(10.0),
                                           ),
                                           imageUrl: futureSnapshot
@@ -81,17 +93,18 @@ class ChatsScreen extends StatelessWidget {
                                                   null
                                               ? "https://llhh.org/pps-medias/14714.jpg"
                                               : futureSnapshot.data.photoUrl,
-                                          width: 35.0,
-                                          height: 35.0,
+                                          width: 45.0,
+                                          height: 45.0,
                                           fit: BoxFit.cover,
                                         ),
                                         borderRadius: BorderRadius.all(
-                                          Radius.circular(18.0),
+                                          Radius.circular(20.0),
                                         ),
                                         clipBehavior: Clip.hardEdge,
                                       ),
+                                      */
                                       SizedBox(
-                                        width: 10.0,
+                                        width: 15.0,
                                       ),
                                       Expanded(
                                         child: Column(
@@ -102,16 +115,15 @@ class ChatsScreen extends StatelessWidget {
                                                   child: Text(
                                                     futureSnapshot.data.name,
                                                     style:
-                                                        TextStyle(fontSize: 15),
+                                                        TextStyle(fontSize: 18),
                                                   ),
                                                 ),
                                                 Text(
-                                                  DateFormat('dd MMM kk:mm')
-                                                      .format(snapshot
-                                                          .data
-                                                          .documents[index]
-                                                          .data['time']
-                                                          .toDate()),
+                                                  timeago.format(snapshot
+                                                      .data
+                                                      .documents[index]
+                                                      .data['time']
+                                                      .toDate()),
                                                   style: Theme.of(context)
                                                       .textTheme
                                                       .caption,
@@ -127,11 +139,7 @@ class ChatsScreen extends StatelessWidget {
                                                   snapshot.data.documents[index]
                                                       .data['lastMsg'],
                                                   style: TextStyle(
-                                                      fontSize:
-                                                          Theme.of(context)
-                                                              .textTheme
-                                                              .caption
-                                                              .fontSize,
+                                                      fontSize: 15,
                                                       color: Theme.of(context)
                                                           .textTheme
                                                           .caption

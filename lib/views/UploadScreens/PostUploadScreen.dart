@@ -101,7 +101,7 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
     var first = address.first;
 
     print(
-        "${first.featureName} : ${first.addressLine} : ${first.subLocality} : ${first.subThoroughfare} : ${first.subAdminArea}");
+        "[PostUploadScreen] ${first.featureName} : ${first.addressLine} : ${first.subLocality} : ${first.subThoroughfare} : ${first.subAdminArea}");
 
     locationController.text = first.addressLine;
   }
@@ -165,13 +165,17 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
               .uploadMedia(_imageFile, _postID);
 
       Post post = new Post(
+          postId: _postID,
           text: _fbKey.currentState.value['text'],
           mediaUrl: downloadURL,
           time: DateTime.now(),
           likes: {},
           location: _fbKey.currentState.value['loc']);
-      await Provider.of<PostProvider>(context, listen: false)
-          .uploadPost(post, _postID, userObject.uid, userObject.name);
+      await Provider.of<PostProvider>(context, listen: false).uploadPost(
+          post: post,
+          postId: _postID,
+          uid: userObject.uid,
+          name: userObject.name);
 
       setState(() {
         _isUploading = false;

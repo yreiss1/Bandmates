@@ -1,12 +1,7 @@
-import 'package:cloud_firestore/cloud_firestore.dart' as prefix0;
 import 'package:flutter/material.dart';
-import 'package:jammerz/views/HomeScreen.dart';
 import 'package:jammerz/views/UI/ChatMessage.dart';
 import 'package:line_icons/line_icons.dart';
-import 'package:firestore_ui/firestore_ui.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:intl/intl.dart';
 import '../models/User.dart';
 import '../models/Chat.dart';
 import './UI/Progress.dart';
@@ -14,6 +9,8 @@ import '../Utils.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:io';
+
+import 'package:timeago/timeago.dart' as timeago;
 
 import 'package:provider/provider.dart';
 
@@ -31,6 +28,7 @@ class ChatRoomScreen extends StatefulWidget {
 class _ChatRoomScreenState extends State<ChatRoomScreen>
     with TickerProviderStateMixin {
   final TextEditingController _textController = new TextEditingController();
+  final _formKey = GlobalKey<FormState>();
   final List<ChatMessage> _messages = <ChatMessage>[];
   FocusNode _focusNode = FocusNode();
   File _imageFile;
@@ -188,6 +186,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
           Flexible(
             child: Container(
               child: TextField(
+                key: _formKey,
                 style: TextStyle(
                     color: Theme.of(context).primaryColor, fontSize: 15.0),
                 controller: _textController,
@@ -484,8 +483,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
             isLastMessageLeft(index, listMessage)
                 ? Container(
                     child: Text(
-                      DateFormat('dd MMM kk:mm')
-                          .format(document['time'].toDate()),
+                      timeago.format(document['time'].toDate()),
                       style: TextStyle(
                           fontSize: 12.0, fontStyle: FontStyle.italic),
                     ),

@@ -1,4 +1,4 @@
-import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:jammerz/views/OnboardingScreen.dart';
@@ -17,6 +17,7 @@ import '../models/User.dart';
 import 'ProfileScreen.dart';
 import '../models/ProfileScreenArguments.dart';
 import 'dart:async';
+import 'dart:io';
 
 User currentUser;
 
@@ -32,6 +33,9 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen>
     with AutomaticKeepAliveClientMixin<HomeScreen> {
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
+  FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
+
   PageController _pageController;
   int pageIndex = 0;
   User _currentUser;
@@ -45,20 +49,23 @@ class _HomeScreenState extends State<HomeScreen>
     super.initState();
     _pageController = PageController();
     _getUser = getSnapshot(widget.uid);
+    configurePushNotifications();
   }
 
   Future<DocumentSnapshot> getSnapshot(String uid) async {
-    print("[HomeScreen] In getSnapshot");
+    //print("[HomeScreen] In getSnapshot");
     DocumentSnapshot snapshot =
         await Provider.of<UserProvider>(context, listen: false)
-            .getSnapshot(widget.uid);
+            .getSnapshot(uid);
 
     if (snapshot.data != null) {
       User user = User.fromDocument(snapshot);
 
       setState(() {
         _currentUser = user;
+        currentUser = user;
       });
+
       print("[HomeScreen] user: " + user.name);
       Provider.of<UserProvider>(context).setCurrentUser(user);
     }
@@ -83,9 +90,54 @@ class _HomeScreenState extends State<HomeScreen>
         duration: Duration(milliseconds: 300), curve: Curves.easeInOut);
   }
 
+  configurePushNotifications() {
+    if (Platform.isIOS) {
+      getiOSPermission();
+    }
+
+    _firebaseMessaging.getToken().then((token) {
+      print("Firebase messaging token $token\n");
+      Firestore.instance
+          .collection("users")
+          .document(widget.uid)
+          .updateData({"androidNotificationToken": token});
+    });
+
+    _firebaseMessaging.configure(
+        onLaunch: (Map<String, dynamic> message) async {},
+        onResume: (Map<String, dynamic> message) async {},
+        onMessage: (Map<String, dynamic> message) async {
+          print("[HomeScreen] onMessage: $message\n");
+
+          final String recipientId = message['data']['recipient'];
+          final String body = message['notification']['body'];
+
+          if (recipientId == widget.uid) {
+            SnackBar snackBar = SnackBar(
+              content: Text(
+                body,
+                overflow: TextOverflow.ellipsis,
+              ),
+            );
+
+            _scaffoldKey.currentState.showSnackBar(snackBar);
+          }
+        });
+  }
+
+  getiOSPermission() {
+    _firebaseMessaging.requestNotificationPermissions(
+        IosNotificationSettings(alert: true, badge: true, sound: true));
+    _firebaseMessaging.onIosSettingsRegistered.listen((settings) {
+      print("Settings registered: $settings");
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    print("[HomeScreen] Rebuilding the widget");
+
     return SafeArea(
       child: FutureBuilder<DocumentSnapshot>(
         future: _getUser,
@@ -96,36 +148,12 @@ class _HomeScreenState extends State<HomeScreen>
                 body: OnboardingScreen(),
               );
             } else {
-              print("[HomeScreen] rebuilt the widget");
-              print("[HomeScreen] currentUser: " + _currentUser.uid.toString());
               return Scaffold(
-                appBar: AppBar(
-                  elevation: 0,
-                  backgroundColor: Colors.white,
-                  title: Text(
-                    "Bandmates",
-                    style: TextStyle(color: Color(0xFF1d1e2c), fontSize: 16),
-                  ),
-                  leading: Container(),
-                  actions: <Widget>[
-                    IconButton(
-                      icon: Icon(
-                        LineIcons.user,
-                        color: Color(0xFF1d1e2c),
-                        size: 30,
-                      ),
-                      onPressed: () {
-                        Navigator.pushNamed(context, ProfileScreen.routeName,
-                            arguments:
-                                ProfileScreenArguments(user: _currentUser));
-                      },
-                    )
-                  ],
-                  centerTitle: true,
-                ),
+                key: _scaffoldKey,
+                appBar: mainHeader("Bandmates", context),
                 body: PageView(
                   children: <Widget>[
-                    TimelineScreen(),
+                    TimelineScreen(currentUser: _currentUser),
                     ChatsScreen(),
                     UploadScreen(),
                     ActivityScreen(),
@@ -143,7 +171,7 @@ class _HomeScreenState extends State<HomeScreen>
                   onTap: onTap,
                   activeColor: Theme.of(context).primaryColor,
                   items: [
-                    BottomNavigationBarItem(icon: Icon(LineIcons.fire)),
+                    BottomNavigationBarItem(icon: Icon(Icons.today)),
                     BottomNavigationBarItem(icon: Icon(LineIcons.comments_o)),
                     BottomNavigationBarItem(
                         icon: Icon(

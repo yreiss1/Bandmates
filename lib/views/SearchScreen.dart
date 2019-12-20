@@ -318,6 +318,8 @@ class _SearchScreenState extends State<SearchScreen>
 
   @override
   Widget build(BuildContext context) {
+    print("[SearchScreen] Rebuilding the widget");
+
     return Scaffold(
       floatingActionButton: isVisible
           ? FloatingActionButton.extended(
@@ -366,7 +368,7 @@ class _SearchScreenState extends State<SearchScreen>
                     ),
                     onTap: () => Navigator.pushNamed(
                         context, ProfileScreen.routeName,
-                        arguments: ProfileScreenArguments(user: user)),
+                        arguments: ProfileScreenArguments(userId: user.uid)),
                   );
                 },
                 crossAxisSpacing: 10,
@@ -377,7 +379,8 @@ class _SearchScreenState extends State<SearchScreen>
                       ListTile(
                         onTap: () => Navigator.pushNamed(
                             context, ProfileScreen.routeName,
-                            arguments: ProfileScreenArguments(user: user)),
+                            arguments:
+                                ProfileScreenArguments(userId: user.uid)),
                         title: Text(user.name),
                         subtitle: Text(buildSubtitle(user.instruments) +
                             "\n" +

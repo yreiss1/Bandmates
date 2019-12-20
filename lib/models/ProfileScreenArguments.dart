@@ -1,7 +1,7 @@
 import 'package:jammerz/models/User.dart';
 
 class ProfileScreenArguments {
-  User user;
+  String userId;
 
-  ProfileScreenArguments({this.user});
+  ProfileScreenArguments({this.userId});
 }

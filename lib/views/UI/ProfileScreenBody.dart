@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:jammerz/AuthService.dart';
+import 'package:jammerz/models/Follow.dart';
+import 'package:jammerz/views/HomeScreen.dart' as prefix0;
 import 'package:jammerz/views/UI/PostItem.dart';
-import 'package:jammerz/views/UI/Progress.dart';
 import '../../models/User.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:circular_profile_avatar/circular_profile_avatar.dart';
@@ -15,7 +15,7 @@ import '../UploadScreens/PostUploadScreen.dart';
 import '../../models/Post.dart';
 import 'package:pk_skeleton/pk_skeleton.dart';
 import '../ChatRoomScreen.dart';
-import '../../models/Chat.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ProfileScreenBody extends StatefulWidget {
   final User user;
@@ -28,11 +28,69 @@ class ProfileScreenBody extends StatefulWidget {
 class _ProfileScreenBodyState extends State<ProfileScreenBody>
     with SingleTickerProviderStateMixin {
   TabController _tabController;
+  bool _isFollowing = false;
+  User _currentUser;
+  int _followersCount = 0;
+  int _postCount = 0;
+  List<Post> _posts = [];
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
     _tabController = new TabController(length: 3, vsync: this);
+    _currentUser = prefix0.currentUser;
+    _getUserPosts();
+    _checkIfFollowing();
+
+    _getFollowers();
+    _getFollowing();
+  }
+
+  _getFollowers() async {
+    QuerySnapshot snapshot = await Firestore.instance
+        .collection("followers")
+        .document(widget.user.uid)
+        .collection("followers")
+        .getDocuments();
+    setState(() {
+      _followersCount = snapshot.documents.length;
+    });
+  }
+
+  _getFollowing() {}
+
+  _checkIfFollowing() async {
+    DocumentSnapshot doc = await Firestore.instance
+        .collection("following")
+        .document(_currentUser.uid)
+        .collection("following")
+        .document(widget.user.uid)
+        .get();
+
+    setState(() {
+      _isFollowing = doc.exists;
+    });
+  }
+
+  _getUserPosts() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    QuerySnapshot querySnap = await Firestore.instance
+        .collection("posts")
+        .document(widget.user.uid)
+        .collection("userPosts")
+        .orderBy("time", descending: true)
+        .getDocuments();
+
+    setState(() {
+      _posts =
+          querySnap.documents.map((doc) => Post.fromDocument(doc)).toList();
+      _postCount = querySnap.documents.length;
+      _isLoading = false;
+    });
   }
 
   String buildSubtitle(Map<dynamic, dynamic> map) {
@@ -83,6 +141,94 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody>
     print("[ProfileScreenBody] mimetype: " + lookupMimeType(chosen.path));
   }
 
+  Widget _buildDataRow() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: <Widget>[
+        Column(
+          children: <Widget>[
+            Text(
+              _followersCount.toString(),
+              style: TextStyle(
+                  fontFamily: 'Oswald',
+                  fontWeight: FontWeight.w500,
+                  fontSize: 20),
+            ),
+            Text('Followers')
+          ],
+        ),
+        Column(
+          children: <Widget>[
+            Text(
+              _postCount.toString(),
+              style: TextStyle(
+                  fontFamily: 'Oswald',
+                  fontWeight: FontWeight.w500,
+                  fontSize: 20),
+            ),
+            Text('Posts')
+          ],
+        ),
+        Column(
+          children: <Widget>[
+            Text(
+              '35',
+              style: TextStyle(
+                  fontFamily: 'Oswald',
+                  fontWeight: FontWeight.w500,
+                  fontSize: 20),
+            ),
+            Text('Yrs Playing')
+          ],
+        )
+      ],
+    );
+  }
+
+  unfollowUser() {
+    setState(() {
+      _isFollowing = false;
+      _followersCount -= 1;
+    });
+
+    Provider.of<FollowProvider>(context).unfollowUser(
+        usersId: widget.user.uid, currentUserId: _currentUser.uid);
+    Firestore.instance
+        .collection("feed")
+        .document(widget.user.uid)
+        .collection("feedItems")
+        .document(_currentUser.uid)
+        .get()
+        .then((doc) {
+      if (doc.exists) {
+        doc.reference.delete();
+      }
+    });
+  }
+
+  followUser() {
+    setState(() {
+      _isFollowing = true;
+      _followersCount += 1;
+    });
+
+    Provider.of<FollowProvider>(context)
+        .followUser(usersId: widget.user.uid, currentUserId: _currentUser.uid);
+    Firestore.instance
+        .collection("feed")
+        .document(widget.user.uid)
+        .collection("feedItems")
+        .document(_currentUser.uid)
+        .setData({
+      "type": 2,
+      "ownerId": widget.user.uid,
+      "user": _currentUser.name,
+      "userId": _currentUser.uid,
+      "avatar": _currentUser.photoUrl,
+      "time": DateTime.now()
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     print("[ProfileScreenBody] uid: " + widget.user.uid.toString());
@@ -98,10 +244,7 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody>
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: widget.user.uid !=
-                          Provider.of<UserProvider>(context, listen: false)
-                              .currentUser
-                              .uid
+                  children: widget.user.uid != _currentUser.uid
                       ? [
                           FloatingActionButton(
                             heroTag: 'chatBtn',
@@ -122,12 +265,19 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody>
                             cacheImage: true,
                             radius: 70,
                           ),
-                          FloatingActionButton(
-                            heroTag: 'followBtn',
-                            onPressed: () {},
-                            backgroundColor: Color(0xff829abe),
-                            child: Icon(LineIcons.user_plus),
-                          ),
+                          _isFollowing == false
+                              ? FloatingActionButton(
+                                  heroTag: 'followBtn',
+                                  onPressed: followUser,
+                                  backgroundColor: Color(0xff829abe),
+                                  child: Icon(LineIcons.user_plus),
+                                )
+                              : FloatingActionButton(
+                                  heroTag: 'unfollowBtn',
+                                  onPressed: unfollowUser,
+                                  backgroundColor: Color(0xff829abe),
+                                  child: Icon(LineIcons.trash),
+                                ),
                         ]
                       : [
                           CircularProfileAvatar(
@@ -165,23 +315,7 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody>
                     SizedBox(
                       height: 40,
                     ),
-                    /*
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: <Widget>[
-                          Text(
-                            "About Me:",
-                            style: TextStyle(
-                                fontWeight: FontWeight.w600, fontSize: 16),
-                          ),
-                          Text(widget.user.bio),
-                        ],
-                      ),
-                      */
-                    if (widget.user.uid ==
-                        Provider.of<UserProvider>(context, listen: false)
-                            .currentUser
-                            .uid)
+                    if (widget.user.uid == _currentUser.uid)
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: <Widget>[
@@ -217,47 +351,7 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody>
                     SizedBox(
                       height: 16,
                     ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: <Widget>[
-                        Column(
-                          children: <Widget>[
-                            Text(
-                              widget.user.followers.toString(),
-                              style: TextStyle(
-                                  fontFamily: 'Oswald',
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 20),
-                            ),
-                            Text('Followers')
-                          ],
-                        ),
-                        Column(
-                          children: <Widget>[
-                            Text(
-                              '245',
-                              style: TextStyle(
-                                  fontFamily: 'Oswald',
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 20),
-                            ),
-                            Text('Posts')
-                          ],
-                        ),
-                        Column(
-                          children: <Widget>[
-                            Text(
-                              '35',
-                              style: TextStyle(
-                                  fontFamily: 'Oswald',
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 20),
-                            ),
-                            Text('Yrs Playing')
-                          ],
-                        )
-                      ],
-                    ),
+                    _buildDataRow(),
                     Divider(),
                   ],
                 )
@@ -301,36 +395,37 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody>
             ],
           ),
           SizedBox(
-            height: MediaQuery.of(context).size.height,
+            height: MediaQuery.of(context).size.height - 130,
             width: double.infinity,
             child: TabBarView(
               controller: _tabController,
               children: <Widget>[
-                FutureBuilder<List<Post>>(
-                  future: Provider.of<PostProvider>(context)
-                      .getUsersPosts(widget.user.uid),
-                  builder: (BuildContext context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.done) {
-                      return ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: snapshot.data.length,
-                        itemBuilder: (BuildContext context, index) {
-                          return PostItem(
-                            post: snapshot.data[index],
-                            user: widget.user,
-                          );
-                        },
-                      );
-                    } else if (snapshot.connectionState ==
-                            ConnectionState.waiting ||
-                        snapshot.connectionState == ConnectionState.active) {
-                      return PKCardListSkeleton(
+                _isLoading == false
+                    ? _postCount == 0
+                        ? Center(
+                            child: Text("No posts to display"),
+                          )
+                        : ListView.separated(
+                            itemBuilder: (context, index) {
+                              return ChangeNotifierProvider.value(
+                                value: _posts[index],
+                                child: PostItem(
+                                  currentUser: prefix0.currentUser,
+                                  post: _posts[index],
+                                ),
+                              );
+                            },
+                            separatorBuilder: (context, index) => Divider(
+                              color: Colors.grey[300],
+                              thickness: 10,
+                            ),
+                            itemCount: _posts.length,
+                          )
+                    : PKCardListSkeleton(
                         isCircularImage: true,
-                        isBottomLinesActive: false,
-                      );
-                    }
-                  },
-                ),
+                        length: 5,
+                        isBottomLinesActive: true,
+                      ),
                 Text("Hello"),
                 Text("Hello again"),
               ],

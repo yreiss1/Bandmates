@@ -7,7 +7,6 @@ class Chat {
 
   Chat({this.id, this.users});
 
-  factory Chat.fromDocument(DocumentSnapshot doc) {}
 }
 
 class ChatProvider with ChangeNotifier {

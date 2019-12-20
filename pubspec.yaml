@@ -26,7 +26,7 @@ dependencies:
   firebase_storage: ^3.0.6
   uuid: ^2.0.2
   image: ^2.1.4
-  animator: ^1.0.0+1
+  animator: ^1.0.0+3
   path_provider: ^1.3.0
   firebase_messaging: ^5.1.6
   timeago: ^2.0.20
@@ -56,7 +56,6 @@ dependencies:
   achievement_view: ^0.2.0
   file_picker: ^1.4.3+1
   mime: ^0.9.6+3
-  firestore_ui: ^1.7.2
 
   # flutter_facebook_login: ^1.1.1
 
