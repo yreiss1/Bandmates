@@ -1,12 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:search_app_bar/searcher.dart';
 
 class Chat {
   final String id;
   final List<String> users;
 
   Chat({this.id, this.users});
-
 }
 
 class ChatProvider with ChangeNotifier {

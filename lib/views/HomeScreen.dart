@@ -147,8 +147,9 @@ class _HomeScreenState extends State<HomeScreen>
               );
             } else {
               return Scaffold(
+                backgroundColor: Theme.of(context).primaryColor,
                 key: _scaffoldKey,
-                appBar: mainHeader("Bandmates", context),
+                //appBar: mainHeader("Bandmates", context),
                 body: PageView(
                   children: <Widget>[
                     TimelineScreen(currentUser: _currentUser),

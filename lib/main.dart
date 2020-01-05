@@ -1,3 +1,4 @@
+import 'package:bandmates/views/MusiciansSearchScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:bandmates/models/Chat.dart';
 import 'package:bandmates/models/Follow.dart';
@@ -33,32 +34,32 @@ class MyApp extends StatelessWidget {
           value: FirebaseAuth.instance.onAuthStateChanged,
         ),
         ChangeNotifierProvider<AuthService>(
-          builder: (_) {
+          create: (_) {
             return AuthService();
           },
         ),
         ChangeNotifierProvider<UserProvider>(
-          builder: (_) {
+          create: (_) {
             return UserProvider();
           },
         ),
         ChangeNotifierProvider<PostProvider>(
-          builder: (_) {
+          create: (_) {
             return PostProvider();
           },
         ),
         ChangeNotifierProvider<EventProvider>(
-          builder: (_) {
+          create: (_) {
             return EventProvider();
           },
         ),
         ChangeNotifierProvider<ChatProvider>(
-          builder: (_) {
+          create: (_) {
             return ChatProvider();
           },
         ),
         ChangeNotifierProvider<FollowProvider>(
-          builder: (_) {
+          create: (_) {
             return FollowProvider();
           },
         )
@@ -86,6 +87,7 @@ class MyApp extends StatelessWidget {
           PostUploadScreen.routeName: (ctx) => PostUploadScreen(),
           EventUploadScreen.routeName: (ctx) => EventUploadScreen(),
           EditProfileScreen.routeName: (ctx) => EditProfileScreen(),
+          MusiciansSearchScreen.routeName: (ctx) => MusiciansSearchScreen(),
         },
       ),
     );

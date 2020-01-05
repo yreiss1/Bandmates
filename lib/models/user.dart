@@ -44,7 +44,7 @@ class User {
         'practice': this.practiceSpace,
         'genres': this.genres,
         'instruments': this.instruments,
-        'location': this.location == null ? null : this.location.data,
+        'location': this.location == null ? null : location.data,
         'photoUrl': this.photoUrl,
         'time': DateTime.now(),
       };

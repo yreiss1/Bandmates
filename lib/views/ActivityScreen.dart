@@ -28,9 +28,22 @@ class ActivityScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     print("[ActivityScreen] Rebuilding Widget");
-    return Scaffold(
-        body: Container(
-      child: FutureBuilder<List<FeedItem>>(
+
+    return ListView(
+      children: <Widget>[buildSearchHeader(), buildMainArea(context)],
+    );
+  }
+
+  buildMainArea(context) {
+    return Container(
+      decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(30), topRight: Radius.circular(30))),
+      height: MediaQuery.of(context).size.height,
+      width: double.infinity,
+      child: Container(
+          child: FutureBuilder<List<FeedItem>>(
         future: getActivityFeed(context),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
@@ -39,7 +52,25 @@ class ActivityScreen extends StatelessWidget {
 
           return ListView(children: snapshot.data);
         },
+      )),
+    );
+  }
+
+  buildSearchHeader() {
+    return Container(
+      padding: EdgeInsets.only(left: 12, top: 32),
+      height: 100,
+      width: double.infinity,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            "Activity Feed",
+            style: TextStyle(
+                color: Colors.white, fontWeight: FontWeight.bold, fontSize: 22),
+          ),
+        ],
       ),
-    ));
+    );
   }
 }

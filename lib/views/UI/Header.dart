@@ -5,6 +5,7 @@ import 'package:bandmates/views/SearchScreen.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:provider/provider.dart';
+import '../../AuthService.dart';
 import '../../models/User.dart';
 
 AppBar mainHeader(String text, BuildContext context) {
@@ -65,7 +66,14 @@ AppBar header(String text, BuildContext context) {
           Navigator.pushNamed(context, ProfileScreen.routeName,
               arguments: ProfileScreenArguments(userId: user.uid));
         },
-      )
+      ),
+      IconButton(
+          icon: Icon(
+            Icons.exit_to_app,
+            color: Color(0xFF1d1e2c),
+            size: 30,
+          ),
+          onPressed: () => Provider.of<AuthService>(context).signOut())
     ],
     centerTitle: true,
   );

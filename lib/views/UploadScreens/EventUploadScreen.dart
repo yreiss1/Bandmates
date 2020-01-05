@@ -21,8 +21,6 @@ import '../../models/Instrument.dart';
 
 import 'dart:async';
 
-import '../UI/InstrumentChipInput.dart';
-
 class EventUploadScreen extends StatefulWidget {
   static const routeName = '/event-upload';
 
@@ -46,6 +44,7 @@ class _EventUploadScreenState extends State<EventUploadScreen> {
   FocusNode _textFocusNode = FocusNode();
   FocusNode _timeFocusNode = FocusNode();
   FocusNode _locationFocusNode = FocusNode();
+  FocusNode _titleFocusNode = FocusNode();
 
   CameraPosition _initialCamera;
   @override
@@ -90,6 +89,7 @@ class _EventUploadScreenState extends State<EventUploadScreen> {
     _locationFocusNode.dispose();
     _textFocusNode.dispose();
     _timeFocusNode.dispose();
+    _titleFocusNode.dispose();
 
     super.dispose();
   }
@@ -122,17 +122,17 @@ class _EventUploadScreenState extends State<EventUploadScreen> {
       switch (fbKey.currentState.value['event']) {
         case "Concert":
           {
-            type = 1;
+            type = 0;
           }
           break;
         case "Audition":
           {
-            type = 2;
+            type = 1;
           }
           break;
         case "Jam Session":
           {
-            type = 3;
+            type = 2;
           }
           break;
       }
@@ -142,6 +142,7 @@ class _EventUploadScreenState extends State<EventUploadScreen> {
           : Map.fromIterable(fbKey.currentState.value['audition'],
               key: (k) => k.value, value: (v) => true);
       Event event = new Event(
+        title: fbKey.currentState.value['title'],
         text: fbKey.currentState.value['text'],
         location: point,
         type: type,
@@ -379,7 +380,7 @@ class _EventUploadScreenState extends State<EventUploadScreen> {
                         child: FormBuilderTextField(
                           focusNode: _locationFocusNode,
                           onFieldSubmitted: (_) => FocusScope.of(context)
-                              .requestFocus(_textFocusNode),
+                              .requestFocus(_titleFocusNode),
                           attribute: 'location',
                           decoration: InputDecoration(
                             labelText: "Event location",
@@ -399,6 +400,22 @@ class _EventUploadScreenState extends State<EventUploadScreen> {
                         child: Icon(LineIcons.crosshairs),
                         onPressed: () => _getLocation(),
                       )
+                    ],
+                  ),
+                  FormBuilderTextField(
+                    focusNode: _titleFocusNode,
+                    attribute: 'title',
+                    decoration: InputDecoration(
+                      labelText: "Event Title",
+                      hintText: 'Event Title',
+                    ),
+                    maxLines: 1,
+                    onFieldSubmitted: (_) =>
+                        FocusScope.of(context).requestFocus(_textFocusNode),
+                    keyboardType: TextInputType.text,
+                    textInputAction: TextInputAction.done,
+                    validators: [
+                      FormBuilderValidators.required(),
                     ],
                   ),
                   FormBuilderTextField(

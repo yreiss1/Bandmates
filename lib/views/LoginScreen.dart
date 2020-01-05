@@ -86,6 +86,8 @@ class LoginScreen extends StatelessWidget {
                             ],
                           ),
                           FormBuilderTextField(
+                            obscureText: true,
+                            maxLines: 1,
                             focusNode: _passwordFocusNode,
                             attribute: 'password',
                             onFieldSubmitted: (_) =>

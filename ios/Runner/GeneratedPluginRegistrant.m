@@ -112,6 +112,12 @@
 @import path_provider;
 #endif
 
+#if __has_include(<searchable_dropdown/SearchableDropdownPlugin.h>)
+#import <searchable_dropdown/SearchableDropdownPlugin.h>
+#else
+@import searchable_dropdown;
+#endif
+
 #if __has_include(<sqflite/SqflitePlugin.h>)
 #import <sqflite/SqflitePlugin.h>
 #else
@@ -145,6 +151,7 @@
   [LocationPlugin registerWithRegistrar:[registry registrarForPlugin:@"LocationPlugin"]];
   [LocationPermissionsPlugin registerWithRegistrar:[registry registrarForPlugin:@"LocationPermissionsPlugin"]];
   [FLTPathProviderPlugin registerWithRegistrar:[registry registrarForPlugin:@"FLTPathProviderPlugin"]];
+  [SearchableDropdownPlugin registerWithRegistrar:[registry registrarForPlugin:@"SearchableDropdownPlugin"]];
   [SqflitePlugin registerWithRegistrar:[registry registrarForPlugin:@"SqflitePlugin"]];
   [FLTVideoPlayerPlugin registerWithRegistrar:[registry registrarForPlugin:@"FLTVideoPlayerPlugin"]];
 }

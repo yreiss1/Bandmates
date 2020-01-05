@@ -102,19 +102,25 @@ class _FeedItemState extends State<FeedItem> {
     if (widget.type == 0 || widget.type == 1) {
       mediaPreview = GestureDetector(
         onTap: () => showPost(context),
-        child: Container(
-          height: 50,
-          width: 50,
-          child: AspectRatio(
-            aspectRatio: 16 / 9,
-            child: Container(
-              decoration: BoxDecoration(
-                  image: DecorationImage(
-                      fit: BoxFit.cover,
-                      image: widget.mediaUrl == null
-                          ? CachedNetworkImageProvider(
-                              "https://www.whittierfirstday.org/wp-content/uploads/default-user-image-e1501670968910.png")
-                          : CachedNetworkImageProvider(widget.mediaUrl))),
+        child: Card(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          elevation: 5,
+          child: Container(
+            height: 50,
+            width: 50,
+            child: AspectRatio(
+              aspectRatio: 16 / 9,
+              child: Container(
+                decoration: BoxDecoration(
+                    borderRadius: BorderRadius.all(Radius.circular(10)),
+                    image: DecorationImage(
+                        fit: BoxFit.cover,
+                        image: widget.mediaUrl == null
+                            ? CachedNetworkImageProvider(
+                                "https://www.whittierfirstday.org/wp-content/uploads/default-user-image-e1501670968910.png")
+                            : CachedNetworkImageProvider(widget.mediaUrl))),
+              ),
             ),
           ),
         ),
@@ -173,7 +179,7 @@ class _FeedItemState extends State<FeedItem> {
     return Padding(
         padding: EdgeInsets.only(bottom: 2.0),
         child: Container(
-          color: Colors.white54,
+          //color: Colors.white54,
           child: ListTile(
             title: GestureDetector(
               onTap: () => showProfile(context),

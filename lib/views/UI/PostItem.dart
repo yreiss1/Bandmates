@@ -11,7 +11,6 @@ import 'package:provider/provider.dart';
 import '../../models/User.dart';
 import 'package:intl/intl.dart';
 import 'package:line_icons/line_icons.dart';
-import 'package:animator/animator.dart';
 
 class PostItem extends StatelessWidget {
   final Post post;
@@ -56,6 +55,7 @@ class PostItem extends StatelessWidget {
               icon: Icon(LineIcons.ellipsis_h),
             )
           : IconButton(
+              onPressed: () {},
               icon: Icon(LineIcons.angle_up),
             ),
     );

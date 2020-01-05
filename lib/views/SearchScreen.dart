@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flappy_search_bar/flappy_search_bar.dart';
+import 'package:flappy_search_bar/search_bar_style.dart';
 import 'package:flutter/material.dart';
 import 'package:bandmates/models/DiscoverScreenArguments.dart';
 import 'package:bandmates/models/ProfileScreenArguments.dart';
@@ -329,101 +330,140 @@ class _SearchScreenState extends State<SearchScreen>
             )
           : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      body: SafeArea(
-        child: Container(
-          height: double.infinity,
-          width: double.infinity,
-          child: Stack(
-            children: <Widget>[
-              SearchBar<User>(
-                emptyWidget: Center(
-                  child: Text("No Results"),
-                ),
-                cancellationText: Text("Clear"),
-                iconActiveColor: Theme.of(context).primaryColor,
-                shrinkWrap: true,
-                onSearch: (String text) => handleSearch(text),
-                searchBarPadding: EdgeInsets.symmetric(horizontal: 10),
-                headerPadding: EdgeInsets.symmetric(horizontal: 10),
-                listPadding: EdgeInsets.symmetric(horizontal: 10),
-                placeHolder: Center(
-                  child: Text("Start typing to search for users!"),
-                ),
-                debounceDuration: Duration(milliseconds: 400),
-                loader: PKCardListSkeleton(
-                  isCircularImage: true,
-                  isBottomLinesActive: false,
-                ),
-                hintText: "Search for a user or band",
-                buildSuggestion: (User user, int index) {
-                  return ListTile(
-                    title: Text(user.name),
-                    subtitle: Text(user.email),
-                    enabled: true,
-                    leading: CircleAvatar(
-                      radius: 20,
-                      backgroundImage: user.photoUrl == null
-                          ? AssetImage('assets/images/user-placeholder.png')
-                          : NetworkImage(user.photoUrl),
-                    ),
-                    onTap: () => Navigator.pushNamed(
-                        context, ProfileScreen.routeName,
-                        arguments: ProfileScreenArguments(userId: user.uid)),
-                  );
-                },
-                crossAxisSpacing: 10,
-                onItemFound: (User user, int index) {
-                  return Container(
-                      child: Column(
-                    children: <Widget>[
-                      ListTile(
-                        onTap: () => Navigator.pushNamed(
-                            context, ProfileScreen.routeName,
-                            arguments:
-                                ProfileScreenArguments(userId: user.uid)),
-                        title: Text(user.name),
-                        subtitle: Text(buildSubtitle(user.instruments) +
-                            "\n" +
-                            user.location
-                                .distance(
-                                    lat: widget.currentUser.location.latitude,
-                                    lng: widget.currentUser.location.longitude)
-                                .round()
-                                .toString() +
-                            " kilometers away"),
-                        isThreeLine: true,
-                        enabled: true,
-                        leading: Container(
-                          child: CircleAvatar(
-                            radius: 20,
-                            backgroundImage: user.photoUrl == null
-                                ? AssetImage(
-                                    'assets/images/user-placeholder.png')
-                                : NetworkImage(user.photoUrl),
-                          ),
-                          decoration: new BoxDecoration(),
-                        ),
-                      ),
-                      Divider(),
-                    ],
-                  ));
-                },
-                header: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: <Widget>[],
-                ),
-              ),
-            ],
-          ),
+      body: Container(
+        height: MediaQuery.of(context).size.height,
+        width: double.infinity,
+        child: ListView(
+          children: <Widget>[buildSearchHeader(), buildMainArea()],
         ),
       ),
     );
   }
-}
 
-class UserResult extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Text("User Result");
+  buildSearchHeader() {
+    return Container(
+      padding: EdgeInsets.only(left: 12, top: 32, right: 12),
+      height: 100,
+      color: Theme.of(context).primaryColor,
+      width: double.infinity,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              Text(
+                "Chats",
+                style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 24),
+              ),
+              IconButton(
+                icon: Icon(
+                  Icons.search,
+                  color: Colors.white,
+                  size: 28,
+                ),
+                onPressed: () {},
+              )
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  buildMainArea() {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(30),
+          topRight: Radius.circular(30),
+        ),
+      ),
+      width: MediaQuery.of(context).size.width,
+      height: MediaQuery.of(context).size.height - 100,
+      child: Stack(
+        children: <Widget>[
+          SearchBar<User>(
+            emptyWidget: Center(
+              child: Text("No Results"),
+            ),
+            cancellationText: Text("Clear"),
+            iconActiveColor: Theme.of(context).primaryColor,
+            shrinkWrap: true,
+            onSearch: (String text) => handleSearch(text),
+            searchBarPadding: EdgeInsets.symmetric(horizontal: 10),
+            headerPadding: EdgeInsets.all(10),
+            listPadding: EdgeInsets.symmetric(horizontal: 10),
+            placeHolder: Center(
+              child: Text("Start typing to search for users!"),
+            ),
+            debounceDuration: Duration(milliseconds: 400),
+            loader: PKCardListSkeleton(
+              isCircularImage: true,
+              isBottomLinesActive: false,
+            ),
+            hintText: "Search for a user or band",
+            buildSuggestion: (User user, int index) {
+              return ListTile(
+                title: Text(user.name),
+                subtitle: Text(user.email),
+                enabled: true,
+                leading: CircleAvatar(
+                  radius: 20,
+                  backgroundImage: user.photoUrl == null
+                      ? AssetImage('assets/images/user-placeholder.png')
+                      : NetworkImage(user.photoUrl),
+                ),
+                onTap: () => Navigator.pushNamed(
+                    context, ProfileScreen.routeName,
+                    arguments: ProfileScreenArguments(userId: user.uid)),
+              );
+            },
+            crossAxisSpacing: 10,
+            onItemFound: (User user, int index) {
+              return Container(
+                  child: Column(
+                children: <Widget>[
+                  ListTile(
+                    onTap: () => Navigator.pushNamed(
+                        context, ProfileScreen.routeName,
+                        arguments: ProfileScreenArguments(userId: user.uid)),
+                    title: Text(user.name),
+                    subtitle: Text(buildSubtitle(user.instruments) +
+                        "\n" +
+                        user.location
+                            .distance(
+                                lat: widget.currentUser.location.latitude,
+                                lng: widget.currentUser.location.longitude)
+                            .round()
+                            .toString() +
+                        " kilometers away"),
+                    isThreeLine: true,
+                    enabled: true,
+                    leading: Container(
+                      child: CircleAvatar(
+                        radius: 20,
+                        backgroundImage: user.photoUrl == null
+                            ? AssetImage('assets/images/user-placeholder.png')
+                            : NetworkImage(user.photoUrl),
+                      ),
+                      decoration: new BoxDecoration(),
+                    ),
+                  ),
+                  Divider(),
+                ],
+              ));
+            },
+            header: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: <Widget>[],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -93,6 +93,7 @@ class SignupScreen extends StatelessWidget {
                                   .requestFocus(_pass2FocusNode);
                             },
                             attribute: 'password',
+                            maxLines: 1,
                             obscureText: true,
                             keyboardType: TextInputType.text,
                             decoration: InputDecoration(
@@ -107,6 +108,7 @@ class SignupScreen extends StatelessWidget {
                           ),
                           FormBuilderTextField(
                             focusNode: _pass2FocusNode,
+                            maxLines: 1,
                             onFieldSubmitted: (_) =>
                                 Focus.of(context).unfocus(),
                             attribute: 'confirm-password',
