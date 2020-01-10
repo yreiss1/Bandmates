@@ -57,27 +57,6 @@ class _FeedItemState extends State<FeedItem> {
   @override
   void initState() {
     super.initState();
-    _checkIfFollowing();
-  }
-
-  _checkIfFollowing() async {
-    await Firestore.instance
-        .collection("following")
-        .document(currentUser.uid)
-        .collection("following")
-        .document(widget.userId)
-        .get()
-        .then((doc) {
-      if (doc.exists) {
-        setState(() {
-          this._isFollowing = true;
-        });
-      } else {
-        setState(() {
-          this._isFollowing = false;
-        });
-      }
-    });
   }
 
   showPost(context) {

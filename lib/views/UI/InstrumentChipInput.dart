@@ -82,50 +82,58 @@ class InstrumentChipInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    child:
-    FormBuilderChipsInput(
-      valueTransformer: (value) {
-        for (Instrument instrument in instruments) {
-          if (value == instrument.value) {
-            return InputChip(
-              key: ObjectKey(instrument),
-              label: Text(instrument.value),
-              avatar: instrument.instrumentIcon,
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            );
+    return FormBuilderChipsInput(
+        valueTransformer: (value) {
+          for (Instrument instrument in instruments) {
+            if (value == instrument.value) {
+              return InputChip(
+                key: ObjectKey(instrument),
+                label: Text(instrument.value),
+                avatar: instrument.instrumentIcon,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              );
+            }
           }
-        }
-        return null;
-      },
-      inputType: TextInputType.text,
-      obscureText: false,
-      autocorrect: false,
-      keyboardAppearance: Brightness.light,
-      textCapitalization: TextCapitalization.none,
-      inputAction: TextInputAction.next,
-      decoration: InputDecoration(labelText: label),
-      attribute: "instrument",
-      findSuggestions: (query) => searchInstruments(query),
-      maxChips: this.maxChips,
-      validators: [FormBuilderValidators.required()],
-      suggestionsBoxMaxHeight: 200,
-      chipBuilder: (context, state, profile) {
-        return InputChip(
-          key: ObjectKey(profile),
-          label: Text(profile.instrumentName),
-          onDeleted: () => state.deleteChip(profile),
-          avatar: profile.instrumentIcon,
-          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        );
-      },
-      suggestionBuilder: (context, state, profile) {
-        return ListTile(
-          key: ObjectKey(profile),
-          leading: profile.instrumentIcon,
-          title: Text(profile.instrumentName),
-          onTap: () => state.selectSuggestion(profile),
-        );
-      },
-    );
+          return null;
+        },
+        inputType: TextInputType.text,
+        obscureText: false,
+        autocorrect: false,
+        keyboardAppearance: Brightness.light,
+        textCapitalization: TextCapitalization.none,
+        inputAction: TextInputAction.next,
+        decoration: new InputDecoration(
+          focusColor: Theme.of(context).primaryColor,
+          border: new OutlineInputBorder(
+            borderRadius: const BorderRadius.all(
+              const Radius.circular(15.0),
+            ),
+          ),
+          filled: true,
+          hintText: "Instruments",
+          /*fillColor: Colors.grey[200]*/
+        ),
+        attribute: "instrument",
+        findSuggestions: (query) => searchInstruments(query),
+        maxChips: this.maxChips,
+        validators: [FormBuilderValidators.required()],
+        suggestionsBoxMaxHeight: 200,
+        chipBuilder: (context, state, profile) {
+          return InputChip(
+            key: ObjectKey(profile),
+            label: Text(profile.instrumentName),
+            onDeleted: () => state.deleteChip(profile),
+            avatar: profile.instrumentIcon,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          );
+        },
+        suggestionBuilder: (context, state, profile) {
+          return ListTile(
+            key: ObjectKey(profile),
+            leading: profile.instrumentIcon,
+            title: Text(profile.instrumentName),
+            onTap: () => state.selectSuggestion(profile),
+          );
+        });
   }
 }

@@ -1,3 +1,4 @@
+import 'package:circular_profile_avatar/circular_profile_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:bandmates/views/UI/ChatMessage.dart';
 import 'package:line_icons/line_icons.dart';
@@ -57,99 +58,73 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
   Widget build(BuildContext context) {
     print("[ChatRoomScreen] currentUser: " + _currentUser.name);
     return Scaffold(
-        appBar: AppBar(
-          elevation: 0,
-          backgroundColor: Colors.white,
-          title: Text(
-            widget.otherUser.name,
-            style: TextStyle(color: Color(0xFF1d1e2c), fontSize: 16),
-          ),
-          leading: IconButton(
-            icon: Icon(
-              LineIcons.arrow_left,
-              color: Color(0xFF1d1e2c),
-            ),
-            onPressed: () => Navigator.pop(context),
-          ),
-          actions: <Widget>[
-            IconButton(
-                icon: Icon(
-                  LineIcons.ellipsis_v,
-                  color: Color(0xFF1d1e2c),
-                  size: 30,
-                ),
-                onPressed: () {})
-          ],
-          centerTitle: true,
-        ),
         body: Column(
-          children: <Widget>[
-            Flexible(
-              child: FutureBuilder<DocumentSnapshot>(
-                future: _getChats,
-                builder: (BuildContext context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.done) {
-                    if (snapshot.hasError) {
-                      Utils.buildErrorDialog(
-                          context, snapshot.error.toString());
-                    } else {
-                      if (snapshot.hasData) {
-                        if (_chatRef == null) {
-                          WidgetsBinding.instance
-                              .addPostFrameCallback((_) => setState(() {
-                                    _chatRef = snapshot.data;
-                                  }));
-                        }
-
-                        print("[ChatRoomScreen] chatID: " +
-                            snapshot.data.documentID);
-                        return StreamBuilder(
-                          stream: Firestore.instance
-                              .collection('chats')
-                              .document(snapshot.data.documentID)
-                              .collection("msgs")
-                              .orderBy('time', descending: true)
-                              .limit(20)
-                              .snapshots(),
-                          builder:
-                              (BuildContext streamContext, streamSnapshot) {
-                            if (streamSnapshot.hasData) {
-                              return new ListView.builder(
-                                //new
-                                padding: new EdgeInsets.all(8.0), //new
-                                reverse: true, //new
-                                itemBuilder: (_, int index) => buildItem(
-                                    index,
-                                    streamSnapshot.data.documents[index],
-                                    streamSnapshot.data.documents),
-                                /*Text(
-                                    (streamSnapshot.data.documents[index]
-                                                    ['user'] ==
-                                                _currentUser.uid
-                                            ? _currentUser.name
-                                            : widget.otherUser.name) +
-                                        " - " +
-                                        streamSnapshot.data.documents[index]
-                                            ['text']),*/
-                                itemCount:
-                                    streamSnapshot.data.documents.length, //new
-                              );
-                            } else {
-                              return circularProgress(context);
-                            }
-                          },
-                        );
-                      }
+      children: <Widget>[
+        builderHeader(),
+        Flexible(
+          child: FutureBuilder<DocumentSnapshot>(
+            future: _getChats,
+            builder: (BuildContext context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.done) {
+                if (snapshot.hasError) {
+                  Utils.buildErrorDialog(context, snapshot.error.toString());
+                } else {
+                  if (snapshot.hasData) {
+                    if (_chatRef == null) {
+                      WidgetsBinding.instance
+                          .addPostFrameCallback((_) => setState(() {
+                                _chatRef = snapshot.data;
+                              }));
                     }
-                  } else {
-                    return circularProgress(context);
+
+                    print(
+                        "[ChatRoomScreen] chatID: " + snapshot.data.documentID);
+                    return StreamBuilder(
+                      stream: Firestore.instance
+                          .collection('chats')
+                          .document(snapshot.data.documentID)
+                          .collection("msgs")
+                          .orderBy('time', descending: true)
+                          .limit(20)
+                          .snapshots(),
+                      builder: (BuildContext streamContext, streamSnapshot) {
+                        if (streamSnapshot.hasData) {
+                          return new ListView.builder(
+                            //new
+                            padding: new EdgeInsets.all(8.0), //new
+                            reverse: true, //new
+                            itemBuilder: (_, int index) => buildItem(
+                                index,
+                                streamSnapshot.data.documents[index],
+                                streamSnapshot.data.documents),
+                            /*Text(
+                                                (streamSnapshot.data.documents[index]
+                                                                ['user'] ==
+                                                            _currentUser.uid
+                                                        ? _currentUser.name
+                                                        : widget.otherUser.name) +
+                                                    " - " +
+                                                    streamSnapshot.data.documents[index]
+                                                        ['text']),*/
+                            itemCount:
+                                streamSnapshot.data.documents.length, //new
+                          );
+                        } else {
+                          return circularProgress(context);
+                        }
+                      },
+                    );
                   }
-                },
-              ),
-            ),
-            _buildTextComposer(context),
-          ],
-        ));
+                }
+              } else {
+                return circularProgress(context);
+              }
+            },
+          ),
+        ),
+        _buildTextComposer(context),
+      ],
+    ));
   }
 
   Widget _buildTextComposer(BuildContext context) {
@@ -169,18 +144,18 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
             color: Colors.white,
           ),
           /*
-          Material(
-            child: new Container(
-              margin: new EdgeInsets.symmetric(horizontal: 1.0),
-              child: new IconButton(
-                icon: new Icon(Icons.face),
-                onPressed: getSticker,
-                color: primaryColor,
-              ),
-            ),
-            color: Colors.white,
-          ),
-          */
+                      Material(
+                        child: new Container(
+                          margin: new EdgeInsets.symmetric(horizontal: 1.0),
+                          child: new IconButton(
+                            icon: new Icon(Icons.face),
+                            onPressed: getSticker,
+                            color: primaryColor,
+                          ),
+                        ),
+                        color: Colors.white,
+                      ),
+                      */
 
           // Edit text
           Flexible(
@@ -518,5 +493,65 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
     } else {
       return false;
     }
+  }
+
+  builderHeader() {
+    return Container(
+        decoration: BoxDecoration(
+            color: Theme.of(context).primaryColor,
+            borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(25),
+                bottomRight: Radius.circular(25))),
+        padding: EdgeInsets.only(left: 12, top: 32),
+        height: MediaQuery.of(context).size.height * 0.16,
+        width: double.infinity,
+        child: Column(
+          children: <Widget>[
+            SizedBox(
+              height: 10,
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: <Widget>[
+                IconButton(
+                  icon: Icon(
+                    LineIcons.arrow_left,
+                    size: 32,
+                    color: Colors.white,
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                ),
+                if (widget.otherUser.photoUrl != null)
+                  CircularProfileAvatar(
+                    widget.otherUser.photoUrl,
+                    radius: 25,
+                    borderColor: Colors.white,
+                    borderWidth: 1,
+                  ),
+                SizedBox(
+                  width: 12,
+                ),
+                Text(
+                  widget.otherUser.name,
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      fontSize: 18),
+                ),
+                // Align(
+                //   alignment: Alignment.topLeft,
+                //   child: IconButton(
+                //     icon: Icon(
+                //       LineIcons.ellipsis_v,
+                //       size: 32,
+                //       color: Colors.white,
+                //     ),
+                //     onPressed: () => print("Menu clicked"),
+                //   ),
+                // ),
+              ],
+            ),
+          ],
+        ));
   }
 }

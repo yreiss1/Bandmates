@@ -1,3 +1,5 @@
+import 'package:bandmates/views/EventsSearchScreen.dart';
+import 'package:bandmates/views/MapScreen.dart';
 import 'package:bandmates/views/MusiciansSearchScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:bandmates/models/Chat.dart';
@@ -69,7 +71,7 @@ class MyApp extends StatelessWidget {
         title: 'Bandmates',
         theme: ThemeData(
           primaryColor: Color(0xff53172c),
-          accentColor: Color(0xff53172c),
+          accentColor: Color(0xff829abe),
           backgroundColor: Colors.white,
           fontFamily: 'Montserrat',
         ),
@@ -87,7 +89,11 @@ class MyApp extends StatelessWidget {
           PostUploadScreen.routeName: (ctx) => PostUploadScreen(),
           EventUploadScreen.routeName: (ctx) => EventUploadScreen(),
           EditProfileScreen.routeName: (ctx) => EditProfileScreen(),
-          MusiciansSearchScreen.routeName: (ctx) => MusiciansSearchScreen(),
+          MusiciansSearchScreen.routeName: (ctx) =>
+              MusiciansSearchScreen(ModalRoute.of(ctx).settings.arguments),
+          EventsSearchScreen.routeName: (ctx) =>
+              EventsSearchScreen(ModalRoute.of(ctx).settings.arguments),
+          MapScreen.routeName: (ctx) => MapScreen(),
         },
       ),
     );

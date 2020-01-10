@@ -1,3 +1,4 @@
+import 'package:bandmates/Utils.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flappy_search_bar/flappy_search_bar.dart';
 import 'package:flappy_search_bar/search_bar_style.dart';
@@ -93,40 +94,6 @@ class _SearchScreenState extends State<SearchScreen>
     Instrument(name: "harp", value: 'harp', icon: Icon(InstrumentIcons.harp)),
   ];
 
-  final List<Genre> genres = [
-    Genre(name: "Rock", value: 'rock', icon: Icon(InstrumentIcons.amp)),
-    Genre(name: "R&B", value: 'r&b', icon: Icon(GenreIcons.r_b)),
-    Genre(name: "Metal", value: 'metal', icon: Icon(GenreIcons.metal)),
-    Genre(name: "Blues", value: 'blues', icon: Icon(GenreIcons.blues)),
-    Genre(
-        name: "Blue Grass",
-        value: 'bluegrass',
-        icon: Icon(GenreIcons.bluegrass)),
-    Genre(name: "Punk Rock", value: 'punk', icon: Icon(GenreIcons.punk)),
-    Genre(
-        name: "Classic Rock", value: 'classic', icon: Icon(GenreIcons.classic)),
-    Genre(name: "Ska", value: 'trombone', icon: Icon(InstrumentIcons.trombone)),
-    Genre(name: "Pop", value: 'pop', icon: Icon(GenreIcons.pop)),
-    Genre(
-        name: "Alternative Rock",
-        value: 'alt',
-        icon: Icon(GenreIcons.alternative)),
-    Genre(name: "Arab", value: 'arab', icon: Icon(GenreIcons.arab)),
-    Genre(
-        name: "Classical",
-        value: 'classical',
-        icon: Icon(InstrumentIcons.musical_notes)),
-    Genre(name: "Jazz", value: 'jazz', icon: Icon(GenreIcons.jazz)),
-    Genre(name: "Rap", value: 'rap', icon: Icon(GenreIcons.rap)),
-    Genre(name: "Reggae", value: 'reggae', icon: Icon(GenreIcons.reggae)),
-    Genre(name: "Country", value: 'country', icon: Icon(GenreIcons.country)),
-    Genre(name: "Latin", value: 'latin', icon: Icon(GenreIcons.latin)),
-    Genre(name: "EDM", value: 'edm', icon: Icon(GenreIcons.electronic)),
-    Genre(name: "Funk", value: 'funk', icon: Icon(GenreIcons.funk)),
-    Genre(
-        name: "Choir/Accapella", value: 'choir', icon: Icon(GenreIcons.choir)),
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -167,7 +134,7 @@ class _SearchScreenState extends State<SearchScreen>
 
   List<Genre> searchGenres(String query) {
     List<Genre> results = [];
-    for (Genre genre in genres) {
+    for (Genre genre in Utils.genresList) {
       if (genre.genreName.contains(query.toLowerCase()) ||
           query.toLowerCase().contains(genre.genreName)) {
         results.add(genre);
@@ -217,42 +184,43 @@ class _SearchScreenState extends State<SearchScreen>
       buttons: [],
       title: "Discover Artists",
       content: SafeArea(
+        top: false,
         child: Container(
           child: FormBuilder(
             key: SearchScreen.searchKey,
             child: Column(
               children: <Widget>[
-                FormBuilderChipsInput(
-                  inputType: TextInputType.text,
-                  obscureText: false,
-                  autocorrect: false,
-                  keyboardAppearance: Brightness.light,
-                  textCapitalization: TextCapitalization.none,
-                  inputAction: TextInputAction.done,
-                  decoration: InputDecoration(labelText: "Instruments"),
-                  attribute: "instrument",
-                  findSuggestions: (query) => searchInstruments(query),
-                  maxChips: 1,
-                  validators: [FormBuilderValidators.required()],
-                  suggestionsBoxMaxHeight: 200,
-                  chipBuilder: (context, state, profile) {
-                    return InputChip(
-                      key: ObjectKey(profile),
-                      label: Text(profile.instrumentName),
-                      onDeleted: () => state.deleteChip(profile),
-                      avatar: profile.instrumentIcon,
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    );
-                  },
-                  suggestionBuilder: (context, state, profile) {
-                    return ListTile(
-                      key: ObjectKey(profile),
-                      leading: profile.instrumentIcon,
-                      title: Text(profile.instrumentName),
-                      onTap: () => state.selectSuggestion(profile),
-                    );
-                  },
-                ),
+                // FormBuilderChipsInput(
+                //   inputType: TextInputType.text,
+                //   obscureText: false,
+                //   autocorrect: false,
+                //   keyboardAppearance: Brightness.light,
+                //   textCapitalization: TextCapitalization.none,
+                //   inputAction: TextInputAction.done,
+                //   decoration: InputDecoration(labelText: "Instruments"),
+                //   attribute: "instrument",
+                //   findSuggestions: (query) => searchInstruments(query),
+                //   maxChips: 1,
+                //   validators: [FormBuilderValidators.required()],
+                //   suggestionsBoxMaxHeight: 200,
+                //   chipBuilder: (context, state, profile) {
+                //     return InputChip(
+                //       key: ObjectKey(profile),
+                //       label: Text(profile.instrumentName),
+                //       onDeleted: () => state.deleteChip(profile),
+                //       avatar: profile.instrumentIcon,
+                //       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                //     );
+                //   },
+                //   suggestionBuilder: (context, state, profile) {
+                //     return ListTile(
+                //       key: ObjectKey(profile),
+                //       leading: profile.instrumentIcon,
+                //       title: Text(profile.instrumentName),
+                //       onTap: () => state.selectSuggestion(profile),
+                //     );
+                //   },
+                // ),
                 FormBuilderCheckbox(
                   activeColor: Colors.white,
                   checkColor: Theme.of(context).primaryColor,

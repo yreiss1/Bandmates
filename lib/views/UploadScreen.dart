@@ -1,12 +1,7 @@
-import 'package:bandmates/models/ProfileScreenArguments.dart';
-import 'package:bandmates/models/User.dart';
-import 'package:bandmates/views/ProfileScreen.dart';
+import 'package:bandmates/models/MusiciansScreenArguments.dart';
+import 'package:bandmates/views/MusiciansSearchScreen.dart';
 import 'package:flutter/material.dart';
-
 import 'package:bandmates/views/UploadScreens/PostUploadScreen.dart';
-import 'package:line_icons/line_icons.dart';
-import 'package:provider/provider.dart';
-
 import 'UploadScreens/EventUploadScreen.dart';
 
 class UploadScreen extends StatelessWidget {
@@ -102,32 +97,38 @@ buildMainArea(context) {
             ),
           ),
         ),
-        Container(
-          height: MediaQuery.of(context).size.height * .2,
-          margin: EdgeInsets.only(bottom: 5),
-          child: Card(
-            elevation: 10,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            child: Container(
-              child: const Padding(
-                padding: EdgeInsets.all(10),
-                child: const Text(
-                  "Discover Musicans",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
+        GestureDetector(
+          onTap: () => Navigator.pushNamed(
+              context, MusiciansSearchScreen.routeName,
+              arguments: MusiciansScreenArguments(userList: [])),
+          child: Container(
+            height: MediaQuery.of(context).size.height * .2,
+            margin: EdgeInsets.only(bottom: 5),
+            child: Card(
+              elevation: 10,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+              child: Container(
+                child: const Padding(
+                  padding: EdgeInsets.all(10),
+                  child: const Text(
+                    "Discover Musicans",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
+                decoration: new BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    image: new DecorationImage(
+                        fit: BoxFit.cover,
+                        colorFilter: new ColorFilter.mode(
+                            Colors.black.withOpacity(0.6), BlendMode.hardLight),
+                        image:
+                            const AssetImage('assets/images/musicians.jpg'))),
               ),
-              decoration: new BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  image: new DecorationImage(
-                      fit: BoxFit.cover,
-                      colorFilter: new ColorFilter.mode(
-                          Colors.black.withOpacity(0.6), BlendMode.hardLight),
-                      image: const AssetImage('assets/images/musicians.jpg'))),
             ),
           ),
         ),
@@ -154,20 +155,20 @@ buildSearchHeader(context) {
                   fontWeight: FontWeight.bold,
                   fontSize: 22),
             ),
-            IconButton(
-              icon: Icon(
-                LineIcons.user,
-                size: 28,
-                color: Colors.white,
-              ),
-              onPressed: () {
-                User user = Provider.of<UserProvider>(context).user;
-                print("[Header] user uid: " + user.uid);
-                //Show search screen
-                Navigator.pushNamed(context, ProfileScreen.routeName,
-                    arguments: ProfileScreenArguments(userId: user.uid));
-              },
-            )
+            // IconButton(
+            //   icon: Icon(
+            //     LineIcons.user,
+            //     size: 28,
+            //     color: Colors.white,
+            //   ),
+            //   onPressed: () {
+            //     User user = Provider.of<UserProvider>(context).user;
+            //     print("[Header] user uid: " + user.uid);
+            //     //Show search screen
+            //     Navigator.pushNamed(context, ProfileScreen.routeName,
+            //         arguments: ProfileScreenArguments(userId: user.uid));
+            //   },
+            // )
           ],
         ),
       ],

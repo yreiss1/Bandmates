@@ -1,80 +1,27 @@
-import 'package:bandmates/models/Instrument.dart';
-import 'package:bandmates/models/ProfileScreenArguments.dart';
+import 'package:bandmates/Utils.dart';
+import 'package:bandmates/models/MusiciansScreenArguments.dart';
 import 'package:bandmates/models/User.dart';
-import 'package:bandmates/presentation/InstrumentIcons.dart';
 import 'package:bandmates/views/HomeScreen.dart';
-import 'package:bandmates/views/ProfileScreen.dart';
 import 'package:bandmates/views/UI/Progress.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flappy_search_bar/flappy_search_bar.dart';
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:line_icons/line_icons.dart';
-import 'package:pk_skeleton/pk_skeleton.dart';
 import 'package:searchable_dropdown/searchable_dropdown.dart';
-
-final List<Instrument> instrumentList = [
-  Instrument(
-      name: "guitar",
-      value: 'guitar',
-      icon: Icon(InstrumentIcons.electric_guitar)),
-  Instrument(name: "piano", value: 'piano', icon: Icon(InstrumentIcons.piano)),
-  Instrument(
-      name: "bass", value: 'bass', icon: Icon(InstrumentIcons.bass_guitar)),
-  Instrument(
-      name: "drums", value: 'drums', icon: Icon(InstrumentIcons.drum_set)),
-  Instrument(name: "flute", value: 'flute', icon: Icon(InstrumentIcons.flute)),
-  Instrument(
-      name: "harmonica",
-      value: 'harmonica',
-      icon: Icon(InstrumentIcons.harmonica)),
-  Instrument(
-      name: "violin", value: 'violin', icon: Icon(InstrumentIcons.violin)),
-  Instrument(
-      name: "ukelele", value: 'ukelele', icon: Icon(InstrumentIcons.ukelele)),
-  Instrument(name: "banjo", value: 'banjo', icon: Icon(InstrumentIcons.banjo)),
-  Instrument(
-      name: "xylophone",
-      value: 'xylophone',
-      icon: Icon(InstrumentIcons.xylophone)),
-  Instrument(
-      name: "saxophone", value: 'sax', icon: Icon(InstrumentIcons.saxophone)),
-  Instrument(
-      name: "vocals", value: 'vocals', icon: Icon(InstrumentIcons.microphone)),
-  Instrument(
-      name: "accordion",
-      value: 'accordion',
-      icon: Icon(InstrumentIcons.accordion)),
-  Instrument(
-      name: "trumpet", value: 'trumpet', icon: Icon(InstrumentIcons.trumpet)),
-  Instrument(
-      name: "contrabass",
-      value: 'contrabass',
-      icon: Icon(InstrumentIcons.contrabass)),
-  Instrument(
-      name: "trombone",
-      value: 'trombone',
-      icon: Icon(InstrumentIcons.trombone)),
-  Instrument(
-      name: "turntable",
-      value: 'turntable',
-      icon: Icon(InstrumentIcons.turntable)),
-  Instrument(
-      name: "mandolin",
-      value: 'mandolin',
-      icon: Icon(InstrumentIcons.mandolin)),
-  Instrument(name: "harp", value: 'harp', icon: Icon(InstrumentIcons.harp)),
-];
 
 class MusiciansSearchScreen extends StatefulWidget {
   static const routeName = '/musicians-search';
+
+  final MusiciansScreenArguments arguments;
+
+  MusiciansSearchScreen(this.arguments);
 
   @override
   _MusiciansSearchScreenState createState() => _MusiciansSearchScreenState();
 }
 
 class _MusiciansSearchScreenState extends State<MusiciansSearchScreen> {
+  bool _isLoading = false;
   String selectedGenre;
   String selectedInstrument;
   List<DropdownMenuItem> instruments = [];
@@ -84,8 +31,11 @@ class _MusiciansSearchScreenState extends State<MusiciansSearchScreen> {
   @override
   void initState() {
     super.initState();
+    _usersList = widget.arguments.userList;
 
-    instrumentList.forEach((inst) => instruments.add(DropdownMenuItem(
+    Utils.instrumentList.forEach(
+      (inst) => instruments.add(
+        DropdownMenuItem(
           child: Row(
             children: <Widget>[
               Icon(
@@ -99,56 +49,105 @@ class _MusiciansSearchScreenState extends State<MusiciansSearchScreen> {
             ],
           ),
           value: inst.value,
-        )));
+        ),
+      ),
+    );
+    /*
+    instruments.insert(
+      0,
+      DropdownMenuItem(
+        child: Text("None"),
+        value: null,
+      ),
+    );*/
+
+    Utils.genresList.forEach(
+      (genre) => genres.add(
+        DropdownMenuItem(
+          child: Row(
+            children: <Widget>[
+              Icon(
+                genre.icon.icon,
+                size: 40,
+              ),
+              SizedBox(
+                width: 10,
+              ),
+              Text(genre.name)
+            ],
+          ),
+          value: genre.value,
+        ),
+      ),
+    );
+    // genres.insert(
+    //   0,
+    //   DropdownMenuItem(
+    //     child: Text("None"),
+    //     value: null,
+    //   ),
+    // );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Container(
-          height: MediaQuery.of(context).size.height,
-          width: double.infinity,
-          child: Stack(
-            children: <Widget>[
-              ListView(
-                children: <Widget>[
-                  buildSearchHeader(context),
-                  buildMainArea(context),
-                ],
-              ),
-              Positioned(
-                left: MediaQuery.of(context).size.width * 0.05,
-                top: MediaQuery.of(context).size.height * 0.3,
-                child: Container(
-                  height: 60,
-                  width: MediaQuery.of(context).size.width * 0.9,
-                  child: Chip(
-                    backgroundColor: Colors.white,
-                    elevation: 10,
-                    label: TextField(
-                      onChanged: (value) {
-                        if (value.length > 3) {
-                          searchName(value);
-                        }
-                      },
-                      decoration: InputDecoration(
-                          border: InputBorder.none,
-                          icon: Icon(Icons.search),
-                          hintText: "Search by name"),
-                      keyboardType: TextInputType.text,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          )),
-    );
-  }
+    return Container(
+      color: Theme.of(context).primaryColor,
+      child: SafeArea(
+        bottom: false,
+        child: Scaffold(
+          backgroundColor: Colors.white, // Theme.of(context).primaryColor,
+          body: Container(
 
-  Future<List<User>> searchUsers() async {
-    return [currentUser];
-    //Firestore.instance.collection("users").where().limit(50);
+              //height: MediaQuery.of(context).size.height,
+              width: double.infinity,
+              child: Stack(
+                children: <Widget>[
+                  ListView(
+                      physics: NeverScrollableScrollPhysics(),
+                      children: <Widget>[
+                        Stack(
+                          children: <Widget>[
+                            SingleChildScrollView(
+                              child: Column(
+                                children: <Widget>[
+                                  buildSearchHeader(context),
+                                  buildMainArea(context),
+                                ],
+                              ),
+                            ),
+                            Positioned(
+                              left: MediaQuery.of(context).size.width * 0.05,
+                              top: 170,
+                              child: Container(
+                                height: 60,
+                                width: MediaQuery.of(context).size.width * 0.9,
+                                child: Chip(
+                                  backgroundColor: Colors.white,
+                                  elevation: 10,
+                                  label: TextField(
+                                    onChanged: (value) {
+                                      if (value.length > 3) {
+                                        _searchName(value);
+                                      }
+                                    },
+                                    decoration: InputDecoration(
+                                        border: InputBorder.none,
+                                        icon: Icon(Icons.search),
+                                        hintText: "Search by name"),
+                                    keyboardType: TextInputType.text,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ]),
+                ],
+              )),
+        ),
+      ),
+    );
   }
 
   buildSearchHeader(context) {
@@ -159,7 +158,7 @@ class _MusiciansSearchScreenState extends State<MusiciansSearchScreen> {
               bottomLeft: Radius.circular(25),
               bottomRight: Radius.circular(25))),
       padding: EdgeInsets.only(left: 12, top: 32),
-      height: MediaQuery.of(context).size.height * 0.3,
+      height: 200,
       width: double.infinity,
       child: Column(
         children: <Widget>[
@@ -197,15 +196,22 @@ class _MusiciansSearchScreenState extends State<MusiciansSearchScreen> {
 
   buildMainArea(context) {
     return Container(
-        color: Colors.white,
-        height: MediaQuery.of(context).size.height * 0.95,
-        width: double.infinity,
-        child: ListView.builder(
-          itemCount: _usersList.length,
-          itemBuilder: (BuildContext context, int index) {
-            return buildUserCard(_usersList[index]);
-          },
-        ));
+      padding: EdgeInsets.only(top: 0),
+      color: Colors.white,
+      height: MediaQuery.of(context).size.height * 0.80,
+      width: double.infinity,
+      child: _isLoading == true
+          ? Center(
+              child: circularProgress(context),
+            )
+          : ListView.builder(
+              padding: EdgeInsets.only(top: 30),
+              itemCount: _usersList.length,
+              itemBuilder: (BuildContext context, int index) {
+                return buildUserCard(_usersList[index]);
+              },
+            ),
+    );
   }
 
   buildChipInputs() {
@@ -220,7 +226,7 @@ class _MusiciansSearchScreenState extends State<MusiciansSearchScreen> {
             child: Chip(
               elevation: 10,
               backgroundColor: Colors.white,
-              label: SearchableDropdown(
+              label: DropdownButton(
                 value: selectedInstrument,
                 hint: Text("Instrument"),
                 items: instruments,
@@ -228,6 +234,7 @@ class _MusiciansSearchScreenState extends State<MusiciansSearchScreen> {
                   setState(() {
                     selectedInstrument = value;
                   });
+                  _searchUsers();
                 },
               ),
             ),
@@ -237,14 +244,15 @@ class _MusiciansSearchScreenState extends State<MusiciansSearchScreen> {
             child: Chip(
               elevation: 10,
               backgroundColor: Colors.white,
-              label: SearchableDropdown(
+              label: DropdownButton(
                 value: selectedGenre,
                 hint: Text("Genre"),
-                items: instruments,
+                items: genres,
                 onChanged: (value) {
                   setState(() {
                     selectedGenre = value;
                   });
+                  _searchUsers();
                 },
               ),
             ),
@@ -254,13 +262,27 @@ class _MusiciansSearchScreenState extends State<MusiciansSearchScreen> {
             child: Chip(
               elevation: 10,
               backgroundColor: Colors.white,
-              label: SearchableDropdown(
+              label: DropdownButton(
                 hint: Text("Transportation"),
-                items: instruments,
+                items: [
+                  DropdownMenuItem(
+                    child: Text("Has"),
+                    value: true,
+                  ),
+                  DropdownMenuItem(
+                    child: Text("Has Not"),
+                    value: false,
+                  ),
+                  DropdownMenuItem(
+                    child: Text("None"),
+                    value: null,
+                  )
+                ],
                 onChanged: (value) {
                   setState(() {
-                    selectedInstrument = value;
+                    //selectedInstrument = value;
                   });
+                  _searchUsers();
                 },
               ),
             ),
@@ -275,8 +297,9 @@ class _MusiciansSearchScreenState extends State<MusiciansSearchScreen> {
                 items: instruments,
                 onChanged: (value) {
                   setState(() {
-                    selectedInstrument = value;
+                    //selectedInstrument = value;
                   });
+                  _searchUsers();
                 },
               ),
             ),
@@ -286,7 +309,10 @@ class _MusiciansSearchScreenState extends State<MusiciansSearchScreen> {
     );
   }
 
-  Future<List<User>> searchName(String query) async {
+  void _searchName(String query) async {
+    setState(() {
+      _isLoading = true;
+    });
     List<User> results = [];
     await Firestore.instance
         .collection('users')
@@ -298,6 +324,33 @@ class _MusiciansSearchScreenState extends State<MusiciansSearchScreen> {
 
     setState(() {
       _usersList = results;
+      _isLoading = false;
+    });
+  }
+
+  void _searchUsers() async {
+    setState(() {
+      _isLoading = true;
+    });
+    Query query = Firestore.instance.collection("users");
+
+    if (selectedInstrument != null) {
+      query = query.where("instruments.$selectedInstrument", isEqualTo: true);
+    }
+    if (selectedGenre != null) {
+      query = query.where("genres.$selectedGenre", isEqualTo: true);
+    }
+
+    QuerySnapshot snapshot = await query.getDocuments();
+
+    List<User> results = [];
+    snapshot.documents.forEach((doc) {
+      results.add(User.fromDocument(doc));
+    });
+
+    setState(() {
+      _usersList = results;
+      _isLoading = false;
     });
   }
 
@@ -325,45 +378,89 @@ class _MusiciansSearchScreenState extends State<MusiciansSearchScreen> {
 
 buildUserCard(User user) {
   return Container(
-    padding: EdgeInsets.all(4),
+    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
     child: Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       elevation: 10,
       child: Container(
-        padding: EdgeInsets.all(8),
+        padding: EdgeInsets.all(12),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Row(
               children: <Widget>[
                 CircleAvatar(
+                  radius: 35,
                   backgroundImage: user.photoUrl == null
                       ? AssetImage('assets/images/user-placeholder.png')
                       : CachedNetworkImageProvider(user.photoUrl),
                 ),
+                SizedBox(
+                  width: 30,
+                ),
                 Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.start,
                   children: <Widget>[
                     Text(
                       user.name,
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
                     ),
-                    Text(user.bio),
+                    Text(
+                      user.location
+                              .distance(
+                                  lat: currentUser.location.latitude,
+                                  lng: currentUser.location.longitude)
+                              .round()
+                              .toString() +
+                          "km away",
+                      style: TextStyle(fontStyle: FontStyle.italic),
+                    )
                   ],
                 ),
               ],
             ),
+            SizedBox(
+              height: 10,
+            ),
+            Text(
+              "Instruments: ",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            SizedBox(
+              height: 5,
+            ),
             Row(
               children: <Widget>[
                 for (String inst in user.instruments.keys)
-                  Chip(
-                    label: Text(inst),
+                  Container(
+                    margin: EdgeInsets.symmetric(horizontal: 2),
+                    child: Icon(
+                      Utils.valueToIcon(inst),
+                      size: 30,
+                    ),
                   )
               ],
+            ),
+            SizedBox(
+              height: 5,
+            ),
+            Text(
+              "Genres: ",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            SizedBox(
+              height: 5,
             ),
             Row(
               children: <Widget>[
                 for (String genre in user.genres.keys)
-                  Chip(
-                    label: Text(genre),
+                  Container(
+                    margin: EdgeInsets.symmetric(horizontal: 2),
+                    child: Chip(
+                      label: Text(genre),
+                    ),
                   )
               ],
             ),

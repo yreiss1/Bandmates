@@ -1,25 +1,24 @@
-import 'package:flappy_search_bar/search_bar_style.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:circular_profile_avatar/circular_profile_avatar.dart';
 import 'package:bandmates/views/ChatRoomScreen.dart';
 import 'package:bandmates/views/UI/Progress.dart';
+//import 'package:line_icons/line_icons.dart';
 import 'package:pk_skeleton/pk_skeleton.dart';
-import 'package:search_app_bar/searcher.dart';
 import '../models/Chat.dart';
 import '../models/User.dart';
 import 'package:provider/provider.dart';
 import 'package:timeago/timeago.dart' as timeago;
-import 'package:flappy_search_bar/flappy_search_bar.dart';
-import 'package:search_app_bar/search_app_bar.dart';
 
 class ChatsScreen extends StatelessWidget {
-  ChatProvider chatProvider = ChatProvider();
   @override
   Widget build(BuildContext context) {
     print("[ChatScreen] Rebuilding the widget");
 
     return ListView(
-      children: <Widget>[buildSearchHeader(), buildChatList(context)],
+      children: <Widget>[
+        buildSearchHeader(),
+        buildChatList(context),
+      ],
     );
   }
 
@@ -133,15 +132,17 @@ buildChatList(context) {
                                     child: Row(
                                       children: <Widget>[
                                         futureSnapshot.data.photoUrl != null
-                                            ? CircularProfileAvatar(
-                                                futureSnapshot.data.photoUrl,
+                                            ? CircleAvatar(
                                                 radius: 26,
-                                                cacheImage: true,
+                                                backgroundImage:
+                                                    CachedNetworkImageProvider(
+                                                        futureSnapshot
+                                                            .data.photoUrl),
                                               )
-                                            : CircularProfileAvatar(
-                                                "https://llhh.org/pps-medias/14714.jpg",
+                                            : CircleAvatar(
                                                 radius: 26,
-                                                cacheImage: true,
+                                                backgroundImage: AssetImage(
+                                                    "assets/images/user-placeholder.png"),
                                               ),
                                         /*
                                       Material(
@@ -186,19 +187,23 @@ buildChatList(context) {
                                                     child: Text(
                                                       futureSnapshot.data.name,
                                                       style: TextStyle(
-                                                          fontSize: 18),
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                          fontSize: 20),
                                                     ),
                                                   ),
                                                   Text(
-                                                    timeago.format(snapshot
-                                                        .data
-                                                        .documents[index]
-                                                        .data['time']
-                                                        .toDate()),
-                                                    style: Theme.of(context)
-                                                        .textTheme
-                                                        .caption,
-                                                  )
+                                                      timeago.format(snapshot
+                                                          .data
+                                                          .documents[index]
+                                                          .data['time']
+                                                          .toDate()),
+                                                      style: TextStyle(
+                                                          fontSize: 16,
+                                                          fontWeight:
+                                                              FontWeight.w300,
+                                                          fontStyle:
+                                                              FontStyle.italic))
                                                 ],
                                               ),
                                               if (snapshot.data.documents[index]
@@ -212,13 +217,10 @@ buildChatList(context) {
                                                         .documents[index]
                                                         .data['lastMsg'],
                                                     style: TextStyle(
-                                                        fontSize: 15,
-                                                        color: Theme.of(context)
-                                                            .textTheme
-                                                            .caption
-                                                            .color,
-                                                        fontStyle:
-                                                            FontStyle.italic),
+                                                      fontSize: 16,
+                                                      fontWeight:
+                                                          FontWeight.w400,
+                                                    ),
                                                   ),
                                                 ),
                                             ],
@@ -256,28 +258,4 @@ buildChatList(context) {
       ),
     ]),
   );
-}
-
-class _ContactListItem extends ListTile {
-  _ContactListItem(Contact contact)
-      : super(
-          title: new Text(contact.fullName),
-          subtitle: new Text(contact.email),
-          leading: CircularProfileAvatar(
-            "https://thumbnailer.mixcloud.com/unsafe/1200x628/tmp/7/4/2/8/fac1-7b75-4a97-a54c-02d8d853fa48",
-            initialsText: Text(contact.fullName.substring(0, 2)),
-            cacheImage: true,
-            radius: 25.0,
-            onTap: () {
-              print("Hello World!");
-            },
-          ),
-        );
-}
-
-class Contact {
-  final String fullName;
-  final String email;
-
-  const Contact({this.fullName, this.email});
 }

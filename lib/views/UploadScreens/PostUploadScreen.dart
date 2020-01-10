@@ -235,6 +235,7 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
     return Scaffold(
       appBar: uploadHeader("Upload Post", context),
       body: SafeArea(
+        top: false,
         child: ListView(
           padding: EdgeInsets.all(10),
           children: <Widget>[

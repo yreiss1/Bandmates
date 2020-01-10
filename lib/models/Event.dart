@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -14,7 +17,9 @@ class Event {
   final String text;
   final int type;
   final String title;
+  final String photoUrl;
   final Map<dynamic, dynamic> audition;
+  final Map<dynamic, dynamic> attending;
 
   Event(
       {this.time,
@@ -25,7 +30,9 @@ class Event {
       this.audition,
       this.ownerId,
       this.eventId,
-      this.name});
+      this.name,
+      this.attending,
+      this.photoUrl});
 
   factory Event.fromDocument(DocumentSnapshot doc) {
     Geoflutterfire geo = Geoflutterfire();
@@ -50,33 +57,51 @@ class Event {
         time: doc.data['time'].toDate(),
         eventId: doc.documentID,
         audition: doc.data['audition'],
-        ownerId: doc.data['ownerId']);
+        ownerId: doc.data['ownerId'],
+        attending: doc.data['attending'],
+        photoUrl: doc.data['photoUrl']);
   }
 }
 
 class EventProvider with ChangeNotifier {
   CollectionReference eventsRef = Firestore.instance.collection("events");
+  StorageReference storageRef = FirebaseStorage.instance.ref();
+
   List<Event> _events = [];
 
   List<Event> get events {
     return [..._events];
   }
 
-  Future<void> uploadEvent(
-      Event event, String eventId, String uid, String name) async {
-    eventsRef.document(eventId).setData({
-      "ownerId": uid,
-      "user": name,
+  Future<void> uploadEvent(Event event) async {
+    eventsRef.document(event.eventId).setData({
+      "ownerId": event.ownerId,
+      "user": event.name,
       "title": event.title,
       "type": event.type,
       "text": event.text,
-      "loc": event.location.data,
+      "loc": event.location == null ? null : event.location.data,
       "time": event.time,
       "audtion": event.audition,
-      "likes": {}
+      "photoUrl": event.photoUrl,
+      "attending": {}
     });
 
     _events.insert(0, event);
     notifyListeners();
+  }
+
+  Future<String> uploadEventImage(
+      File imageFile, String ownerId, String eventId) async {
+    String downloadUrl;
+    StorageUploadTask uploadTask = storageRef
+        .child("eventPhotos")
+        .child(ownerId)
+        .child("$eventId.jpg")
+        .putFile(imageFile);
+    StorageTaskSnapshot storageSnap = await uploadTask.onComplete;
+    downloadUrl = await storageSnap.ref.getDownloadURL();
+
+    return downloadUrl;
   }
 }

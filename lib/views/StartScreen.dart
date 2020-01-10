@@ -59,13 +59,13 @@ class _StartScreenState extends State<StartScreen>
                           tabs: <Widget>[
                             Text(
                               "Sign In",
-                              style:
-                                  TextStyle(fontSize: 17, fontFamily: 'Roboto'),
+                              style: TextStyle(
+                                  fontSize: 17, fontWeight: FontWeight.w500),
                             ),
                             Text(
                               "Sign Up",
-                              style:
-                                  TextStyle(fontSize: 17, fontFamily: 'Roboto'),
+                              style: TextStyle(
+                                  fontSize: 17, fontWeight: FontWeight.w500),
                             )
                           ],
                         )

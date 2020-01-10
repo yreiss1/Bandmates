@@ -1,7 +1,11 @@
+import 'dart:async';
+
+import 'package:bandmates/Utils.dart';
+import 'package:bandmates/views/UI/Progress.dart';
 import 'package:flutter/material.dart';
-import 'package:bandmates/models/Follow.dart';
 import 'package:bandmates/views/HomeScreen.dart' as prefix0;
 import 'package:bandmates/views/UI/PostItem.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../models/User.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:circular_profile_avatar/circular_profile_avatar.dart';
@@ -10,12 +14,10 @@ import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 import 'package:mime/mime.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
-import '../UploadScreens/EventUploadScreen.dart';
-import '../UploadScreens/PostUploadScreen.dart';
 import '../../models/Post.dart';
 import 'package:pk_skeleton/pk_skeleton.dart';
-import '../ChatRoomScreen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:geocoder/geocoder.dart' as geocoder;
 
 class ProfileScreenBody extends StatefulWidget {
   final User user;
@@ -27,50 +29,14 @@ class ProfileScreenBody extends StatefulWidget {
 
 class _ProfileScreenBodyState extends State<ProfileScreenBody>
     with SingleTickerProviderStateMixin {
-  TabController _tabController;
-  bool _isFollowing = false;
   User _currentUser;
-  int _followersCount = 0;
-  int _postCount = 0;
-  List<Post> _posts = [];
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _tabController = new TabController(length: 3, vsync: this);
     _currentUser = prefix0.currentUser;
     _getUserPosts();
-    _checkIfFollowing();
-
-    _getFollowers();
-    _getFollowing();
-  }
-
-  _getFollowers() async {
-    QuerySnapshot snapshot = await Firestore.instance
-        .collection("followers")
-        .document(widget.user.uid)
-        .collection("followers")
-        .getDocuments();
-    setState(() {
-      _followersCount = snapshot.documents.length;
-    });
-  }
-
-  _getFollowing() {}
-
-  _checkIfFollowing() async {
-    DocumentSnapshot doc = await Firestore.instance
-        .collection("following")
-        .document(_currentUser.uid)
-        .collection("following")
-        .document(widget.user.uid)
-        .get();
-
-    setState(() {
-      _isFollowing = doc.exists;
-    });
   }
 
   _getUserPosts() async {
@@ -78,6 +44,7 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody>
       _isLoading = true;
     });
 
+    //TODO: Get work
     QuerySnapshot querySnap = await Firestore.instance
         .collection("posts")
         .document(widget.user.uid)
@@ -85,35 +52,10 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody>
         .orderBy("time", descending: true)
         .getDocuments();
 
+    if (!mounted) return;
     setState(() {
-      _posts =
-          querySnap.documents.map((doc) => Post.fromDocument(doc)).toList();
-      _postCount = querySnap.documents.length;
       _isLoading = false;
     });
-  }
-
-  String buildSubtitle(Map<dynamic, dynamic> map) {
-    List l = map.keys.toList();
-
-    String result = l.fold(
-        "",
-        (inc, ins) =>
-            inc +
-            " " +
-            ins.toString()[0].toUpperCase() +
-            ins.toString().substring(1) +
-            " " +
-            "\·");
-
-    result = result.substring(1, result.length - 1);
-    /*
-    if (result.length > 50) {
-      result = result.substring(0, 50);
-      result += "...";
-    }
-    */
-    return result;
   }
 
   _uploadWork(BuildContext context) async {
@@ -141,298 +83,340 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody>
     print("[ProfileScreenBody] mimetype: " + lookupMimeType(chosen.path));
   }
 
-  Widget _buildDataRow() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: <Widget>[
-        Column(
-          children: <Widget>[
-            Text(
-              _followersCount.toString(),
-              style: TextStyle(
-                  fontFamily: 'Oswald',
-                  fontWeight: FontWeight.w500,
-                  fontSize: 20),
-            ),
-            Text('Followers')
-          ],
-        ),
-        Column(
-          children: <Widget>[
-            Text(
-              _postCount.toString(),
-              style: TextStyle(
-                  fontFamily: 'Oswald',
-                  fontWeight: FontWeight.w500,
-                  fontSize: 20),
-            ),
-            Text('Posts')
-          ],
-        ),
-        Column(
-          children: <Widget>[
-            Text(
-              '35',
-              style: TextStyle(
-                  fontFamily: 'Oswald',
-                  fontWeight: FontWeight.w500,
-                  fontSize: 20),
-            ),
-            Text('Yrs Playing')
-          ],
-        )
-      ],
-    );
-  }
-
-  unfollowUser() {
-    setState(() {
-      _isFollowing = false;
-      _followersCount -= 1;
-    });
-
-    Provider.of<FollowProvider>(context).unfollowUser(
-        usersId: widget.user.uid, currentUserId: _currentUser.uid);
-    Firestore.instance
-        .collection("feed")
-        .document(widget.user.uid)
-        .collection("feedItems")
-        .document(_currentUser.uid)
-        .get()
-        .then((doc) {
-      if (doc.exists) {
-        doc.reference.delete();
-      }
-    });
-  }
-
-  followUser() {
-    setState(() {
-      _isFollowing = true;
-      _followersCount += 1;
-    });
-
-    Provider.of<FollowProvider>(context)
-        .followUser(usersId: widget.user.uid, currentUserId: _currentUser.uid);
-    Firestore.instance
-        .collection("feed")
-        .document(widget.user.uid)
-        .collection("feedItems")
-        .document(_currentUser.uid)
-        .setData({
-      "type": 2,
-      "ownerId": widget.user.uid,
-      "user": _currentUser.name,
-      "userId": _currentUser.uid,
-      "avatar": _currentUser.photoUrl,
-      "time": DateTime.now()
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     print("[ProfileScreenBody] uid: " + widget.user.uid.toString());
 
     return SingleChildScrollView(
-      child: Column(
+      child: Stack(
         children: <Widget>[
-          Container(
-            child: Column(
-              children: <Widget>[
-                SizedBox(
-                  height: 20,
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: widget.user.uid != _currentUser.uid
-                      ? [
-                          FloatingActionButton(
-                            heroTag: 'chatBtn',
-                            onPressed: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (BuildContext context) {
-                                return ChatRoomScreen(otherUser: widget.user);
-                              }),
-                            ),
-                            backgroundColor: Theme.of(context).primaryColor,
-                            child: Icon(LineIcons.comments),
-                          ),
-                          CircularProfileAvatar(
-                            widget.user.photoUrl == null
-                                ? "https://www.bsn.eu/wp-content/uploads/2016/12/user-icon-image-placeholder-300-grey.jpg"
-                                : widget.user.photoUrl,
-                            cacheImage: true,
-                            radius: 70,
-                          ),
-                          _isFollowing == false
-                              ? FloatingActionButton(
-                                  heroTag: 'followBtn',
-                                  onPressed: followUser,
-                                  backgroundColor: Color(0xff829abe),
-                                  child: Icon(LineIcons.user_plus),
-                                )
-                              : FloatingActionButton(
-                                  heroTag: 'unfollowBtn',
-                                  onPressed: unfollowUser,
-                                  backgroundColor: Color(0xff829abe),
-                                  child: Icon(LineIcons.trash),
-                                ),
-                        ]
-                      : [
-                          CircularProfileAvatar(
-                            widget.user.photoUrl == null
-                                ? "https://www.bsn.eu/wp-content/uploads/2016/12/user-icon-image-placeholder-300-grey.jpg"
-                                : widget.user.photoUrl,
-                            cacheImage: true,
-                            radius: 70,
-                          ),
-                        ],
-                ),
-                SizedBox(
-                  height: 16,
-                ),
-                Column(
-                  children: <Widget>[
-                    Text(
-                      widget.user.name,
-                      style: TextStyle(
-                          fontSize: 20,
-                          color: Color(0xff1d1e2c),
-                          fontWeight: FontWeight.w500),
-                    ),
-                    SizedBox(
-                      height: 8,
-                    ),
-                    Container(
-                      alignment: Alignment.center,
-                      width: MediaQuery.of(context).size.width * .9,
-                      child: Text(
-                        buildSubtitle(widget.user.instruments),
-                        overflow: TextOverflow.fade,
-                      ),
-                    ),
-                    SizedBox(
-                      height: 40,
-                    ),
-                    if (widget.user.uid == _currentUser.uid)
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: <Widget>[
-                          FlatButton.icon(
-                            shape: RoundedRectangleBorder(
-                                side: BorderSide(
-                                    color: Theme.of(context).primaryColor,
-                                    width: 1,
-                                    style: BorderStyle.solid),
-                                borderRadius: BorderRadius.circular(50)),
-                            color: Theme.of(context).primaryColor,
-                            icon: Icon(LineIcons.calendar),
-                            textColor: Colors.white,
-                            label: Text("Add Event"),
-                            onPressed: () => Navigator.pushNamed(
-                                context, EventUploadScreen.routeName),
-                          ),
-                          FlatButton.icon(
-                            icon: Icon(LineIcons.file_text_o),
-                            shape: RoundedRectangleBorder(
-                                side: BorderSide(
-                                    color: Theme.of(context).primaryColor,
-                                    width: 1,
-                                    style: BorderStyle.solid),
-                                borderRadius: BorderRadius.circular(50)),
-                            label: Text("Add Post"),
-                            textColor: Theme.of(context).primaryColor,
-                            onPressed: () => Navigator.pushNamed(
-                                context, PostUploadScreen.routeName),
-                          ),
-                        ],
-                      ),
-                    SizedBox(
-                      height: 16,
-                    ),
-                    _buildDataRow(),
-                    Divider(),
-                  ],
-                )
-              ],
-            ),
-          ),
-          TabBar(
-            controller: _tabController,
-            indicatorColor: Theme.of(context).primaryColor,
-            labelColor: Theme.of(context).primaryColor,
-            labelPadding: EdgeInsets.symmetric(horizontal: 20),
-            isScrollable: true,
-            tabs: <Widget>[
-              Container(
-                height: 40,
-                width: MediaQuery.of(context).size.width / 4.25,
-                child: Icon(
-                  LineIcons.trophy,
-                  size: 40,
-                ),
-                alignment: Alignment.center,
-              ),
-              Container(
-                height: 40,
-                width: MediaQuery.of(context).size.width / 4.25,
-                child: Icon(
-                  LineIcons.bank,
-                  size: 40,
-                ),
-                alignment: Alignment.center,
-              ),
-              Container(
-                height: 40,
-                width: MediaQuery.of(context).size.width / 4.25,
-                child: Icon(
-                  LineIcons.angellist,
-                  size: 40,
-                ),
-                alignment: Alignment.center,
-              ),
+          Column(
+            children: <Widget>[
+              buildHeader(),
+              Column(
+                children: <Widget>[
+                  Container(
+                    height: 1000,
+                  )
+                ],
+              )
             ],
           ),
-          SizedBox(
-            height: MediaQuery.of(context).size.height - 130,
-            width: double.infinity,
-            child: TabBarView(
-              controller: _tabController,
+          Positioned(
+            child: Column(
               children: <Widget>[
-                _isLoading == false
-                    ? _postCount == 0
-                        ? Center(
-                            child: Text("No posts to display"),
-                          )
-                        : ListView.separated(
-                            itemBuilder: (context, index) {
-                              return ChangeNotifierProvider.value(
-                                value: _posts[index],
-                                child: PostItem(
-                                  currentUser: prefix0.currentUser,
-                                  post: _posts[index],
-                                ),
-                              );
-                            },
-                            separatorBuilder: (context, index) => Divider(
-                              color: Colors.grey[300],
-                              thickness: 10,
-                            ),
-                            itemCount: _posts.length,
-                          )
-                    : PKCardListSkeleton(
-                        isCircularImage: true,
-                        length: 5,
-                        isBottomLinesActive: true,
-                      ),
-                Text("Hello"),
-                Text("Hello again"),
+                buildProfileCard(),
+                SizedBox(
+                  height: 4,
+                ),
+                buildInfoCard()
               ],
             ),
+            top: MediaQuery.of(context).size.height * 0.18,
+          ),
+          Positioned.fill(
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: widget.user.photoUrl != null
+                  ? CircularProfileAvatar(
+                      widget.user.photoUrl,
+                      radius: 60,
+                      borderColor: Colors.white,
+                      borderWidth: 6,
+                    )
+                  : CircularProfileAvatar(
+                      "https://www.bsn.eu/wp-content/uploads/2016/12/user-icon-image-placeholder-300-grey.jpg",
+                      radius: 60,
+                      borderColor: Colors.white,
+                      borderWidth: 3,
+                    ),
+            ),
+            top: MediaQuery.of(context).size.height * 0.1,
           ),
         ],
       ),
+    );
+  }
+
+  buildHeader() {
+    return Container(
+      decoration: BoxDecoration(
+          color: Theme.of(context).primaryColor,
+          borderRadius: BorderRadius.only(
+              bottomLeft: Radius.circular(25),
+              bottomRight: Radius.circular(25))),
+      padding: EdgeInsets.only(left: 12, top: 32),
+      height: MediaQuery.of(context).size.height * 0.3,
+      width: double.infinity,
+      child: Column(
+        children: <Widget>[
+          widget.user.uid != _currentUser.uid
+              ? Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: <Widget>[
+                    IconButton(
+                      icon: Icon(
+                        LineIcons.arrow_left,
+                        size: 32,
+                        color: Colors.white,
+                      ),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        LineIcons.ellipsis_h,
+                        size: 32,
+                        color: Colors.white,
+                      ),
+                      onPressed: () => print("Menu clicked"),
+                    ),
+                  ],
+                )
+              : Align(
+                  alignment: Alignment.topRight,
+                  child: IconButton(
+                    icon: Icon(
+                      LineIcons.ellipsis_h,
+                      size: 32,
+                      color: Colors.white,
+                    ),
+                    onPressed: () => print("Menu clicked"),
+                  ),
+                )
+        ],
+      ),
+    );
+  }
+
+  buildProfileCard() {
+    return Container(
+      width: MediaQuery.of(context).size.width,
+      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: Card(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        elevation: 10,
+        child: Container(
+          padding: EdgeInsets.all(25),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: <Widget>[
+              SizedBox(
+                height: 40,
+              ),
+              Text(
+                widget.user.name,
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+              ),
+              SizedBox(
+                height: 4,
+              ),
+              Text(widget.user.bio),
+              widget.user.uid == _currentUser.uid
+                  ? Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: <Widget>[
+                        FlatButton.icon(
+                          shape: RoundedRectangleBorder(
+                              side: BorderSide(
+                                  color: Colors.white,
+                                  width: 1,
+                                  style: BorderStyle.solid),
+                              borderRadius: BorderRadius.circular(50)),
+                          color: Theme.of(context).primaryColor,
+                          icon: Icon(LineIcons.calendar),
+                          textColor: Colors.white,
+                          label: Text(
+                            "Create Event",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          onPressed: () {},
+                        ),
+                        FlatButton.icon(
+                          icon: Icon(LineIcons.music),
+                          shape: RoundedRectangleBorder(
+                              side: BorderSide(
+                                  color: Theme.of(context).primaryColor,
+                                  width: 1,
+                                  style: BorderStyle.solid),
+                              borderRadius: BorderRadius.circular(50)),
+                          label: Text(
+                            "Upload Work",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          textColor: Theme.of(context).primaryColor,
+                          onPressed: () {},
+                        ),
+                      ],
+                    )
+                  : FlatButton.icon(
+                      shape: RoundedRectangleBorder(
+                          side: BorderSide(
+                              color: Colors.white,
+                              width: 1,
+                              style: BorderStyle.solid),
+                          borderRadius: BorderRadius.circular(50)),
+                      color: Color(0xff829abe),
+                      icon: Icon(LineIcons.comment),
+                      textColor: Colors.white,
+                      label: Text(
+                        "Chat",
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      onPressed: () {},
+                    ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  buildInfoCard() {
+    final coordinates = new geocoder.Coordinates(
+        prefix0.currentUser.location.latitude,
+        prefix0.currentUser.location.longitude);
+
+    return FutureBuilder<List<geocoder.Address>>(
+      future:
+          geocoder.Geocoder.google("AIzaSyBVY9wwL0hnzcoEN7HTKh41o92PzHZe0wI")
+              .findAddressesFromCoordinates(coordinates),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return circularProgress(context);
+        }
+
+        return Container(
+          height: MediaQuery.of(context).size.height,
+          width: MediaQuery.of(context).size.width,
+          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          child: Card(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            elevation: 10,
+            child: Container(
+              padding: EdgeInsets.all(25),
+              child: Wrap(children: [
+                SizedBox(
+                  height: 4,
+                ),
+                Row(
+                  children: <Widget>[
+                    Icon(
+                      Icons.place,
+                      color: Theme.of(context).primaryColor,
+                    ),
+                    Flexible(
+                      child: Text(
+                        snapshot.data.first.locality +
+                            ", " +
+                            snapshot.data.first.adminArea,
+                        overflow: TextOverflow.visible,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(
+                  height: 2,
+                ),
+                Container(
+                  height: 200,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.all(Radius.circular(20)),
+                    child: Card(
+                      elevation: 5,
+                      child:
+                          /* GoogleMap(
+                        scrollGesturesEnabled: false,
+                        zoomGesturesEnabled: false,
+                        myLocationButtonEnabled: false,
+                        mapType: MapType.normal,
+                        initialCameraPosition: CameraPosition(
+                          target: LatLng(widget.user.location.latitude,
+                              widget.user.location.longitude),
+                          zoom: 12.0000,
+                        ),
+                        circles: {
+                          Circle(
+                              strokeWidth: 1,
+                              radius: 1500,
+                              fillColor: Theme.of(context)
+                                  .primaryColor
+                                  .withOpacity(0.4),
+                              circleId: CircleId("User Location"),
+                              center: LatLng(widget.user.location.latitude,
+                                  widget.user.location.longitude))
+                        },
+                      ), */
+                          Container(),
+                    ),
+                  ),
+                ),
+                Divider(),
+                Text(
+                  "Instruments",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Wrap(
+                    runSpacing: 0,
+                    spacing: 4,
+                    children: [
+                      for (String inst in widget.user.instruments.keys)
+                        Chip(
+                          label: Text(inst),
+                        )
+                    ],
+                  ),
+                ),
+                Divider(),
+                Text(
+                  "Genres",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Wrap(
+                    runSpacing: 0,
+                    spacing: 4,
+                    children: [
+                      for (String genre in widget.user.genres.keys)
+                        Chip(
+                          label: Text(genre),
+                        )
+                    ],
+                  ),
+                ),
+                Divider(),
+                Text(
+                  widget.user.name + "'s Work",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                SizedBox(
+                  height: 8,
+                ),
+                GridView.builder(
+                  physics: NeverScrollableScrollPhysics(),
+                  shrinkWrap: true,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: (MediaQuery.of(context).orientation ==
+                              Orientation.portrait)
+                          ? 2
+                          : 3),
+                  itemCount: 10,
+                  itemBuilder: (BuildContext context, int index) {
+                    return GridTile(
+                      footer: Text("Hello World!"),
+                      child: Image.network(
+                          "https://picsum.photos/id/$index/200/300"),
+                    );
+                  },
+                )
+              ]),
+            ),
+          ),
+        );
+      },
     );
   }
 }

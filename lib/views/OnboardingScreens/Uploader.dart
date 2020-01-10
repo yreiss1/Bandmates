@@ -39,7 +39,7 @@ class _UploaderState extends State<Uploader> {
           var event = snapshot?.data?.snapshot;
           snapshot?.data?.snapshot?.ref
               .getDownloadURL()
-              .then((url) => {Utils.uploadPhotoPath(context, url)});
+              .then((url) => {/*Utils.uploadPhotoPath(context, url)*/});
           double progressPercent =
               event != null ? event.bytesTransferred / event.totalByteCount : 0;
           return Column(

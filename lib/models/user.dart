@@ -27,7 +27,7 @@ class User {
   final String email;
   final String bio;
   final bool transportation;
-  final GeoFirePoint location;
+  GeoFirePoint location;
   final Map<dynamic, dynamic> genres;
   final Map<dynamic, dynamic> instruments;
   final String photoUrl;
@@ -106,7 +106,10 @@ class UserProvider with ChangeNotifier {
 
   Future<DocumentSnapshot> getSnapshot(String uid) async {
     print("In getSnapshot");
-    return await userRef.document(uid).get();
+    return await userRef
+        .document(uid)
+        .get()
+        .catchError((error) => print(error));
   }
 
   Future<void> uploadUser(String uid, User userIn) async {
@@ -117,13 +120,6 @@ class UserProvider with ChangeNotifier {
         .collection("users")
         .document(uid)
         .setData(userIn.toJson());
-
-    await Firestore.instance
-        .collection("followers")
-        .document(uid)
-        .collection("followers")
-        .document(uid)
-        .setData({});
   }
 
   Future<String> uploadProfileImage(File imageFile, String uid) async {

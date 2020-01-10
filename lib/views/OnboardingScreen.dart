@@ -216,6 +216,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             left: 16,
             right: 16,
             child: SafeArea(
+              top: false,
               child: Row(
                 children: <Widget>[
                   Expanded(

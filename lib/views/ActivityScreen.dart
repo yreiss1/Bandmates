@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:bandmates/views/UI/Progress.dart';
+import 'package:line_icons/line_icons.dart';
 import '../models/User.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -30,7 +31,7 @@ class ActivityScreen extends StatelessWidget {
     print("[ActivityScreen] Rebuilding Widget");
 
     return ListView(
-      children: <Widget>[buildSearchHeader(), buildMainArea(context)],
+      children: <Widget>[buildSearchHeader(context), buildMainArea(context)],
     );
   }
 
@@ -56,18 +57,33 @@ class ActivityScreen extends StatelessWidget {
     );
   }
 
-  buildSearchHeader() {
+  buildSearchHeader(context) {
     return Container(
-      padding: EdgeInsets.only(left: 12, top: 32),
+      padding: EdgeInsets.only(left: 12, top: 32, right: 12),
       height: 100,
       width: double.infinity,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(
-            "Activity Feed",
-            style: TextStyle(
-                color: Colors.white, fontWeight: FontWeight.bold, fontSize: 22),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              Text(
+                "Activity Feed",
+                style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 22),
+              ),
+              IconButton(
+                icon: Icon(
+                  LineIcons.search,
+                  size: 28,
+                  color: Colors.white,
+                ),
+                onPressed: () {},
+              )
+            ],
           ),
         ],
       ),

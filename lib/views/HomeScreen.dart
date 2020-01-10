@@ -1,3 +1,5 @@
+import 'package:bandmates/models/ProfileScreenArguments.dart';
+import 'package:bandmates/views/ProfileScreen.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -46,6 +48,7 @@ class _HomeScreenState extends State<HomeScreen>
   void initState() {
     super.initState();
     _pageController = PageController();
+
     _getUser = getSnapshot(widget.uid);
     configurePushNotifications();
   }
@@ -64,7 +67,6 @@ class _HomeScreenState extends State<HomeScreen>
         currentUser = user;
       });
 
-      print("[HomeScreen] user: " + user.name);
       Provider.of<UserProvider>(context).setCurrentUser(user);
     }
 
@@ -137,6 +139,7 @@ class _HomeScreenState extends State<HomeScreen>
     print("[HomeScreen] Rebuilding the widget");
 
     return SafeArea(
+      top: false,
       child: FutureBuilder<DocumentSnapshot>(
         future: _getUser,
         builder: (context, AsyncSnapshot<DocumentSnapshot> snapshot) {
@@ -149,16 +152,14 @@ class _HomeScreenState extends State<HomeScreen>
               return Scaffold(
                 backgroundColor: Theme.of(context).primaryColor,
                 key: _scaffoldKey,
-                //appBar: mainHeader("Bandmates", context),
                 body: PageView(
                   children: <Widget>[
                     TimelineScreen(currentUser: _currentUser),
                     ChatsScreen(),
                     UploadScreen(),
                     ActivityScreen(),
-                    SearchScreen(
-                      currentUser: _currentUser,
-                    ),
+                    ProfileScreen(
+                        ProfileScreenArguments(userId: _currentUser.uid)),
                   ],
                   controller: _pageController,
                   onPageChanged: onPageChanged,
@@ -178,7 +179,7 @@ class _HomeScreenState extends State<HomeScreen>
                       size: 35.0,
                     )),
                     BottomNavigationBarItem(icon: Icon(LineIcons.bell_o)),
-                    BottomNavigationBarItem(icon: Icon(LineIcons.search)),
+                    BottomNavigationBarItem(icon: Icon(LineIcons.user)),
                   ],
                 ),
               );
