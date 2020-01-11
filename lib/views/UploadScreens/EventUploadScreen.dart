@@ -3,27 +3,21 @@ import 'dart:io';
 import 'package:bandmates/models/Genre.dart';
 import 'package:bandmates/views/HomeScreen.dart';
 import 'package:bandmates/views/MapScreen.dart';
-import 'package:bandmates/views/UI/InstrumentChipInput.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:geocoder/geocoder.dart' as geocoder;
 
 import 'package:intl/intl.dart';
-import 'package:bandmates/models/User.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:bandmates/models/Event.dart';
-import 'package:flutter_form_builder/flutter_form_builder.dart';
 
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:location/location.dart';
-import 'package:geocoder/geocoder.dart';
-import 'package:geocoder/geocoder.dart' as prefix1;
 import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:provider/provider.dart';
 import '../../Utils.dart';
-import '../../models/User.dart';
 import '../../models/Event.dart';
 import 'package:uuid/uuid.dart';
 import '../../models/Instrument.dart';
@@ -39,11 +33,10 @@ class EventUploadScreen extends StatefulWidget {
 
 class _EventUploadScreenState extends State<EventUploadScreen> {
   GlobalKey<FormBuilderState> _fbKey = new GlobalKey<FormBuilderState>();
-  TextEditingController locationController = new TextEditingController();
   Completer<GoogleMapController> _mapController = Completer();
   Location location = new Location();
-  Set<Marker> markers = Set();
-  GeoFirePoint point;
+  Set<Marker> _markers = Set();
+  geocoder.Coordinates _coordinates;
   Geoflutterfire geo = Geoflutterfire();
   bool _isAudition = false;
   bool _isUploading = false;
@@ -62,33 +55,6 @@ class _EventUploadScreenState extends State<EventUploadScreen> {
   @override
   void initState() {
     super.initState();
-  }
-
-  Future<LocationData> _getLocation() async {
-    var pos = await Provider.of<UserProvider>(context).getUserLocation();
-    setState(() {
-      point = geo.point(latitude: pos.latitude, longitude: pos.longitude);
-    });
-    final coordinates = new prefix1.Coordinates(pos.latitude, pos.longitude);
-    var address =
-        await Geocoder.local.findAddressesFromCoordinates(coordinates);
-    var first = address.first;
-
-    print(
-        "[EventUploadScreen] ${first.featureName} : ${first.addressLine} : ${first.subLocality} : ${first.subThoroughfare} : ${first.subAdminArea}");
-    locationController.text = first.subAdminArea;
-    markers.clear();
-    markers.add(Marker(
-        consumeTapEvents: true,
-        infoWindow: InfoWindow(
-          title: "My Location",
-        ),
-        markerId: MarkerId("My Location"),
-        position: LatLng(pos.latitude, pos.longitude)));
-    GoogleMapController controller = await _mapController.future;
-
-    controller.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
-        target: LatLng(pos.latitude, pos.longitude), zoom: 14.0000)));
   }
 
   @override
@@ -143,10 +109,27 @@ class _EventUploadScreenState extends State<EventUploadScreen> {
     });
   }
 
+  changeLocation(LatLng setLocation) async {
+    setState(() {
+      _coordinates =
+          new geocoder.Coordinates(setLocation.latitude, setLocation.longitude);
+    });
+
+    final GoogleMapController controller = await _mapController.future;
+
+    controller.animateCamera(CameraUpdate.newCameraPosition(
+        CameraPosition(target: setLocation, zoom: 12)));
+
+    controller.animateCamera(CameraUpdate.newLatLngZoom(setLocation, 14));
+    _markers.clear();
+    _markers.add(
+        Marker(markerId: MarkerId("Event Location"), position: setLocation));
+  }
+
   _handleSubmit() async {
     FocusScope.of(context).unfocus();
 
-    if (point == null) {
+    if (_coordinates == null) {
       //TODO: Show message that says that location must not be null!!
     }
 
@@ -168,7 +151,7 @@ class _EventUploadScreenState extends State<EventUploadScreen> {
         eventId: _eventID,
         title: _fbKey.currentState.value['title'],
         text: _fbKey.currentState.value['text'],
-        location: point,
+        location: GeoFirePoint(_coordinates.latitude, _coordinates.longitude),
         type: _eventType,
         time: _fbKey.currentState.value['event-time'],
         audition: audition,
@@ -253,8 +236,9 @@ class _EventUploadScreenState extends State<EventUploadScreen> {
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).primaryColor,
-        borderRadius: BorderRadius.all(
-          Radius.circular(25),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(25),
+          bottomRight: Radius.circular(25),
         ),
       ),
       padding: EdgeInsets.only(left: 12, top: 32, right: 12),
@@ -464,9 +448,11 @@ class _EventUploadScreenState extends State<EventUploadScreen> {
                         hintText: "Event Type",
                       ),
                       onChanged: (value) {
-                        setState(() {
-                          _eventType = value;
-                        });
+                        setState(
+                          () {
+                            _eventType = value;
+                          },
+                        );
                       },
                       items: [
                         DropdownMenuItem(
@@ -480,7 +466,11 @@ class _EventUploadScreenState extends State<EventUploadScreen> {
                         DropdownMenuItem(
                           child: Text("Jam Session"),
                           value: 2,
-                        )
+                        ),
+                        DropdownMenuItem(
+                          child: Text("Open Mic"),
+                          value: 3,
+                        ),
                       ],
                     ),
                   ],
@@ -501,6 +491,40 @@ class _EventUploadScreenState extends State<EventUploadScreen> {
               _buildGenreChipField(),
               SizedBox(height: 20),
               Divider(),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Icon(
+                    LineIcons.map_marker,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                  _coordinates == null
+                      ? Text("Tap the map to choose a location",
+                          style: TextStyle(fontWeight: FontWeight.bold))
+                      : FutureBuilder<List<geocoder.Address>>(
+                          future: geocoder.Geocoder.google(
+                                  "AIzaSyBVY9wwL0hnzcoEN7HTKh41o92PzHZe0wI")
+                              .findAddressesFromCoordinates(_coordinates),
+                          builder: (context, snapshot) {
+                            if (!snapshot.hasData) {
+                              return Text("Loading...");
+                            }
+
+                            if (snapshot.hasError) {
+                              return Text(
+                                "Error: " + snapshot.error,
+                                overflow: TextOverflow.ellipsis,
+                              );
+                            }
+
+                            return Text(
+                              snapshot.data.first.addressLine,
+                              overflow: TextOverflow.ellipsis,
+                            );
+                          },
+                        ),
+                ],
+              ),
               Container(
                 height: 200,
                 child: ClipRRect(
@@ -508,18 +532,27 @@ class _EventUploadScreenState extends State<EventUploadScreen> {
                   child: Card(
                     elevation: 5,
                     child: GoogleMap(
-                      onTap: (latlng) =>
-                          Navigator.pushNamed(context, MapScreen.routeName),
+                      onTap: (latlng) => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => MapScreen(
+                            paramFunction: changeLocation,
+                          ),
+                        ),
+                      ),
                       scrollGesturesEnabled: false,
                       zoomGesturesEnabled: false,
                       myLocationButtonEnabled: false,
                       mapType: MapType.normal,
+                      onMapCreated: (GoogleMapController controller) {
+                        _mapController.complete(controller);
+                      },
                       initialCameraPosition: CameraPosition(
                         target: LatLng(currentUser.location.latitude,
                             currentUser.location.longitude),
                         zoom: 12.0000,
                       ),
-                      markers: {},
+                      markers: _markers,
                     ),
                   ),
                 ),

@@ -1,21 +1,17 @@
 import 'package:bandmates/Utils.dart';
 import 'package:bandmates/models/Event.dart';
-import 'package:bandmates/models/EventsScreenArguments.dart';
 import 'package:bandmates/views/HomeScreen.dart';
 import 'package:bandmates/views/UI/Progress.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 class EventsSearchScreen extends StatefulWidget {
   static const routeName = '/events-search';
-
-  final EventsScreenArguments arguments;
-
-  EventsSearchScreen(this.arguments);
 
   @override
   _EventsSearchScreenState createState() => _EventsSearchScreenState();
@@ -24,16 +20,17 @@ class EventsSearchScreen extends StatefulWidget {
 class _EventsSearchScreenState extends State<EventsSearchScreen> {
   int _selectedType;
   String _selectedGenre;
+  bool _searching = false;
   List<DropdownMenuItem> genres = [];
   List<Event> _eventsList = [];
   bool _isLoading = false;
+
+  final GeoFirePoint center = currentUser.location;
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-
-    _eventsList = widget.arguments.eventList;
 
     Utils.genresList.forEach(
       (genre) => genres.add(
@@ -54,13 +51,6 @@ class _EventsSearchScreenState extends State<EventsSearchScreen> {
         ),
       ),
     );
-    // genres.insert(
-    //   0,
-    //   DropdownMenuItem(
-    //     child: Text("None"),
-    //     value: null,
-    //   ),
-    // );
   }
 
   @override
@@ -138,7 +128,7 @@ class _EventsSearchScreenState extends State<EventsSearchScreen> {
             children: <Widget>[
               IconButton(
                 icon: Icon(
-                  LineIcons.long_arrow_left,
+                  Icons.arrow_back,
                   size: 32,
                   color: Colors.white,
                 ),
@@ -199,6 +189,10 @@ class _EventsSearchScreenState extends State<EventsSearchScreen> {
                   DropdownMenuItem(
                     child: Text("Jam Session"),
                     value: 2,
+                  ),
+                  DropdownMenuItem(
+                    child: Text("Open Mic"),
+                    value: 3,
                   )
                 ],
               ),
@@ -229,21 +223,50 @@ class _EventsSearchScreenState extends State<EventsSearchScreen> {
 
   buildMainArea(context) {
     return Container(
-      color: Colors.white,
-      height: MediaQuery.of(context).size.height * 0.8,
-      width: double.infinity,
-      child: _isLoading == true
-          ? Center(
-              child: circularProgress(context),
-            )
-          : ListView.builder(
-              padding: EdgeInsets.only(top: 30),
-              itemCount: _eventsList.length,
-              itemBuilder: (BuildContext context, int index) {
-                return buildEventCard(_eventsList[index]);
-              },
-            ),
-    );
+        color: Colors.white,
+        height: MediaQuery.of(context).size.height * 0.8,
+        width: double.infinity,
+        child: _searching != true
+            ? StreamBuilder(
+                stream: Provider.of<EventProvider>(context).getClosest(center),
+                builder: (BuildContext context,
+                    AsyncSnapshot<List<DocumentSnapshot>> snapshot) {
+                  if (snapshot.hasError) {
+                    Utils.buildErrorDialog(context,
+                        "There is an error fetching data, please try again later!");
+                  }
+
+                  if (!snapshot.hasData) {
+                    return circularProgress(context);
+                  }
+
+                  if (snapshot.data.isEmpty) {
+                    return Center(
+                      child: Text(
+                          "There are no current events near you at this time!"),
+                    );
+                  }
+                  return ListView.builder(
+                    padding: EdgeInsets.only(top: 30),
+                    itemCount: snapshot.data.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      return buildEventCard(
+                          Event.fromDocument(snapshot.data[index]));
+                    },
+                  );
+                },
+              )
+            : _eventsList.isEmpty
+                ? Center(
+                    child: Text("No events with these parameters"),
+                  )
+                : ListView.builder(
+                    padding: EdgeInsets.only(top: 30),
+                    itemCount: _eventsList.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      return buildEventCard(_eventsList[index]);
+                    },
+                  ));
   }
 
   buildEventCard(Event event) {
@@ -273,7 +296,9 @@ class _EventsSearchScreenState extends State<EventsSearchScreen> {
                     child: Text(
                       event.type == 0
                           ? "Concert"
-                          : event.type == 1 ? "Audition" : "Jam Session",
+                          : event.type == 1
+                              ? "Audition"
+                              : event.type == 2 ? "Jam Session" : "Open Mic",
                       style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Theme.of(context).primaryColor),
@@ -360,6 +385,7 @@ class _EventsSearchScreenState extends State<EventsSearchScreen> {
   _searchEvents() async {
     setState(() {
       _isLoading = true;
+      _searching = true;
     });
 
     Query query = Firestore.instance.collection('events');
@@ -389,6 +415,7 @@ class _EventsSearchScreenState extends State<EventsSearchScreen> {
   void _searchName(String query) async {
     setState(() {
       _isLoading = true;
+      _searching = true;
     });
     List<Event> results = [];
     await Firestore.instance

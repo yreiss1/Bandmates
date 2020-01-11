@@ -1,4 +1,4 @@
-import 'package:bandmates/models/MusiciansScreenArguments.dart';
+import 'package:bandmates/views/EventsSearchScreen.dart';
 import 'package:bandmates/views/MusiciansSearchScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:bandmates/views/UploadScreens/PostUploadScreen.dart';
@@ -16,6 +16,7 @@ class UploadScreen extends StatelessWidget {
 }
 
 buildMainArea(context) {
+  double buttonSize = MediaQuery.of(context).size.height * 0.17;
   return Container(
     decoration: BoxDecoration(
         color: Colors.white,
@@ -32,7 +33,7 @@ buildMainArea(context) {
         GestureDetector(
           onTap: () => Navigator.pushNamed(context, PostUploadScreen.routeName),
           child: Container(
-            height: MediaQuery.of(context).size.height * .20,
+            height: buttonSize,
             margin: EdgeInsets.only(bottom: 5),
             child: Card(
               elevation: 10,
@@ -66,7 +67,7 @@ buildMainArea(context) {
           onTap: () =>
               Navigator.pushNamed(context, EventUploadScreen.routeName),
           child: Container(
-            height: MediaQuery.of(context).size.height * .2,
+            height: buttonSize,
             margin: EdgeInsets.only(bottom: 5),
             child: Card(
               elevation: 10,
@@ -99,10 +100,11 @@ buildMainArea(context) {
         ),
         GestureDetector(
           onTap: () => Navigator.pushNamed(
-              context, MusiciansSearchScreen.routeName,
-              arguments: MusiciansScreenArguments(userList: [])),
+            context,
+            MusiciansSearchScreen.routeName,
+          ),
           child: Container(
-            height: MediaQuery.of(context).size.height * .2,
+            height: buttonSize,
             margin: EdgeInsets.only(bottom: 5),
             child: Card(
               elevation: 10,
@@ -132,6 +134,41 @@ buildMainArea(context) {
             ),
           ),
         ),
+        GestureDetector(
+          onTap: () => Navigator.pushNamed(
+            context,
+            EventsSearchScreen.routeName,
+          ),
+          child: Container(
+            height: buttonSize,
+            margin: EdgeInsets.only(bottom: 5),
+            child: Card(
+              elevation: 10,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+              child: Container(
+                child: const Padding(
+                  padding: EdgeInsets.all(10),
+                  child: const Text(
+                    "Discover Events",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                decoration: new BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    image: new DecorationImage(
+                        fit: BoxFit.cover,
+                        colorFilter: new ColorFilter.mode(
+                            Colors.black.withOpacity(0.6), BlendMode.hardLight),
+                        image: const AssetImage('assets/images/singer.jpg'))),
+              ),
+            ),
+          ),
+        ),
       ],
     ),
   );
@@ -139,6 +176,21 @@ buildMainArea(context) {
 
 buildSearchHeader(context) {
   return Container(
+    // decoration: BoxDecoration(
+    //   gradient: LinearGradient(
+    //     // Where the linear gradient begins and ends
+    //     begin: Alignment.topRight,
+    //     end: Alignment.bottomLeft,
+    //     // Add one stop for each color. Stops should increase from 0 to 1
+    //     stops: [0.1, 0.5, 0.7],
+    //     colors: [
+    //       // Colors are easy thanks to Flutter's Colors class.
+    //       Theme.of(context).primaryColor.withAlpha(50),
+    //       Theme.of(context).primaryColor.withAlpha(900),
+    //       Theme.of(context).primaryColor.withAlpha(80),
+    //     ],
+    //   ),
+    // ),
     padding: EdgeInsets.only(left: 12, top: 32),
     height: 100,
     width: double.infinity,

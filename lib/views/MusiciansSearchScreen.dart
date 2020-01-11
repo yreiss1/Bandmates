@@ -1,20 +1,19 @@
 import 'package:bandmates/Utils.dart';
-import 'package:bandmates/models/MusiciansScreenArguments.dart';
+import 'package:bandmates/models/ProfileScreenArguments.dart';
 import 'package:bandmates/models/User.dart';
 import 'package:bandmates/views/HomeScreen.dart';
+import 'package:bandmates/views/ProfileScreen.dart';
 import 'package:bandmates/views/UI/Progress.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:provider/provider.dart';
 import 'package:searchable_dropdown/searchable_dropdown.dart';
 
 class MusiciansSearchScreen extends StatefulWidget {
   static const routeName = '/musicians-search';
-
-  final MusiciansScreenArguments arguments;
-
-  MusiciansSearchScreen(this.arguments);
 
   @override
   _MusiciansSearchScreenState createState() => _MusiciansSearchScreenState();
@@ -28,10 +27,11 @@ class _MusiciansSearchScreenState extends State<MusiciansSearchScreen> {
   List<DropdownMenuItem> genres = [];
   List<User> _usersList = [];
 
+  final GeoFirePoint center = currentUser.location;
+
   @override
   void initState() {
     super.initState();
-    _usersList = widget.arguments.userList;
 
     Utils.instrumentList.forEach(
       (inst) => instruments.add(
@@ -166,7 +166,7 @@ class _MusiciansSearchScreenState extends State<MusiciansSearchScreen> {
             children: <Widget>[
               IconButton(
                 icon: Icon(
-                  LineIcons.long_arrow_left,
+                  Icons.arrow_back,
                   size: 32,
                   color: Colors.white,
                 ),
@@ -196,22 +196,51 @@ class _MusiciansSearchScreenState extends State<MusiciansSearchScreen> {
 
   buildMainArea(context) {
     return Container(
-      padding: EdgeInsets.only(top: 0),
-      color: Colors.white,
-      height: MediaQuery.of(context).size.height * 0.80,
-      width: double.infinity,
-      child: _isLoading == true
-          ? Center(
-              child: circularProgress(context),
-            )
-          : ListView.builder(
-              padding: EdgeInsets.only(top: 30),
-              itemCount: _usersList.length,
-              itemBuilder: (BuildContext context, int index) {
-                return buildUserCard(_usersList[index]);
-              },
-            ),
-    );
+        padding: EdgeInsets.only(top: 0),
+        color: Colors.white,
+        height: MediaQuery.of(context).size.height * 0.80,
+        width: double.infinity,
+        child: _usersList.length == 0
+            ? StreamBuilder(
+                stream: Provider.of<UserProvider>(context).getClosest(center),
+                builder: (BuildContext context,
+                    AsyncSnapshot<List<DocumentSnapshot>> snapshot) {
+                  if (!snapshot.hasData) {
+                    return circularProgress(context);
+                  }
+
+                  if (snapshot.hasError) {
+                    Utils.buildErrorDialog(context,
+                        "Error fetching data, please try again later!");
+                  }
+
+                  if (snapshot.data.length == 0) {
+                    return Center(
+                      child: Text(
+                          "No musicians in your area, please try again later!"),
+                    );
+                  }
+
+                  return ListView.builder(
+                    padding: EdgeInsets.only(top: 30),
+                    itemCount: snapshot.data.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      User user = User.fromDocument(snapshot.data[index]);
+                      if (user.uid == currentUser.uid) {
+                        return Container();
+                      }
+                      return buildUserCard(user, context);
+                    },
+                  );
+                },
+              )
+            : ListView.builder(
+                padding: EdgeInsets.only(top: 30),
+                itemCount: _usersList.length,
+                itemBuilder: (BuildContext context, int index) {
+                  return buildUserCard(_usersList[index], context);
+                },
+              ));
   }
 
   buildChipInputs() {
@@ -376,95 +405,99 @@ class _MusiciansSearchScreenState extends State<MusiciansSearchScreen> {
   }
 }
 
-buildUserCard(User user) {
-  return Container(
-    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-    child: Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      elevation: 10,
-      child: Container(
-        padding: EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Row(
-              children: <Widget>[
-                CircleAvatar(
-                  radius: 35,
-                  backgroundImage: user.photoUrl == null
-                      ? AssetImage('assets/images/user-placeholder.png')
-                      : CachedNetworkImageProvider(user.photoUrl),
-                ),
-                SizedBox(
-                  width: 30,
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      user.name,
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-                    ),
-                    Text(
-                      user.location
-                              .distance(
-                                  lat: currentUser.location.latitude,
-                                  lng: currentUser.location.longitude)
-                              .round()
-                              .toString() +
-                          "km away",
-                      style: TextStyle(fontStyle: FontStyle.italic),
+buildUserCard(User user, BuildContext context) {
+  return GestureDetector(
+    onTap: () => Navigator.pushNamed(context, ProfileScreen.routeName,
+        arguments: ProfileScreenArguments(userId: user.uid)),
+    child: Container(
+      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: Card(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        elevation: 10,
+        child: Container(
+          padding: EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Row(
+                children: <Widget>[
+                  CircleAvatar(
+                    radius: 35,
+                    backgroundImage: user.photoUrl == null
+                        ? AssetImage('assets/images/user-placeholder.png')
+                        : CachedNetworkImageProvider(user.photoUrl),
+                  ),
+                  SizedBox(
+                    width: 30,
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        user.name,
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 20),
+                      ),
+                      Text(
+                        user.location
+                                .distance(
+                                    lat: currentUser.location.latitude,
+                                    lng: currentUser.location.longitude)
+                                .round()
+                                .toString() +
+                            "km away",
+                        style: TextStyle(fontStyle: FontStyle.italic),
+                      )
+                    ],
+                  ),
+                ],
+              ),
+              SizedBox(
+                height: 10,
+              ),
+              Text(
+                "Instruments: ",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              SizedBox(
+                height: 5,
+              ),
+              Row(
+                children: <Widget>[
+                  for (String inst in user.instruments.keys)
+                    Container(
+                      margin: EdgeInsets.symmetric(horizontal: 2),
+                      child: Icon(
+                        Utils.valueToIcon(inst),
+                        size: 30,
+                      ),
                     )
-                  ],
-                ),
-              ],
-            ),
-            SizedBox(
-              height: 10,
-            ),
-            Text(
-              "Instruments: ",
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            SizedBox(
-              height: 5,
-            ),
-            Row(
-              children: <Widget>[
-                for (String inst in user.instruments.keys)
-                  Container(
-                    margin: EdgeInsets.symmetric(horizontal: 2),
-                    child: Icon(
-                      Utils.valueToIcon(inst),
-                      size: 30,
-                    ),
-                  )
-              ],
-            ),
-            SizedBox(
-              height: 5,
-            ),
-            Text(
-              "Genres: ",
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            SizedBox(
-              height: 5,
-            ),
-            Row(
-              children: <Widget>[
-                for (String genre in user.genres.keys)
-                  Container(
-                    margin: EdgeInsets.symmetric(horizontal: 2),
-                    child: Chip(
-                      label: Text(genre),
-                    ),
-                  )
-              ],
-            ),
-          ],
+                ],
+              ),
+              SizedBox(
+                height: 5,
+              ),
+              Text(
+                "Genres: ",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              SizedBox(
+                height: 5,
+              ),
+              Row(
+                children: <Widget>[
+                  for (String genre in user.genres.keys)
+                    Container(
+                      margin: EdgeInsets.symmetric(horizontal: 2),
+                      child: Chip(
+                        label: Text(genre),
+                      ),
+                    )
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     ),

@@ -1,8 +1,6 @@
 import 'dart:async';
 
 import 'package:bandmates/models/Event.dart';
-import 'package:bandmates/models/EventsScreenArguments.dart';
-import 'package:bandmates/models/MusiciansScreenArguments.dart';
 import 'package:bandmates/views/EventsSearchScreen.dart';
 import 'package:bandmates/views/MapScreen.dart';
 import 'package:bandmates/views/MusiciansSearchScreen.dart';
@@ -18,96 +16,19 @@ import 'package:geocoder/geocoder.dart' as geocoder;
 import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:provider/provider.dart';
 import '../Utils.dart';
 
 import '../models/User.dart';
 
 final usersRef = Firestore.instance.collection('users');
 
-class TimelineScreen extends StatefulWidget {
+class TimelineScreen extends StatelessWidget {
   final User currentUser;
 
   TimelineScreen({this.currentUser});
 
-  @override
-  _TimelineScreenState createState() => _TimelineScreenState();
-}
-
-class _TimelineScreenState extends State<TimelineScreen> {
-  bool _isLoading = false;
-  List<User> _userList;
-  List<Event> _eventList;
-  final Geoflutterfire geo = Geoflutterfire();
   final GeoFirePoint center = prefix0.currentUser.location;
-
-  @override
-  void initState() {
-    super.initState();
-    _userList = [];
-    _eventList = [];
-    getTimeline();
-  }
-
-  Future<void> getTimeline() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    var collectionReference = Firestore.instance.collection('events');
-
-    Stream<List<DocumentSnapshot>> stream = geo
-        .collection(collectionRef: collectionReference)
-        .within(center: center, radius: 100, field: 'loc', strictMode: true);
-
-    stream.listen((List<DocumentSnapshot> documentList) {
-      documentList.forEach((doc) {
-        setState(() {
-          _eventList.add(Event.fromDocument(doc));
-        });
-      });
-    });
-
-    var userReference = Firestore.instance.collection('users');
-    Stream<List<DocumentSnapshot>> userStream = geo
-        .collection(collectionRef: userReference)
-        .within(
-            center: center, radius: 100, field: 'location', strictMode: true);
-
-    userStream.listen((List<DocumentSnapshot> documentList) {
-      documentList.forEach((doc) {
-        setState(() {
-          if (doc.documentID != prefix0.currentUser.uid) {
-            _userList.add(User.fromDocument(doc));
-          }
-        });
-      });
-    });
-
-    setState(() {
-      _isLoading = false;
-    });
-  }
-
-  String buildSubtitle(Map<dynamic, dynamic> map) {
-    List l = map.keys.toList();
-
-    String result = l.fold(
-        "",
-        (inc, ins) =>
-            inc +
-            " " +
-            ins.toString()[0].toUpperCase() +
-            ins.toString().substring(1) +
-            " " +
-            "\\");
-
-    result = result.substring(1, result.length - 1);
-    if (result.length > 40) {
-      result = result.substring(0, 40);
-      result += "...";
-    }
-    return result;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -115,20 +36,20 @@ class _TimelineScreenState extends State<TimelineScreen> {
 
     return ListView(
       children: <Widget>[
-        buildSearchHeader(),
-        buildMainArea(),
+        buildSearchHeader(context),
+        buildMainArea(context),
       ],
     );
   }
 
-  buildSearchHeader() {
+  buildSearchHeader(context) {
     final coordinates = new geocoder.Coordinates(
         prefix0.currentUser.location.latitude,
         prefix0.currentUser.location.longitude);
 
     return Container(
       padding: EdgeInsets.only(left: 12, top: 32, right: 12),
-      height: MediaQuery.of(context).size.height * 0.25,
+      height: MediaQuery.of(context).size.height * 0.28,
       width: double.infinity,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -189,14 +110,32 @@ class _TimelineScreenState extends State<TimelineScreen> {
                   borderRadius: BorderRadius.circular(50)),
               label: Text("Change"),
               textColor: Colors.white,
-              onPressed: () =>
-                  Navigator.pushNamed(context, MapScreen.routeName)),
+              onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => MapScreen(
+                            paramFunction: changeLocation,
+                          )))),
         ],
       ),
     );
   }
 
-  buildEventsList() {
+  changeLocation(LatLng setLocation) {
+    GeoFirePoint point =
+        GeoFirePoint(setLocation.latitude, setLocation.longitude);
+    print("[MapScreen] " + point.data.toString());
+
+    Firestore.instance
+        .collection('users')
+        .document(currentUser.uid)
+        .updateData({
+      'location': point.data,
+    });
+    currentUser.location = point;
+  }
+
+  buildEventsList(context) {
     return Flexible(
       child: Container(
         width: double.infinity,
@@ -213,9 +152,9 @@ class _TimelineScreenState extends State<TimelineScreen> {
                   ),
                   FlatButton(
                     onPressed: () => Navigator.pushNamed(
-                        context, EventsSearchScreen.routeName,
-                        arguments:
-                            EventsScreenArguments(eventList: [..._eventList])),
+                      context,
+                      EventsSearchScreen.routeName,
+                    ),
                     child: Text(
                       "See All",
                       style: TextStyle(color: Theme.of(context).primaryColor),
@@ -227,89 +166,114 @@ class _TimelineScreenState extends State<TimelineScreen> {
             SizedBox(
               height: 16,
             ),
-            Expanded(
-              child: ListView.separated(
-                padding: EdgeInsets.only(left: 12, right: 12),
-                separatorBuilder: (BuildContext context, int index) {
-                  return SizedBox(
-                    width: 16,
+            StreamBuilder<List<DocumentSnapshot>>(
+              stream: Provider.of<EventProvider>(context).getClosest(center),
+              builder: (BuildContext context,
+                  AsyncSnapshot<List<DocumentSnapshot>> snapshot) {
+                if (!snapshot.hasData) {
+                  return Center(
+                    child: circularProgress(context),
                   );
-                },
-                scrollDirection: Axis.horizontal,
-                itemCount: _eventList.length,
-                itemBuilder: (BuildContext context, int index) {
-                  return Container(
-                    child: Column(
-                      children: <Widget>[
-                        Card(
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10)),
-                          elevation: 10,
-                          child: Container(
-                            padding: EdgeInsets.all(8),
-                            width: 250,
-                            height: 250,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: <Widget>[
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
+                }
+
+                if (snapshot.data.length == 0) {
+                  return Center(
+                    child: Text("There are no events currently in your area"),
+                  );
+                }
+
+                if (snapshot.error != null) {
+                  return Center(
+                    child: Text(
+                      "There was an error fetching events, please try again later",
+                    ),
+                  );
+                }
+
+                return Expanded(
+                  child: ListView.separated(
+                    padding: EdgeInsets.only(left: 12, right: 12),
+                    separatorBuilder: (BuildContext context, int index) {
+                      return SizedBox(
+                        width: 16,
+                      );
+                    },
+                    scrollDirection: Axis.horizontal,
+                    itemCount: snapshot.data.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      Event event = Event.fromDocument(snapshot.data[index]);
+                      return Container(
+                        child: Column(
+                          children: <Widget>[
+                            Card(
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10)),
+                              elevation: 10,
+                              child: Container(
+                                padding: EdgeInsets.all(8),
+                                width: 250,
+                                height: 250,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: <Widget>[
-                                    Text(
-                                      _eventList[index].title,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: <Widget>[
+                                        Text(
+                                          event.title,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16),
+                                        ),
+                                        Container(
+                                          padding: EdgeInsets.all(2),
+                                          decoration: BoxDecoration(
+                                              border: Border.all(
+                                                  color: Theme.of(context)
+                                                      .primaryColor)),
+                                          child: Text(
+                                            event.type == 0
+                                                ? "Concert"
+                                                : event.type == 1
+                                                    ? "Audition"
+                                                    : "Jam Session",
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                color: Theme.of(context)
+                                                    .primaryColor),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(
+                                      height: 8,
+                                    ),
+                                    Text(event.name),
+                                    SizedBox(
+                                      height: 8,
                                     ),
                                     Container(
-                                      padding: EdgeInsets.all(2),
-                                      decoration: BoxDecoration(
-                                          border: Border.all(
-                                              color: Theme.of(context)
-                                                  .primaryColor)),
-                                      child: Text(
-                                        _eventList[index].type == 0
-                                            ? "Concert"
-                                            : _eventList[index].type == 1
-                                                ? "Audition"
-                                                : "Jam Session",
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            color:
-                                                Theme.of(context).primaryColor),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(
-                                  height: 8,
-                                ),
-                                Text(_eventList[index].name),
-                                SizedBox(
-                                  height: 8,
-                                ),
-                                Container(
-                                  height: 100,
-                                  width: double.infinity,
-                                  child: ClipRRect(
-                                    borderRadius:
-                                        BorderRadius.all(Radius.circular(10)),
-                                    child: Card(
-                                      elevation: 5,
-                                      child:
-                                          /* GoogleMap(
+                                      height: 100,
+                                      width: double.infinity,
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.all(
+                                            Radius.circular(10)),
+                                        child: Card(
+                                          elevation: 5,
+                                          child:
+                                              /* GoogleMap(
                                         scrollGesturesEnabled: false,
                                         zoomGesturesEnabled: false,
                                         myLocationButtonEnabled: false,
                                         mapType: MapType.normal,
                                         initialCameraPosition: CameraPosition(
                                           target: LatLng(
-                                              _eventList[index]
+                                              event
                                                   .location
                                                   .latitude,
-                                              _eventList[index]
+                                              event
                                                   .location
                                                   .longitude),
                                           zoom: 14.0000,
@@ -319,79 +283,82 @@ class _TimelineScreenState extends State<TimelineScreen> {
                                               markerId:
                                                   MarkerId("Event Location"),
                                               position: LatLng(
-                                                  _eventList[index]
+                                                  event
                                                       .location
                                                       .latitude,
-                                                  _eventList[index]
+                                                  event
                                                       .location
                                                       .longitude))
                                         },
                                       ), */
-                                          Container(),
+                                              Container(),
+                                        ),
+                                      ),
                                     ),
-                                  ),
+                                    SizedBox(
+                                      height: 4,
+                                    ),
+                                    Text(
+                                      event.text,
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.w500),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    SizedBox(
+                                      height: 4,
+                                    ),
+                                    Container(
+                                      padding: EdgeInsets.all(2),
+                                      decoration: BoxDecoration(
+                                          border: Border.all(
+                                              color: Theme.of(context)
+                                                  .accentColor)),
+                                      child: Text(
+                                        DateFormat.yMMMd()
+                                            .add_jm()
+                                            .format(event.time),
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color:
+                                                Theme.of(context).accentColor),
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      height: 8,
+                                    ),
+                                    Text(
+                                      event.location
+                                              .distance(
+                                                  lat: prefix0.currentUser
+                                                      .location.latitude,
+                                                  lng: prefix0.currentUser
+                                                      .location.longitude)
+                                              .round()
+                                              .toString() +
+                                          " km away",
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.w300,
+                                          fontStyle: FontStyle.italic),
+                                    )
+                                  ],
                                 ),
-                                SizedBox(
-                                  height: 4,
-                                ),
-                                Text(
-                                  _eventList[index].text,
-                                  style: TextStyle(fontWeight: FontWeight.w500),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                SizedBox(
-                                  height: 4,
-                                ),
-                                Container(
-                                  padding: EdgeInsets.all(2),
-                                  decoration: BoxDecoration(
-                                      border: Border.all(
-                                          color:
-                                              Theme.of(context).accentColor)),
-                                  child: Text(
-                                    DateFormat.yMMMd()
-                                        .add_jm()
-                                        .format(_eventList[index].time),
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Theme.of(context).accentColor),
-                                  ),
-                                ),
-                                SizedBox(
-                                  height: 8,
-                                ),
-                                Text(
-                                  _eventList[index]
-                                          .location
-                                          .distance(
-                                              lat: prefix0.currentUser.location
-                                                  .latitude,
-                                              lng: prefix0.currentUser.location
-                                                  .longitude)
-                                          .round()
-                                          .toString() +
-                                      " km away",
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.w300,
-                                      fontStyle: FontStyle.italic),
-                                )
-                              ],
+                              ),
                             ),
-                          ),
+                          ],
                         ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ),
+                      );
+                    },
+                  ),
+                );
+              },
+            )
           ],
         ),
       ),
     );
   }
 
-  buildUsersList() {
+  buildUsersList(context) {
     return Container(
       height: 300,
       width: double.infinity,
@@ -408,9 +375,9 @@ class _TimelineScreenState extends State<TimelineScreen> {
                 ),
                 FlatButton(
                   onPressed: () => Navigator.pushNamed(
-                      context, MusiciansSearchScreen.routeName,
-                      arguments:
-                          MusiciansScreenArguments(userList: [..._userList])),
+                    context,
+                    MusiciansSearchScreen.routeName,
+                  ),
                   child: Text(
                     "See All",
                     style: TextStyle(color: Theme.of(context).primaryColor),
@@ -422,120 +389,149 @@ class _TimelineScreenState extends State<TimelineScreen> {
           SizedBox(
             height: 16,
           ),
-          Expanded(
-            child: ListView.separated(
-              padding: EdgeInsets.only(left: 12, right: 12),
-              separatorBuilder: (BuildContext context, int index) {
-                return SizedBox(
-                  width: 16,
+          StreamBuilder(
+            stream: Provider.of<UserProvider>(context).getClosest(center),
+            builder: (BuildContext context,
+                AsyncSnapshot<List<DocumentSnapshot>> snapshot) {
+              if (!snapshot.hasData) {
+                return Center(
+                  child: circularProgress(context),
                 );
-              },
-              scrollDirection: Axis.horizontal,
-              itemCount: _userList.length,
-              itemBuilder: (BuildContext context, int index) {
-                return Container(
-                  width: 134,
-                  child: GestureDetector(
-                    onTap: () => Navigator.pushNamed(
-                        context, ProfileScreen.routeName,
-                        arguments: ProfileScreenArguments(
-                            userId: _userList[index].uid)),
-                    child: Stack(
-                      alignment: Alignment.topCenter,
-                      children: <Widget>[
-                        Column(
+              }
+
+              if (snapshot.data.length == 0) {
+                return Center(
+                  child: Text("There are no users currently in your area"),
+                );
+              }
+
+              if (snapshot.error != null) {
+                return Center(
+                  child: Text(
+                    "There was an error fetching data, please try again later",
+                  ),
+                );
+              }
+
+              return Expanded(
+                child: ListView.separated(
+                  padding: EdgeInsets.only(left: 12, right: 12),
+                  separatorBuilder: (BuildContext context, int index) {
+                    return SizedBox(
+                      width: 16,
+                    );
+                  },
+                  scrollDirection: Axis.horizontal,
+                  itemCount: snapshot.data.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    User user = User.fromDocument(snapshot.data[index]);
+                    if (user.uid == prefix0.currentUser.uid) {
+                      return Container();
+                    }
+                    return Container(
+                      width: 134,
+                      child: GestureDetector(
+                        onTap: () => Navigator.pushNamed(
+                            context, ProfileScreen.routeName,
+                            arguments:
+                                ProfileScreenArguments(userId: user.uid)),
+                        child: Stack(
+                          alignment: Alignment.topCenter,
                           children: <Widget>[
-                            SizedBox(
-                              height: 30,
-                            ),
-                            Card(
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10)),
-                              elevation: 10,
-                              child: Container(
-                                padding: EdgeInsets.all(8),
-                                width: 134,
-                                height: 140,
-                                child: Column(
-                                  children: <Widget>[
-                                    SizedBox(
-                                      height: 45,
-                                    ),
-                                    Text(
-                                      _userList[index].name,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 14),
-                                    ),
-                                    SizedBox(
-                                      height: 8,
-                                    ),
-                                    Container(
-                                      height: 30,
-                                      child: FittedBox(
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.max,
-                                          children: [
-                                            for (String inst in _userList[index]
-                                                .instruments
-                                                .keys)
-                                              Container(
-                                                margin: EdgeInsets.symmetric(
-                                                    horizontal: 2),
-                                                child: Icon(
-                                                  Utils.valueToIcon(inst),
-                                                  size: 30,
-                                                ),
-                                              )
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                    Align(
-                                      alignment: Alignment.bottomCenter,
-                                      child: Text(
-                                        _userList[index]
-                                                .location
-                                                .distance(
-                                                    lat: prefix0.currentUser
-                                                        .location.latitude,
-                                                    lng: prefix0.currentUser
-                                                        .location.longitude)
-                                                .round()
-                                                .toString() +
-                                            " km away",
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.w300,
-                                            fontStyle: FontStyle.italic),
-                                      ),
-                                    ),
-                                  ],
+                            Column(
+                              children: <Widget>[
+                                SizedBox(
+                                  height: 30,
                                 ),
-                              ),
+                                Card(
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10)),
+                                  elevation: 10,
+                                  child: Container(
+                                    padding: EdgeInsets.all(8),
+                                    width: 134,
+                                    height: 140,
+                                    child: Column(
+                                      children: <Widget>[
+                                        SizedBox(
+                                          height: 45,
+                                        ),
+                                        Text(
+                                          user.name,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14),
+                                        ),
+                                        SizedBox(
+                                          height: 8,
+                                        ),
+                                        Container(
+                                          height: 30,
+                                          child: FittedBox(
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.max,
+                                              children: [
+                                                for (String inst
+                                                    in user.instruments.keys)
+                                                  Container(
+                                                    margin:
+                                                        EdgeInsets.symmetric(
+                                                            horizontal: 2),
+                                                    child: Icon(
+                                                      Utils.valueToIcon(inst),
+                                                      size: 30,
+                                                    ),
+                                                  )
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                        Align(
+                                          alignment: Alignment.bottomCenter,
+                                          child: Text(
+                                            user.location
+                                                    .distance(
+                                                        lat: prefix0.currentUser
+                                                            .location.latitude,
+                                                        lng: prefix0.currentUser
+                                                            .location.longitude)
+                                                    .round()
+                                                    .toString() +
+                                                " km away",
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.w300,
+                                                fontStyle: FontStyle.italic),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            CircleAvatar(
+                              radius: 35,
+                              backgroundImage: user.photoUrl == null
+                                  ? AssetImage(
+                                      "assets/images/user-placeholder.png")
+                                  : CachedNetworkImageProvider(user.photoUrl),
                             ),
                           ],
                         ),
-                        CircleAvatar(
-                          radius: 35,
-                          backgroundImage: _userList[index].photoUrl == null
-                              ? AssetImage("assets/images/user-placeholder.png")
-                              : CachedNetworkImageProvider(
-                                  _userList[index].photoUrl),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
           ),
         ],
       ),
     );
   }
 
-  buildMainArea() {
+  buildMainArea(context) {
     return Container(
       decoration: BoxDecoration(
           color: Colors.white,
@@ -543,14 +539,12 @@ class _TimelineScreenState extends State<TimelineScreen> {
               topLeft: Radius.circular(30), topRight: Radius.circular(30))),
       height: 700,
       width: double.infinity,
-      child: _isLoading
-          ? circularProgress(context)
-          : Column(
-              children: <Widget>[
-                buildUsersList(),
-                buildEventsList(),
-              ],
-            ),
+      child: Column(
+        children: <Widget>[
+          buildUsersList(context),
+          buildEventsList(context),
+        ],
+      ),
     );
   }
 }

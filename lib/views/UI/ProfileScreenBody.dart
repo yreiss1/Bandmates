@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:bandmates/AuthService.dart';
 import 'package:bandmates/Utils.dart';
+import 'package:bandmates/views/ChatRoomScreen.dart';
 import 'package:bandmates/views/UI/Progress.dart';
 import 'package:flutter/material.dart';
 import 'package:bandmates/views/HomeScreen.dart' as prefix0;
@@ -87,53 +89,49 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody>
   Widget build(BuildContext context) {
     print("[ProfileScreenBody] uid: " + widget.user.uid.toString());
 
-    return SingleChildScrollView(
-      child: Stack(
-        children: <Widget>[
-          Column(
-            children: <Widget>[
-              buildHeader(),
-              Column(
-                children: <Widget>[
-                  Container(
-                    height: 1000,
-                  )
-                ],
-              )
-            ],
-          ),
-          Positioned(
-            child: Column(
-              children: <Widget>[
-                buildProfileCard(),
-                SizedBox(
-                  height: 4,
-                ),
-                buildInfoCard()
+    return Scaffold(
+      body: SafeArea(
+        bottom: false,
+        top: false,
+        child: Stack(
+          children: <Widget>[
+            buildHeader(),
+            CustomScrollView(
+              slivers: <Widget>[
+                widget.user.uid == prefix0.currentUser.uid
+                    ? SliverAppBar(
+                        expandedHeight: 50,
+                        actions: <Widget>[
+                          IconButton(
+                            icon: Icon(
+                              LineIcons.sign_out,
+                              size: 32,
+                              color: Colors.white,
+                            ),
+                            onPressed: () =>
+                                Provider.of<AuthService>(context).signOut(),
+                          ),
+                        ],
+                      )
+                    : SliverAppBar(
+                        expandedHeight: 100,
+                        actions: <Widget>[
+                          IconButton(
+                            icon: Icon(
+                              LineIcons.ellipsis_h,
+                            ),
+                            onPressed: () => print("Menu pressed!"),
+                          )
+                        ],
+                      ),
+                SliverList(
+                  delegate: SliverChildListDelegate(
+                      [buildProfileCard(), buildInfoCard()]),
+                )
               ],
             ),
-            top: MediaQuery.of(context).size.height * 0.18,
-          ),
-          Positioned.fill(
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: widget.user.photoUrl != null
-                  ? CircularProfileAvatar(
-                      widget.user.photoUrl,
-                      radius: 60,
-                      borderColor: Colors.white,
-                      borderWidth: 6,
-                    )
-                  : CircularProfileAvatar(
-                      "https://www.bsn.eu/wp-content/uploads/2016/12/user-icon-image-placeholder-300-grey.jpg",
-                      radius: 60,
-                      borderColor: Colors.white,
-                      borderWidth: 3,
-                    ),
-            ),
-            top: MediaQuery.of(context).size.height * 0.1,
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -146,128 +144,131 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody>
               bottomLeft: Radius.circular(25),
               bottomRight: Radius.circular(25))),
       padding: EdgeInsets.only(left: 12, top: 32),
-      height: MediaQuery.of(context).size.height * 0.3,
+      height: 250,
       width: double.infinity,
-      child: Column(
-        children: <Widget>[
-          widget.user.uid != _currentUser.uid
-              ? Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    IconButton(
-                      icon: Icon(
-                        LineIcons.arrow_left,
-                        size: 32,
-                        color: Colors.white,
-                      ),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                    IconButton(
-                      icon: Icon(
-                        LineIcons.ellipsis_h,
-                        size: 32,
-                        color: Colors.white,
-                      ),
-                      onPressed: () => print("Menu clicked"),
-                    ),
-                  ],
-                )
-              : Align(
-                  alignment: Alignment.topRight,
-                  child: IconButton(
-                    icon: Icon(
-                      LineIcons.ellipsis_h,
-                      size: 32,
-                      color: Colors.white,
-                    ),
-                    onPressed: () => print("Menu clicked"),
-                  ),
-                )
-        ],
-      ),
+      child: Container(),
     );
   }
 
   buildProfileCard() {
-    return Container(
-      width: MediaQuery.of(context).size.width,
-      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      child: Card(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        elevation: 10,
-        child: Container(
-          padding: EdgeInsets.all(25),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
-              SizedBox(
-                height: 40,
-              ),
-              Text(
-                widget.user.name,
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
-              ),
-              SizedBox(
-                height: 4,
-              ),
-              Text(widget.user.bio),
-              widget.user.uid == _currentUser.uid
-                  ? Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: <Widget>[
-                        FlatButton.icon(
-                          shape: RoundedRectangleBorder(
-                              side: BorderSide(
-                                  color: Colors.white,
-                                  width: 1,
-                                  style: BorderStyle.solid),
-                              borderRadius: BorderRadius.circular(50)),
-                          color: Theme.of(context).primaryColor,
-                          icon: Icon(LineIcons.calendar),
-                          textColor: Colors.white,
-                          label: Text(
-                            "Create Event",
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          onPressed: () {},
-                        ),
-                        FlatButton.icon(
-                          icon: Icon(LineIcons.music),
-                          shape: RoundedRectangleBorder(
-                              side: BorderSide(
-                                  color: Theme.of(context).primaryColor,
-                                  width: 1,
-                                  style: BorderStyle.solid),
-                              borderRadius: BorderRadius.circular(50)),
-                          label: Text(
-                            "Upload Work",
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          textColor: Theme.of(context).primaryColor,
-                          onPressed: () {},
-                        ),
-                      ],
-                    )
-                  : FlatButton.icon(
-                      shape: RoundedRectangleBorder(
-                          side: BorderSide(
-                              color: Colors.white,
-                              width: 1,
-                              style: BorderStyle.solid),
-                          borderRadius: BorderRadius.circular(50)),
-                      color: Color(0xff829abe),
-                      icon: Icon(LineIcons.comment),
-                      textColor: Colors.white,
-                      label: Text(
-                        "Chat",
-                        style: TextStyle(fontWeight: FontWeight.bold),
+    return Stack(
+      children: <Widget>[
+        Wrap(
+          children: <Widget>[
+            Container(
+              width: MediaQuery.of(context).size.width,
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              margin: EdgeInsets.only(top: 60),
+              child: Card(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
+                elevation: 10,
+                child: Container(
+                  padding: EdgeInsets.all(25),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      SizedBox(
+                        height: 40,
                       ),
-                      onPressed: () {},
-                    ),
-            ],
+                      Text(
+                        widget.user.name,
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 24),
+                      ),
+                      SizedBox(
+                        height: 4,
+                      ),
+                      Text(widget.user.bio),
+                      widget.user.uid == _currentUser.uid
+                          ? Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: <Widget>[
+                                FlatButton.icon(
+                                  shape: RoundedRectangleBorder(
+                                      side: BorderSide(
+                                          color: Colors.white,
+                                          width: 1,
+                                          style: BorderStyle.solid),
+                                      borderRadius: BorderRadius.circular(50)),
+                                  color: Theme.of(context).primaryColor,
+                                  icon: Icon(LineIcons.calendar),
+                                  textColor: Colors.white,
+                                  label: Text(
+                                    "Create Event",
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                  onPressed: () {},
+                                ),
+                                FlatButton.icon(
+                                  icon: Icon(LineIcons.music),
+                                  shape: RoundedRectangleBorder(
+                                      side: BorderSide(
+                                          color: Theme.of(context).primaryColor,
+                                          width: 1,
+                                          style: BorderStyle.solid),
+                                      borderRadius: BorderRadius.circular(50)),
+                                  label: Text(
+                                    "Upload Work",
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                  textColor: Theme.of(context).primaryColor,
+                                  onPressed: () {},
+                                ),
+                              ],
+                            )
+                          : FlatButton.icon(
+                              shape: RoundedRectangleBorder(
+                                  side: BorderSide(
+                                      color: Colors.white,
+                                      width: 1,
+                                      style: BorderStyle.solid),
+                                  borderRadius: BorderRadius.circular(50)),
+                              color: Color(0xff829abe),
+                              icon: Icon(LineIcons.comment),
+                              textColor: Colors.white,
+                              label: Text(
+                                "Chat",
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              onPressed: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (BuildContext context) {
+                                  return ChatRoomScreen(
+                                    otherUser: widget.user,
+                                  );
+                                }),
+                              ),
+                            ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        Positioned.fill(
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: widget.user.photoUrl != null
+                ? CircularProfileAvatar(
+                    widget.user.photoUrl,
+                    radius: 60,
+                    borderColor: Colors.white,
+                    borderWidth: 6,
+                  )
+                : CircularProfileAvatar(
+                    "https://www.bsn.eu/wp-content/uploads/2016/12/user-icon-image-placeholder-300-grey.jpg",
+                    radius: 60,
+                    borderColor: Colors.white,
+                    borderWidth: 3,
+                  ),
           ),
         ),
-      ),
+      ],
     );
   }
 
@@ -282,7 +283,7 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody>
               .findAddressesFromCoordinates(coordinates),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
-          return circularProgress(context);
+          return Center(child: circularProgress(context));
         }
 
         return Container(

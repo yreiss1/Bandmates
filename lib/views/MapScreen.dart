@@ -13,6 +13,9 @@ import 'package:search_map_place/search_map_place.dart';
 
 class MapScreen extends StatefulWidget {
   static const routeName = '/map-screen';
+  final Function paramFunction;
+
+  MapScreen({@required this.paramFunction});
 
   @override
   _MapScreenState createState() => _MapScreenState();
@@ -154,17 +157,7 @@ class _MapScreenState extends State<MapScreen> {
                 icon: Icon(Icons.check),
                 label: Text("Save Location"),
                 onPressed: () {
-                  GeoFirePoint point = GeoFirePoint(
-                      _setLocation.latitude, _setLocation.longitude);
-                  print("[MapScreen] " + point.data.toString());
-
-                  Firestore.instance
-                      .collection('users')
-                      .document(currentUser.uid)
-                      .updateData({
-                    'location': point.data,
-                  });
-                  currentUser.location = point;
+                  widget.paramFunction(_setLocation);
                   Navigator.pop(context);
                 },
                 backgroundColor: Theme.of(context).primaryColor,

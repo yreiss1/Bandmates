@@ -66,6 +66,7 @@ class Event {
 class EventProvider with ChangeNotifier {
   CollectionReference eventsRef = Firestore.instance.collection("events");
   StorageReference storageRef = FirebaseStorage.instance.ref();
+  final Geoflutterfire geo = Geoflutterfire();
 
   List<Event> _events = [];
 
@@ -103,5 +104,11 @@ class EventProvider with ChangeNotifier {
     downloadUrl = await storageSnap.ref.getDownloadURL();
 
     return downloadUrl;
+  }
+
+  Stream<List<DocumentSnapshot>> getClosest(GeoFirePoint center) {
+    return geo
+        .collection(collectionRef: eventsRef)
+        .within(center: center, radius: 100, field: 'loc', strictMode: true);
   }
 }

@@ -89,10 +89,8 @@ class MyApp extends StatelessWidget {
           PostUploadScreen.routeName: (ctx) => PostUploadScreen(),
           EventUploadScreen.routeName: (ctx) => EventUploadScreen(),
           EditProfileScreen.routeName: (ctx) => EditProfileScreen(),
-          MusiciansSearchScreen.routeName: (ctx) =>
-              MusiciansSearchScreen(ModalRoute.of(ctx).settings.arguments),
-          EventsSearchScreen.routeName: (ctx) =>
-              EventsSearchScreen(ModalRoute.of(ctx).settings.arguments),
+          MusiciansSearchScreen.routeName: (ctx) => MusiciansSearchScreen(),
+          EventsSearchScreen.routeName: (ctx) => EventsSearchScreen(),
           MapScreen.routeName: (ctx) => MapScreen(),
         },
       ),

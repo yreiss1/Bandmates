@@ -73,12 +73,14 @@ class User {
       practiceSpace: doc.data['practice'],
       transportation: doc.data['transport'],
       location: loc,
-      time: doc.data['time'],
+      time: doc.data['time'] == null ? null : doc.data['time'].toDate(),
     );
   }
 }
 
 class UserProvider with ChangeNotifier {
+  final Geoflutterfire geo = Geoflutterfire();
+
   User currentUser;
 
   User get user {
@@ -139,5 +141,10 @@ class UserProvider with ChangeNotifier {
   Future<void> obtainLocation() async {
     var pos = await location.getLocation();
     userLocation = pos;
+  }
+
+  Stream<List<DocumentSnapshot>> getClosest(GeoFirePoint center) {
+    return geo.collection(collectionRef: userRef).within(
+        center: center, radius: 100, field: 'location', strictMode: true);
   }
 }
