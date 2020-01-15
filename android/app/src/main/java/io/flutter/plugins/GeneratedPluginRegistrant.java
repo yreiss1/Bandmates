@@ -19,6 +19,7 @@ import io.flutter.plugins.imagepicker.ImagePickerPlugin;
 import com.lyokone.location.LocationPlugin;
 import com.baseflow.location_permissions.LocationPermissionsPlugin;
 import io.flutter.plugins.pathprovider.PathProviderPlugin;
+import flutter.plugins.screen.screen.ScreenPlugin;
 import com.bobbystenly.searchable_dropdown.SearchableDropdownPlugin;
 import com.tekartik.sqflite.SqflitePlugin;
 import io.flutter.plugins.videoplayer.VideoPlayerPlugin;
@@ -49,6 +50,7 @@ public final class GeneratedPluginRegistrant {
     LocationPlugin.registerWith(registry.registrarFor("com.lyokone.location.LocationPlugin"));
     LocationPermissionsPlugin.registerWith(registry.registrarFor("com.baseflow.location_permissions.LocationPermissionsPlugin"));
     PathProviderPlugin.registerWith(registry.registrarFor("io.flutter.plugins.pathprovider.PathProviderPlugin"));
+    ScreenPlugin.registerWith(registry.registrarFor("flutter.plugins.screen.screen.ScreenPlugin"));
     SearchableDropdownPlugin.registerWith(registry.registrarFor("com.bobbystenly.searchable_dropdown.SearchableDropdownPlugin"));
     SqflitePlugin.registerWith(registry.registrarFor("com.tekartik.sqflite.SqflitePlugin"));
     VideoPlayerPlugin.registerWith(registry.registrarFor("io.flutter.plugins.videoplayer.VideoPlayerPlugin"));

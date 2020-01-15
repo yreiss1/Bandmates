@@ -1,14 +1,17 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:bandmates/views/UI/Progress.dart';
+import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
 import 'package:bandmates/models/Post.dart';
-import 'package:bandmates/views/UI/Progress.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:uuid/uuid.dart';
 import 'package:provider/provider.dart';
 import 'package:image_cropper/image_cropper.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:koukicons/pic2.dart';
+import 'package:koukicons/speaker.dart';
+import 'package:koukicons/film.dart';
 
 import 'package:image/image.dart' as Im;
 
@@ -40,46 +43,21 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
   Location location = new Location();
   bool _isVideo = false;
   VideoPlayerController _controller;
+  Future<void> _initializeVideoPlayerFuture;
   String _postID = Uuid().v4();
 
   final _textFocusNode = FocusNode();
-  final _locationFocusNode = FocusNode();
+  final _titleFocusNode = FocusNode();
 
   bool _isUploading = false;
 
-  File _imageFile;
-  File _videoFile;
-  String filename;
+  File _uploadFile;
+  int _fileType;
 
+  ChewieController _chewieController;
   @override
   void initState() {
     super.initState();
-  }
-
-  Future<void> _pickVideo(ImageSource source) async {
-    File selected = await ImagePicker.pickVideo(source: source);
-    await _playVideo(selected);
-    setState(() {
-      _isVideo = true;
-      _imageFile = null;
-      _videoFile = selected;
-    });
-
-    _fbKey.currentState.value['image'] = null;
-    _fbKey.currentState.value['video'] = _videoFile;
-  }
-
-  Future<void> _pickImage(ImageSource source) async {
-    File selected = await ImagePicker.pickImage(source: source);
-
-    setState(() {
-      _isVideo = false;
-      _videoFile = null;
-      _imageFile = selected;
-    });
-
-    _fbKey.currentState.value['video'] = null;
-    _fbKey.currentState.value['image'] = _imageFile;
   }
 
   @override
@@ -90,31 +68,20 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
     super.dispose();
   }
 
-  Future<LocationData> _getLocation() async {
-    var pos = await Provider.of<UserProvider>(context).getUserLocation();
-    setState(() {
-      point = geo.point(latitude: pos.latitude, longitude: pos.longitude);
-    });
-    final coordinates = new prefix1.Coordinates(pos.latitude, pos.longitude);
-    var address =
-        await Geocoder.local.findAddressesFromCoordinates(coordinates);
-    var first = address.first;
+  Future<void> _playVideo() async {
+    if (mounted) {
+      //await _disposeVideoController();
 
-    print(
-        "[PostUploadScreen] ${first.featureName} : ${first.addressLine} : ${first.subLocality} : ${first.subThoroughfare} : ${first.subAdminArea}");
-
-    locationController.text = first.addressLine;
+      setState(() {
+        _controller.play();
+      });
+    }
   }
 
-  Future<void> _playVideo(File file) async {
-    if (file != null && mounted) {
-      //await _disposeVideoController();
-      _controller = VideoPlayerController.file(file);
-      await _controller.setVolume(1.0);
-      await _controller.initialize();
-      await _controller.setLooping(true);
-      await _controller.play();
-    }
+  _pauseVideo() async {
+    setState(() {
+      _controller.pause();
+    });
   }
 
   Future<void> _disposeVideoController() async {
@@ -124,27 +91,14 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
     }
   }
 
-  Widget _previewVideo() {
-    if (_controller == null) {
-      return const Text(
-        'You have not yet picked a video',
-        textAlign: TextAlign.center,
-      );
-    }
-    return Padding(
-      padding: const EdgeInsets.all(10.0),
-      child: AspectRatioVideo(_controller),
-    );
-  }
-
   _compressImage() async {
     final tempDir = await getTemporaryDirectory();
     final path = tempDir.path;
-    Im.Image imageFile = Im.decodeImage(_imageFile.readAsBytesSync());
+    Im.Image imageFile = Im.decodeImage(_uploadFile.readAsBytesSync());
     final compressedImageFile = File('$path/img_$_postID.jpg')
       ..writeAsBytesSync(Im.encodeJpg(imageFile, quality: 85));
     setState(() {
-      _imageFile = compressedImageFile;
+      _uploadFile = compressedImageFile;
     });
   }
 
@@ -155,14 +109,14 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
       setState(() {
         _isUploading = true;
       });
-      if (_imageFile != null) {
+      if (_uploadFile != null) {
         await _compressImage();
       }
 
       User userObject = Provider.of<UserProvider>(context).currentUser;
       String downloadURL =
           await Provider.of<PostProvider>(context, listen: false)
-              .uploadMedia(_imageFile, _postID);
+              .uploadMedia(_uploadFile, _postID);
 
       Post post = new Post(
           postId: _postID,
@@ -179,8 +133,7 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
 
       setState(() {
         _isUploading = false;
-        _imageFile = null;
-        _videoFile = null;
+        _uploadFile = null;
       });
       Navigator.pop(context);
     }
@@ -188,195 +141,442 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
 
   Future<void> _cropImage() async {
     File cropped = await ImageCropper.cropImage(
-      sourcePath: _imageFile.path,
+      sourcePath: _uploadFile.path,
     );
 
     setState(() {
-      _imageFile = cropped ?? _imageFile;
+      _uploadFile = cropped ?? _uploadFile;
     });
   }
 
   /// Remove image
   void _clear() {
-    setState(() => _imageFile = null);
-  }
-
-  AppBar uploadHeader(String text, BuildContext context) {
-    return AppBar(
-      elevation: 0,
-      backgroundColor: Colors.white,
-      title: Text(
-        text,
-        style: TextStyle(color: Color(0xFF1d1e2c), fontSize: 16),
-      ),
-      leading: IconButton(
-        icon: Icon(
-          LineIcons.arrow_left,
-          color: Color(0xFF1d1e2c),
-        ),
-        onPressed: () => Navigator.pop(context),
-      ),
-      actions: <Widget>[
-        IconButton(
-          icon: Icon(
-            LineIcons.check,
-            color: Color(0xFF1d1e2c),
-            size: 30,
-          ),
-          onPressed: _isUploading ? null : () => _handleSubmit(),
-        )
-      ],
-      centerTitle: true,
-    );
+    setState(() => _uploadFile = null);
   }
 
   @override
   Widget build(BuildContext parentContext) {
     return Scaffold(
-      appBar: uploadHeader("Upload Post", context),
+      backgroundColor: Theme.of(context).primaryColor,
       body: SafeArea(
         top: false,
-        child: ListView(
-          padding: EdgeInsets.all(10),
+        bottom: false,
+        child: Stack(
           children: <Widget>[
-            _isUploading ? linearProgress(context) : Container(),
-            Container(
-              height: 220,
-              width: MediaQuery.of(context).size.width * 0.8,
-              child: Center(
-                child: _imageFile == null && _isVideo == false
-                    ? Text("No Image Selected")
-                    : _isVideo
-                        ? _controller.value.initialized
-                            ? AspectRatio(
-                                aspectRatio: 16 / 9,
-                                //aspectRatio: _controller.value.aspectRatio,
-                                child: VideoPlayer(_controller),
-                              )
-                            : Text("Error")
-                        : AspectRatio(
-                            aspectRatio: 16 / 9,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                  image: DecorationImage(
-                                      fit: BoxFit.contain,
-                                      image: _imageFile == null
-                                          ? AssetImage(
-                                              'assets/images/user-placeholder.png')
-                                          : FileImage(_imageFile))),
-                            ),
-                          ),
-              ),
-            ),
-            Divider(),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: <Widget>[
-                FlatButton.icon(
-                  icon: Icon(LineIcons.file_photo_o),
-                  shape: RoundedRectangleBorder(
-                      side: BorderSide(
-                          color: Theme.of(context).primaryColor,
-                          width: 1,
-                          style: BorderStyle.solid),
-                      borderRadius: BorderRadius.circular(50)),
-                  label: Text("Gallery"),
-                  textColor: Theme.of(context).primaryColor,
-                  onPressed: () => _pickImage(ImageSource.gallery),
-                ),
-                FlatButton.icon(
-                  shape: RoundedRectangleBorder(
-                      side: BorderSide(
-                          color: Colors.white,
-                          width: 1,
-                          style: BorderStyle.solid),
-                      borderRadius: BorderRadius.circular(50)),
-                  color: Theme.of(context).primaryColor,
-                  icon: Icon(LineIcons.camera),
-                  textColor: Colors.white,
-                  label: Text("Photo"),
-                  onPressed: () => _pickImage(ImageSource.camera),
-                ),
-                FlatButton.icon(
-                  shape: RoundedRectangleBorder(
-                      side: BorderSide(
-                          color: Colors.white,
-                          width: 1,
-                          style: BorderStyle.solid),
-                      borderRadius: BorderRadius.circular(50)),
-                  color: Theme.of(context).primaryColor,
-                  icon: Icon(LineIcons.video_camera),
-                  textColor: Colors.white,
-                  label: Text("Video"),
-                  onPressed: () => _pickVideo(ImageSource.camera),
-                ),
-              ],
-            ),
-            Divider(
-              thickness: 1,
-            ),
-            SizedBox(
-              height: 10,
-            ),
-            FormBuilder(
-              autovalidate: false,
-              key: _fbKey,
-              child: Column(
+            Scaffold(
+              body: Stack(
                 children: <Widget>[
-                  FormBuilderTextField(
-                    focusNode: _textFocusNode,
-                    onFieldSubmitted: (val) {
-                      FocusScope.of(context).requestFocus(_locationFocusNode);
-                    },
-                    attribute: 'text',
-                    decoration: InputDecoration(
-                      labelText: "What's on your mind?",
-                      hintText: 'Let us know what\'s up',
-                    ),
-                    maxLines: 5,
-                    keyboardType: TextInputType.text,
-                    validators: [
-                      FormBuilderValidators.required(),
-                    ],
-                  ),
-                  SizedBox(
-                    height: 20,
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: <Widget>[
-                      Container(
-                        width: MediaQuery.of(context).size.width * .80,
-                        child: FormBuilderTextField(
-                          focusNode: _locationFocusNode,
-                          attribute: 'loc',
-                          decoration: InputDecoration(
-                            labelText: "Your location",
+                  _buildHeader(),
+                  CustomScrollView(
+                    slivers: <Widget>[
+                      SliverAppBar(
+                        forceElevated: false,
+                        actions: <Widget>[
+                          IconButton(
+                            icon: Icon(
+                              Icons.cloud_upload,
+                              size: 32,
+                              color: Colors.white,
+                            ),
+                            onPressed: () => _handleSubmit(),
                           ),
-                          readOnly: false,
-                          controller: locationController,
-                          validators: [],
+                        ],
+                        expandedHeight: 100,
+                        title: Text(
+                          "Upload Work",
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold),
                         ),
                       ),
-                      SizedBox(
-                        width: 5,
+                      SliverFillRemaining(
+                        fillOverscroll: false,
+                        hasScrollBody: false,
+                        child: _buildPostUploadCard(),
                       ),
-                      FloatingActionButton(
-                        mini: true,
-                        elevation: 0,
-                        child: Icon(LineIcons.crosshairs),
-                        onPressed: () => _getLocation(),
+                      SliverPadding(
+                        padding: EdgeInsets.all(60),
                       )
                     ],
                   ),
                 ],
               ),
             ),
+            Positioned.fill(
+              bottom: 40,
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: FloatingActionButton.extended(
+                  icon: Icon(Icons.cloud_upload),
+                  label: Text("Upload Work"),
+                  onPressed: () => _handleSubmit(),
+                  backgroundColor: Theme.of(context).primaryColor,
+                ),
+              ),
+            ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildFilePreview() {
+    if (_uploadFile != null) {
+      if (_fileType == 0) {
+        //Image
+        return _buildImageFilePreview();
+      } else if (_fileType == 1) {
+        //Audio
+
+      } else if (_fileType == 2) {
+        return _buildVideoFilePreview();
+      }
+    }
+  }
+
+  Widget _buildFileSelection() {
+    return Container(
+      child: Column(
+        children: <Widget>[
+          Text(
+            "Choose file type to upload",
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          ),
+          SizedBox(
+            height: 16,
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              Column(
+                children: <Widget>[
+                  Container(
+                    height: MediaQuery.of(context).size.width * 0.2,
+                    width: MediaQuery.of(context).size.width * 0.2,
+                    child: FittedBox(
+                      child: FloatingActionButton(
+                        heroTag: 'image',
+                        backgroundColor: Colors.white,
+                        elevation: 10,
+                        child: KoukiconsPic2(
+                          height: 30,
+                          width: 30,
+                        ),
+                        onPressed: () async {
+                          File file =
+                              await FilePicker.getFile(type: FileType.IMAGE);
+
+                          setState(() {
+                            _fileType = 0;
+                            _uploadFile = file;
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    height: 8,
+                  ),
+                  Text(
+                    "Image",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                  )
+                ],
+              ),
+              Column(
+                children: <Widget>[
+                  Container(
+                    height: MediaQuery.of(context).size.width * 0.2,
+                    width: MediaQuery.of(context).size.width * 0.2,
+                    child: FittedBox(
+                      child: FloatingActionButton(
+                        heroTag: 'audio',
+                        backgroundColor: Colors.white,
+                        elevation: 10,
+                        child: KoukiconsSpeaker(
+                          height: 100,
+                          width: 100,
+                        ),
+                        onPressed: () async {
+                          File file =
+                              await FilePicker.getFile(type: FileType.AUDIO);
+
+                          setState(() {
+                            _fileType = 1;
+                            _uploadFile = file;
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    height: 8,
+                  ),
+                  Text(
+                    "Audio",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                  )
+                ],
+              ),
+              Column(
+                children: <Widget>[
+                  Container(
+                    height: MediaQuery.of(context).size.width * 0.2,
+                    width: MediaQuery.of(context).size.width * 0.2,
+                    child: FittedBox(
+                      child: FloatingActionButton(
+                        heroTag: 'video',
+                        backgroundColor: Colors.white,
+                        elevation: 10,
+                        child: KoukiconsFilm(),
+                        onPressed: () async {
+                          File file =
+                              await FilePicker.getFile(type: FileType.VIDEO);
+                          print(file.path);
+                          setState(() {
+                            _controller = VideoPlayerController.file(file);
+                            _fileType = 2;
+                            _uploadFile = file;
+                            _chewieController = ChewieController(
+                              videoPlayerController: _controller,
+                              aspectRatio: 3 / 2,
+                              autoPlay: true,
+                              looping: true,
+                            );
+                          });
+
+                          // _initializeVideoPlayerFuture =
+                          //     _controller.initialize();
+                          // _controller.setVolume(1.0);
+                          // _controller.setLooping(true);
+
+                          // await _controller.play();
+                        },
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    height: 8,
+                  ),
+                  Text(
+                    "Video",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                  )
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  _buildHeader() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).primaryColor,
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(25),
+          bottomRight: Radius.circular(25),
+        ),
+      ),
+      padding: EdgeInsets.only(left: 12, top: 32, right: 12),
+      height: 350,
+      width: double.infinity,
+    );
+  }
+
+  _buildPostUploadCard() {
+    return Container(
+        width: MediaQuery.of(context).size.width,
+        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Card(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          elevation: 10,
+          child: Container(
+            padding: EdgeInsets.all(25),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                Container(
+                  height: 300,
+                  child: _uploadFile == null
+                      ? _buildFileSelection()
+                      : _buildFilePreview(),
+                ),
+                SizedBox(
+                  height: 24,
+                ),
+                FormBuilder(
+                  key: _fbKey,
+                  child: Column(
+                    children: <Widget>[
+                      TextFormField(
+                        textInputAction: TextInputAction.next,
+                        focusNode: _titleFocusNode,
+                        onFieldSubmitted: (_) =>
+                            FocusScope.of(context).requestFocus(_textFocusNode),
+                        decoration: new InputDecoration(
+                          focusColor: Theme.of(context).primaryColor,
+                          border: new OutlineInputBorder(
+                            borderRadius: const BorderRadius.all(
+                              const Radius.circular(15.0),
+                            ),
+                          ),
+                          hintText: "Work Title",
+                        ),
+                        validator: FormBuilderValidators.required(),
+                      ),
+                      SizedBox(
+                        height: 16,
+                      ),
+                      TextFormField(
+                        maxLines: null,
+                        textInputAction: TextInputAction.done,
+                        focusNode: _textFocusNode,
+                        onFieldSubmitted: (_) =>
+                            FocusScope.of(context).unfocus(),
+                        decoration: new InputDecoration(
+                          focusColor: Theme.of(context).primaryColor,
+                          border: new OutlineInputBorder(
+                            borderRadius: const BorderRadius.all(
+                              const Radius.circular(15.0),
+                            ),
+                          ),
+                          hintText: "Describe your work",
+                        ),
+                        validator: FormBuilderValidators.required(),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ));
+  }
+
+  Widget _buildImageFilePreview() {
+    return Column(
+      children: <Widget>[
+        Container(
+          width: 200,
+          height: 180,
+          decoration: new BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            image: new DecorationImage(
+                fit: BoxFit.cover,
+                image: _uploadFile != null
+                    ? FileImage(_uploadFile)
+                    : AssetImage('assets/images/user-placeholder.png')),
+          ),
+        ),
+        SizedBox(
+          height: 8,
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: <Widget>[
+            FlatButton.icon(
+              shape: RoundedRectangleBorder(
+                  side: BorderSide(
+                      color: Colors.white, width: 1, style: BorderStyle.solid),
+                  borderRadius: BorderRadius.circular(50)),
+              color: Theme.of(context).primaryColor,
+              icon: Icon(LineIcons.crop),
+              textColor: Colors.white,
+              label: Text("Crop"),
+              onPressed: () => _cropImage(),
+            ),
+            FlatButton.icon(
+              icon: Icon(LineIcons.refresh),
+              shape: RoundedRectangleBorder(
+                  side: BorderSide(
+                      color: Theme.of(context).primaryColor,
+                      width: 1,
+                      style: BorderStyle.solid),
+                  borderRadius: BorderRadius.circular(50)),
+              label: Text("Redo"),
+              textColor: Theme.of(context).primaryColor,
+              onPressed: () => _clear(),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildVideoFilePreview() {
+    return Column(
+      children: <Widget>[
+        // Container(
+        //   height: 180,
+        //   width: 200,
+        //   child: FutureBuilder(
+        //     future: _initializeVideoPlayerFuture,
+        //     builder: (BuildContext context, snapshot) {
+        //       if (snapshot.connectionState == ConnectionState.done) {
+        //         return AspectRatioVideo(_controller);
+        //       } else {
+        //         return circularProgress(context);
+        //       }
+        //     },
+        //   ),
+        // ),
+
+        Chewie(
+          controller: _chewieController,
+        ),
+        SizedBox(
+          height: 8,
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: <Widget>[
+            _controller.value.isPlaying == false
+                ? FlatButton.icon(
+                    shape: RoundedRectangleBorder(
+                        side: BorderSide(
+                            color: Colors.white,
+                            width: 1,
+                            style: BorderStyle.solid),
+                        borderRadius: BorderRadius.circular(50)),
+                    color: Theme.of(context).primaryColor,
+                    icon: Icon(LineIcons.play),
+                    textColor: Colors.white,
+                    label: Text("Play"),
+                    onPressed: () => _playVideo(),
+                  )
+                : FlatButton.icon(
+                    shape: RoundedRectangleBorder(
+                        side: BorderSide(
+                            color: Colors.white,
+                            width: 1,
+                            style: BorderStyle.solid),
+                        borderRadius: BorderRadius.circular(50)),
+                    color: Theme.of(context).primaryColor,
+                    icon: Icon(LineIcons.pause),
+                    textColor: Colors.white,
+                    label: Text("Pause"),
+                    onPressed: () => _pauseVideo(),
+                  ),
+            FlatButton.icon(
+              icon: Icon(LineIcons.refresh),
+              shape: RoundedRectangleBorder(
+                  side: BorderSide(
+                      color: Theme.of(context).primaryColor,
+                      width: 1,
+                      style: BorderStyle.solid),
+                  borderRadius: BorderRadius.circular(50)),
+              label: Text("Clear"),
+              textColor: Theme.of(context).primaryColor,
+              onPressed: () => _clear(),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

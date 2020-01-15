@@ -49,7 +49,7 @@ class TimelineScreen extends StatelessWidget {
 
     return Container(
       padding: EdgeInsets.only(left: 12, top: 32, right: 12),
-      height: MediaQuery.of(context).size.height * 0.28,
+      height: MediaQuery.of(context).size.height * 0.3,
       width: double.infinity,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -103,19 +103,22 @@ class TimelineScreen extends StatelessWidget {
             height: 4,
           ),
           FlatButton.icon(
-              icon: Icon(LineIcons.map),
-              shape: RoundedRectangleBorder(
-                  side: BorderSide(
-                      color: Colors.white, width: 1, style: BorderStyle.solid),
-                  borderRadius: BorderRadius.circular(50)),
-              label: Text("Change"),
-              textColor: Colors.white,
-              onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => MapScreen(
-                            paramFunction: changeLocation,
-                          )))),
+            icon: Icon(LineIcons.map),
+            shape: RoundedRectangleBorder(
+                side: BorderSide(
+                    color: Colors.white, width: 1, style: BorderStyle.solid),
+                borderRadius: BorderRadius.circular(50)),
+            label: Text("Change"),
+            textColor: Colors.white,
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => MapScreen(
+                  paramFunction: changeLocation,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );

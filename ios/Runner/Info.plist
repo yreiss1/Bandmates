@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Need to upload image</string>
+	<string>Bandmates need to upload image</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Need to upload image</string>
 	<key>NSMicrophoneUsageDescription</key>
@@ -39,6 +39,8 @@
 	</dict>
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
+	<key>NSAppleMusicUsageDescription</key>
+	<string>Bandmates needs to be able to access music files</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>This app needs your location to determine events around you.</string>
 	<key>NSLocationAlwaysUsageDescription</key>

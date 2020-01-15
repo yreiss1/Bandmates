@@ -159,9 +159,9 @@ class LoginScreen extends StatelessWidget {
                                           await Provider.of<UserProvider>(
                                                   context)
                                               .getUser(result.uid);
-
+                                      /*
                                       Provider.of<UserProvider>(context)
-                                          .setCurrentUser(user);
+                                          .setCurrentUser(user);*/
                                     } on AuthException catch (error) {
                                       Utils.buildErrorDialog(
                                           context, error.message);

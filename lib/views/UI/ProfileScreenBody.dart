@@ -181,43 +181,49 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody>
                       ),
                       Text(widget.user.bio),
                       widget.user.uid == _currentUser.uid
-                          ? Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: <Widget>[
-                                FlatButton.icon(
-                                  shape: RoundedRectangleBorder(
-                                      side: BorderSide(
-                                          color: Colors.white,
-                                          width: 1,
-                                          style: BorderStyle.solid),
-                                      borderRadius: BorderRadius.circular(50)),
-                                  color: Theme.of(context).primaryColor,
-                                  icon: Icon(LineIcons.calendar),
-                                  textColor: Colors.white,
-                                  label: Text(
-                                    "Create Event",
-                                    style:
-                                        TextStyle(fontWeight: FontWeight.bold),
+                          ? FittedBox(
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
+                                children: <Widget>[
+                                  FlatButton.icon(
+                                    shape: RoundedRectangleBorder(
+                                        side: BorderSide(
+                                            color: Colors.white,
+                                            width: 1,
+                                            style: BorderStyle.solid),
+                                        borderRadius:
+                                            BorderRadius.circular(50)),
+                                    color: Theme.of(context).primaryColor,
+                                    icon: Icon(LineIcons.calendar),
+                                    textColor: Colors.white,
+                                    label: Text(
+                                      "Create Event",
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                    onPressed: () {},
                                   ),
-                                  onPressed: () {},
-                                ),
-                                FlatButton.icon(
-                                  icon: Icon(LineIcons.music),
-                                  shape: RoundedRectangleBorder(
-                                      side: BorderSide(
-                                          color: Theme.of(context).primaryColor,
-                                          width: 1,
-                                          style: BorderStyle.solid),
-                                      borderRadius: BorderRadius.circular(50)),
-                                  label: Text(
-                                    "Upload Work",
-                                    style:
-                                        TextStyle(fontWeight: FontWeight.bold),
+                                  FlatButton.icon(
+                                    icon: Icon(LineIcons.music),
+                                    shape: RoundedRectangleBorder(
+                                        side: BorderSide(
+                                            color:
+                                                Theme.of(context).primaryColor,
+                                            width: 1,
+                                            style: BorderStyle.solid),
+                                        borderRadius:
+                                            BorderRadius.circular(50)),
+                                    label: Text(
+                                      "Upload Work",
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                    textColor: Theme.of(context).primaryColor,
+                                    onPressed: () {},
                                   ),
-                                  textColor: Theme.of(context).primaryColor,
-                                  onPressed: () {},
-                                ),
-                              ],
+                                ],
+                              ),
                             )
                           : FlatButton.icon(
                               shape: RoundedRectangleBorder(

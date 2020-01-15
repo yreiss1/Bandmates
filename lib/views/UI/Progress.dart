@@ -14,7 +14,6 @@ Container circularProgress(context) {
 
           CircularProgressIndicator(
         valueColor: AlwaysStoppedAnimation(Theme.of(context).primaryColor),
-        backgroundColor: Theme.of(context).primaryColor,
       ));
 }
 

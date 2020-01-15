@@ -91,7 +91,6 @@ class MyApp extends StatelessWidget {
           EditProfileScreen.routeName: (ctx) => EditProfileScreen(),
           MusiciansSearchScreen.routeName: (ctx) => MusiciansSearchScreen(),
           EventsSearchScreen.routeName: (ctx) => EventsSearchScreen(),
-          MapScreen.routeName: (ctx) => MapScreen(),
         },
       ),
     );
