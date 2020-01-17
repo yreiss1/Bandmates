@@ -100,15 +100,16 @@ class CommentsScreen extends StatelessWidget {
           ),
           Divider(),
           ListTile(
-              title: TextFormField(
-                controller: _textEditingController,
-                decoration: InputDecoration(labelText: "Write a comment"),
-              ),
-              trailing: IconButton(
-                icon: Icon(Icons.send),
-                color: Theme.of(context).primaryColor,
-                onPressed: () => addComment(),
-              ))
+            title: TextFormField(
+              controller: _textEditingController,
+              decoration: InputDecoration(labelText: "Write a comment"),
+            ),
+            trailing: IconButton(
+              icon: Icon(Icons.send),
+              color: Theme.of(context).primaryColor,
+              onPressed: () => addComment(),
+            ),
+          ),
         ],
       ),
     );

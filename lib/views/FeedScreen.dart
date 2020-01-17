@@ -1,3 +1,4 @@
+import 'package:bandmates/Utils.dart';
 import 'package:flutter/material.dart';
 import 'package:bandmates/views/UI/Progress.dart';
 import 'package:line_icons/line_icons.dart';
@@ -6,7 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import './UI/FeedItem.dart';
 
-class ActivityScreen extends StatelessWidget {
+class FeedScreen extends StatelessWidget {
   Future<List<FeedItem>> getActivityFeed(BuildContext context) async {
     //print("[ActivityScreen]: in getActivityFeed function");
     User currentUser = Provider.of<UserProvider>(context).user;
@@ -49,6 +50,17 @@ class ActivityScreen extends StatelessWidget {
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return circularProgress(context);
+          }
+
+          if (snapshot.hasError) {
+            Utils.buildErrorDialog(context,
+                "Cannot access activity feed items, please try again later!");
+          }
+
+          if (snapshot.data.isEmpty) {
+            return Center(
+              child: Text("No activity feed items to display"),
+            );
           }
 
           return ListView(children: snapshot.data);

@@ -74,7 +74,7 @@ class _StartScreenState extends State<StartScreen>
                   ),
                   SizedBox(
                     width: double.infinity,
-                    height: MediaQuery.of(context).size.height - 100,
+                    height: MediaQuery.of(context).size.height,
                     child: TabBarView(
                       controller: _tabController,
                       children: <Widget>[LoginScreen(), SignupScreen()],

@@ -1,3 +1,7 @@
+import 'dart:io';
+
+import 'package:bandmates/models/Post.dart';
+import 'package:bandmates/views/UI/Progress.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -5,9 +9,11 @@ import 'package:bandmates/models/ProfileScreenArguments.dart';
 import 'package:bandmates/views/HomeScreen.dart';
 import 'package:bandmates/views/PostScreen.dart';
 import 'package:bandmates/views/ProfileScreen.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:line_icons/line_icons.dart';
 import 'package:provider/provider.dart';
+import 'package:video_thumbnail/video_thumbnail.dart';
 import '../../models/User.dart';
 import '../../models/Follow.dart';
 
@@ -17,6 +23,7 @@ class FeedItem extends StatefulWidget {
   final int type;
   final String mediaUrl;
   final String postId;
+  final int postType;
   final String avatar;
   final String text;
   final DateTime time;
@@ -27,6 +34,7 @@ class FeedItem extends StatefulWidget {
       this.type,
       this.mediaUrl,
       this.postId,
+      this.postType,
       this.avatar,
       this.text,
       this.time});
@@ -38,6 +46,7 @@ class FeedItem extends StatefulWidget {
       avatar: doc['avatar'],
       type: doc['type'],
       postId: doc['postId'],
+      postType: doc['postType'],
       text: doc['text'],
       time: doc['time'].toDate(),
       mediaUrl: doc['mediaUrl'],
@@ -51,23 +60,26 @@ class FeedItem extends StatefulWidget {
 class _FeedItemState extends State<FeedItem> {
   Widget mediaPreview;
 
-  bool _isFollowing;
   String activityItemText;
+  String _tempDir;
 
   @override
   void initState() {
     super.initState();
+    getTemporaryDirectory().then((d) => _tempDir = d.path);
   }
 
-  showPost(context) {
-    String uid = Provider.of<UserProvider>(context).user.uid;
+  showPost(context) async {
+    Post post = await Provider.of<PostProvider>(context)
+        .getPost(postId: widget.postId, userId: widget.userId);
     Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) => PostScreen(
-                  postId: this.widget.postId,
-                  userId: uid,
-                )));
+      context,
+      MaterialPageRoute(
+        builder: (context) => PostScreen(
+          post: post,
+        ),
+      ),
+    );
   }
 
   showProfile(context) async {
@@ -77,8 +89,8 @@ class _FeedItemState extends State<FeedItem> {
   }
 
   configureMediaPreview(context) {
-    // 0: Like, 1: Comment, 2: Follow
-    if (widget.type == 0 || widget.type == 1) {
+    // 0: Like, 1: Comment,
+    if (widget.postType == 0) {
       mediaPreview = GestureDetector(
         onTap: () => showPost(context),
         child: Card(
@@ -104,46 +116,84 @@ class _FeedItemState extends State<FeedItem> {
           ),
         ),
       );
-    } else {
-      mediaPreview = _isFollowing == true
-          ? FlatButton.icon(
+    } else if (widget.postType == 1) {
+      mediaPreview = GestureDetector(
+        onTap: () => showPost(context),
+        child: Card(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          elevation: 5,
+          child: Container(
+            height: 50,
+            width: 50,
+            child: AspectRatio(
+              aspectRatio: 16 / 9,
+              child: Container(
+                decoration: BoxDecoration(
+                    borderRadius: BorderRadius.all(Radius.circular(10)),
+                    image: DecorationImage(
+                        fit: BoxFit.cover,
+                        image: widget.mediaUrl == null
+                            ? CachedNetworkImageProvider(
+                                "https://www.whittierfirstday.org/wp-content/uploads/default-user-image-e1501670968910.png")
+                            : AssetImage(
+                                "assets/images/audio-placeholder.png"))),
+              ),
+            ),
+          ),
+        ),
+      );
+    } else if (widget.postType == 2) {
+      mediaPreview = FutureBuilder(
+        future: VideoThumbnail.thumbnailFile(
+          video: widget.mediaUrl,
+          thumbnailPath: _tempDir,
+          imageFormat: ImageFormat.JPEG,
+          maxHeight: 100,
+          maxWidth: 100,
+          quality: 75,
+        ),
+        builder: (BuildContext context, snapshot) {
+          if (!snapshot.hasData) {
+            return circularProgress(context);
+          }
+
+          if (snapshot.hasError) {
+            return Container();
+          }
+
+          return GestureDetector(
+            onTap: () => showPost(context),
+            child: Card(
               shape: RoundedRectangleBorder(
-                  side: BorderSide(
-                      color: Colors.white, width: 1, style: BorderStyle.solid),
-                  borderRadius: BorderRadius.circular(50)),
-              color: Color(0xff829abe),
-              icon: Icon(LineIcons.user_plus),
-              textColor: Colors.white,
-              label: Text("Unfollow"),
-              onPressed: () {
-                Provider.of<FollowProvider>(context).unfollowUser(
-                    currentUserId: currentUser.uid, usersId: widget.userId);
-                setState(() {
-                  _isFollowing = false;
-                });
-              })
-          : FlatButton.icon(
-              shape: RoundedRectangleBorder(
-                  side: BorderSide(
-                      color: Colors.white, width: 1, style: BorderStyle.solid),
-                  borderRadius: BorderRadius.circular(50)),
-              color: Theme.of(context).primaryColor,
-              icon: Icon(LineIcons.user_plus),
-              textColor: Colors.white,
-              label: Text("Follow"),
-              onPressed: () {
-                Provider.of<FollowProvider>(context).followUser(
-                    currentUserId: currentUser.uid, usersId: widget.userId);
-                setState(() {
-                  _isFollowing = true;
-                });
-              });
+                  borderRadius: BorderRadius.circular(10)),
+              elevation: 5,
+              child: Container(
+                height: 50,
+                width: 50,
+                child: AspectRatio(
+                  aspectRatio: 16 / 9,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.all(Radius.circular(10)),
+                      image: DecorationImage(
+                        fit: BoxFit.cover,
+                        image: FileImage(
+                          File(snapshot.data),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      );
     }
 
     if (widget.type == 0) {
       activityItemText = "liked your post";
-    } else if (widget.type == 2) {
-      activityItemText = "is following you";
     } else if (widget.type == 1) {
       activityItemText = "replied: ${widget.text}";
     } else {

@@ -1,25 +1,32 @@
-import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:bandmates/AuthService.dart';
 import 'package:bandmates/Utils.dart';
 import 'package:bandmates/views/ChatRoomScreen.dart';
+import 'package:bandmates/views/PostScreen.dart';
 import 'package:bandmates/views/UI/Progress.dart';
+import 'package:bandmates/views/UploadScreens/EventUploadScreen.dart';
+import 'package:bandmates/views/UploadScreens/PostUploadScreen.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:bandmates/views/HomeScreen.dart' as prefix0;
 import 'package:bandmates/views/UI/PostItem.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:video_thumbnail/video_thumbnail.dart';
+import 'CustomNetworkImage.dart';
 import '../../models/User.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:circular_profile_avatar/circular_profile_avatar.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
-import 'package:mime/mime.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
 import '../../models/Post.dart';
 import 'package:pk_skeleton/pk_skeleton.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geocoder/geocoder.dart' as geocoder;
+import '../../Utils.dart';
 
 class ProfileScreenBody extends StatefulWidget {
   final User user;
@@ -32,57 +39,13 @@ class ProfileScreenBody extends StatefulWidget {
 class _ProfileScreenBodyState extends State<ProfileScreenBody>
     with SingleTickerProviderStateMixin {
   User _currentUser;
-  bool _isLoading = false;
+  String _tempDir;
 
   @override
   void initState() {
     super.initState();
+    getTemporaryDirectory().then((d) => _tempDir = d.path);
     _currentUser = prefix0.currentUser;
-    _getUserPosts();
-  }
-
-  _getUserPosts() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    //TODO: Get work
-    QuerySnapshot querySnap = await Firestore.instance
-        .collection("posts")
-        .document(widget.user.uid)
-        .collection("userPosts")
-        .orderBy("time", descending: true)
-        .getDocuments();
-
-    if (!mounted) return;
-    setState(() {
-      _isLoading = false;
-    });
-  }
-
-  _uploadWork(BuildContext context) async {
-    File chosen = await FilePicker.getFile(type: FileType.ANY);
-    if (chosen != null) {
-      Alert(
-          context: context,
-          type: AlertType.none,
-          title: "Upload Work",
-          content: Column(
-            children: <Widget>[Image.file(chosen), TextField()],
-          ),
-          buttons: [
-            DialogButton(
-              child: Text("Upload"),
-              onPressed: () {},
-            ),
-            DialogButton(
-              child: Text("Cancel"),
-              onPressed: () => Navigator.pop(context),
-            )
-          ]).show();
-    }
-
-    print("[ProfileScreenBody] mimetype: " + lookupMimeType(chosen.path));
   }
 
   @override
@@ -125,9 +88,12 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody>
                         ],
                       ),
                 SliverList(
-                  delegate: SliverChildListDelegate(
-                      [buildProfileCard(), buildInfoCard()]),
-                )
+                  delegate: SliverChildListDelegate([
+                    buildProfileCard(),
+                    buildInfoCard(),
+                    _buildPostCard(context),
+                  ]),
+                ),
               ],
             ),
           ],
@@ -202,7 +168,8 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody>
                                       style: TextStyle(
                                           fontWeight: FontWeight.bold),
                                     ),
-                                    onPressed: () {},
+                                    onPressed: () => Navigator.pushNamed(
+                                        context, EventUploadScreen.routeName),
                                   ),
                                   FlatButton.icon(
                                     icon: Icon(LineIcons.music),
@@ -215,12 +182,13 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody>
                                         borderRadius:
                                             BorderRadius.circular(50)),
                                     label: Text(
-                                      "Upload Work",
+                                      "Upload Post",
                                       style: TextStyle(
                                           fontWeight: FontWeight.bold),
                                     ),
                                     textColor: Theme.of(context).primaryColor,
-                                    onPressed: () {},
+                                    onPressed: () => Navigator.pushNamed(
+                                        context, PostUploadScreen.routeName),
                                   ),
                                 ],
                               ),
@@ -293,8 +261,6 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody>
         }
 
         return Container(
-          height: MediaQuery.of(context).size.height,
-          width: MediaQuery.of(context).size.width,
           padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           child: Card(
             shape:
@@ -302,7 +268,7 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody>
             elevation: 10,
             child: Container(
               padding: EdgeInsets.all(25),
-              child: Wrap(children: [
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
                 SizedBox(
                   height: 4,
                 ),
@@ -394,36 +360,163 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody>
                     ],
                   ),
                 ),
-                Divider(),
-                Text(
-                  widget.user.name + "'s Work",
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                SizedBox(
-                  height: 8,
-                ),
-                GridView.builder(
-                  physics: NeverScrollableScrollPhysics(),
-                  shrinkWrap: true,
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: (MediaQuery.of(context).orientation ==
-                              Orientation.portrait)
-                          ? 2
-                          : 3),
-                  itemCount: 10,
-                  itemBuilder: (BuildContext context, int index) {
-                    return GridTile(
-                      footer: Text("Hello World!"),
-                      child: Image.network(
-                          "https://picsum.photos/id/$index/200/300"),
-                    );
-                  },
-                )
               ]),
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget _buildPostCard(context) {
+    return Container(
+      constraints: BoxConstraints(minHeight: 100),
+      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      child: Card(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        elevation: 10,
+        child: Container(
+          padding: EdgeInsets.all(15),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              prefix0.currentUser.uid == widget.user.uid
+                  ? Text(
+                      "Your Posts",
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                    )
+                  : Text(
+                      widget.user.name + "'s Posts",
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                    ),
+              Divider(),
+              FutureBuilder<List<DocumentSnapshot>>(
+                future: Provider.of<PostProvider>(context)
+                    .getUsersPosts(widget.user.uid),
+                builder: (BuildContext context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return circularProgress(context);
+                  }
+
+                  if (snapshot.data.length == 0) {
+                    return Center(
+                      child: Text("No posts to display"),
+                    );
+                  }
+
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Text(
+                          "Unable to get users posts, please try again later"),
+                    );
+                  }
+
+                  return GridView.builder(
+                    shrinkWrap: true,
+                    physics: NeverScrollableScrollPhysics(),
+                    itemCount: snapshot.data.length,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        crossAxisSpacing: 4,
+                        mainAxisSpacing: 4),
+                    itemBuilder: (BuildContext context, int index) {
+                      Post post = Post.fromDocument(snapshot.data[index]);
+                      if (post.type == 0) {
+                        return GestureDetector(
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PostScreen(post: post),
+                            ),
+                          ),
+                          child: GridTile(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                image: DecorationImage(
+                                    fit: BoxFit.cover,
+                                    image: NetworkImage(post
+                                        .mediaUrl) // customNetworkImage(post.mediaUrl),
+                                    ),
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(10)),
+                              ),
+                            ),
+                          ),
+                        );
+                      } else if (post.type == 1) {
+                        return GestureDetector(
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PostScreen(post: post),
+                            ),
+                          ),
+                          child: GridTile(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                image: DecorationImage(
+                                  fit: BoxFit.cover,
+                                  image: AssetImage(
+                                      'assets/images/audio-placeholder.png'),
+                                ),
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(10)),
+                              ),
+                            ),
+                          ),
+                        );
+                      } else if (post.type == 2) {
+                        return FutureBuilder(
+                          future: VideoThumbnail.thumbnailFile(
+                            video: post.mediaUrl,
+                            thumbnailPath: _tempDir,
+                            imageFormat: ImageFormat.JPEG,
+                            maxHeight: 100,
+                            maxWidth: 100,
+                            quality: 75,
+                          ),
+                          builder: (BuildContext context, snapshot) {
+                            if (!snapshot.hasData) {
+                              return circularProgress(context);
+                            }
+
+                            if (snapshot.hasError) {
+                              return Container();
+                            }
+
+                            return GestureDetector(
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => PostScreen(post: post),
+                                ),
+                              ),
+                              child: GridTile(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    image: DecorationImage(
+                                      fit: BoxFit.cover,
+                                      image: FileImage(File(snapshot.data)),
+                                    ),
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(10)),
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      }
+                    },
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

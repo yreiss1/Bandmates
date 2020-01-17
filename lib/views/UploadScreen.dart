@@ -179,15 +179,15 @@ buildSearchHeader(context) {
     // decoration: BoxDecoration(
     //   gradient: LinearGradient(
     //     // Where the linear gradient begins and ends
-    //     begin: Alignment.topRight,
-    //     end: Alignment.bottomLeft,
-    //     // Add one stop for each color. Stops should increase from 0 to 1
-    //     stops: [0.1, 0.5, 0.7],
+    //     begin: Alignment.centerLeft,
+    //     end: Alignment.centerRight,
+    //     // Add one stop for each color. Stops shozuld increase from 0 to 1
+    //     stops: [0.45, 1],
     //     colors: [
     //       // Colors are easy thanks to Flutter's Colors class.
-    //       Theme.of(context).primaryColor.withAlpha(50),
-    //       Theme.of(context).primaryColor.withAlpha(900),
-    //       Theme.of(context).primaryColor.withAlpha(80),
+    //       Theme.of(context).primaryColor,
+
+    //       Color(0xff962d54),
     //     ],
     //   ),
     // ),
@@ -207,20 +207,6 @@ buildSearchHeader(context) {
                   fontWeight: FontWeight.bold,
                   fontSize: 22),
             ),
-            // IconButton(
-            //   icon: Icon(
-            //     LineIcons.user,
-            //     size: 28,
-            //     color: Colors.white,
-            //   ),
-            //   onPressed: () {
-            //     User user = Provider.of<UserProvider>(context).user;
-            //     print("[Header] user uid: " + user.uid);
-            //     //Show search screen
-            //     Navigator.pushNamed(context, ProfileScreen.routeName,
-            //         arguments: ProfileScreenArguments(userId: user.uid));
-            //   },
-            // )
           ],
         ),
       ],

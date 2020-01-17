@@ -48,7 +48,6 @@ class PostItem extends StatelessWidget {
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
       ),
-      subtitle: post.location != null ? Text(post.location) : Container(),
       trailing: post.ownerId == prefix0.currentUser.uid
           ? IconButton(
               onPressed: () => _handleDeletePost(context),

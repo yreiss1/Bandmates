@@ -55,12 +55,13 @@ dependencies:
   video_player:
   achievement_view: ^0.2.0
   file_picker:
-  mime: ^0.9.6+3
   flutter_launcher_icons: ^0.7.4
   search_app_bar: ^1.0.2+2
   searchable_dropdown: ^1.1.0
   koukicons:
-  chewie:
+  audioplayers:
+  flutter_video_compress:
+  video_thumbnail:
 
 flutter_icons:
   image_path: "assets/launcher_icons/launcher_icon.png"
@@ -95,6 +96,7 @@ flutter:
     - assets/images/silhouette.jpg
     - assets/images/musicians.jpg
     - assets/images/singer.jpg
+    - assets/images/audio-placeholder.png
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.
   # For details regarding adding assets from package dependencies, see

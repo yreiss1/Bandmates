@@ -1,4 +1,5 @@
 import 'package:bandmates/models/ProfileScreenArguments.dart';
+import 'package:bandmates/views/FeedScreen.dart';
 import 'package:bandmates/views/ProfileScreen.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
@@ -12,7 +13,6 @@ import '../presentation/InstrumentIcons.dart';
 import './ChatsScreen.dart';
 import './UploadScreen.dart';
 import './TimelineScreen.dart';
-import './ActivityScreen.dart';
 import './UI/Progress.dart';
 import 'package:provider/provider.dart';
 import '../models/User.dart';
@@ -157,7 +157,7 @@ class _HomeScreenState extends State<HomeScreen>
                     TimelineScreen(currentUser: _currentUser),
                     ChatsScreen(),
                     UploadScreen(),
-                    ActivityScreen(),
+                    FeedScreen(),
                     ProfileScreen(
                         ProfileScreenArguments(userId: _currentUser.uid)),
                   ],

@@ -215,7 +215,6 @@ class TimelineScreen extends StatelessWidget {
                               child: Container(
                                 padding: EdgeInsets.all(8),
                                 width: 250,
-                                height: 250,
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: <Widget>[

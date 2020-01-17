@@ -7,35 +7,39 @@ import './User.dart';
 
 class Post with ChangeNotifier {
   final String text;
+  final String title;
   final String ownerId;
   final String postId;
   final String username;
   final Map likes;
   final DateTime time;
   final String mediaUrl;
-  final String location;
   final String avatar;
+  final int type;
 
   Post(
-      {@required this.text,
-      @required this.time,
+      {@required this.time,
+      @required this.title,
+      this.text,
       this.mediaUrl,
-      this.location,
       this.likes,
-      this.ownerId,
-      this.postId,
+      @required this.ownerId,
+      @required this.postId,
+      @required this.type,
       this.username,
       this.avatar});
 
   factory Post.fromDocument(DocumentSnapshot doc) {
     return Post(
       postId: doc.data['postId'],
+      title: doc.data['title'],
       ownerId: doc.data['ownerId'],
       username: doc.data['user'],
+      avatar: doc.data['avatar'],
       text: doc.data['text'],
       mediaUrl: doc.data['media'],
       likes: doc.data['likes'],
-      location: doc.data['loc'],
+      type: doc.data['type'],
       time: doc.data['time'].toDate(),
     );
   }
@@ -119,7 +123,7 @@ class PostProvider with ChangeNotifier {
     String downloadUrl;
     if (file != null) {
       StorageUploadTask uploadTask =
-          storageRef.child("post_$postId.jpg").putFile(file);
+          storageRef.child('posts').child("post_$postId.jpg").putFile(file);
       StorageTaskSnapshot storageSnap = await uploadTask.onComplete;
       downloadUrl = await storageSnap.ref.getDownloadURL();
     }
@@ -134,8 +138,10 @@ class PostProvider with ChangeNotifier {
       "ownerId": uid,
       "user": name,
       "media": post.mediaUrl,
+      "title": post.title,
+      "avatar": post.avatar,
       "text": post.text,
-      "loc": post.location,
+      "type": post.type,
       "time": post.time,
       "likes": {}
     });
@@ -156,21 +162,20 @@ class PostProvider with ChangeNotifier {
     return snapshot.data == null ? null : Post.fromDocument(snapshot);
   }
 
-  Future<List<Post>> getUsersPosts(String uid) async {
-    List<Post> results = [];
+  Future<List<DocumentSnapshot>> getUsersPosts(String uid) async {
+    print("[PostProvider] uid: " + uid);
     QuerySnapshot querySnap = await postRef
         .document(uid)
         .collection("userPosts")
         .orderBy("time", descending: true)
         .getDocuments();
 
-    List<DocumentSnapshot> snaps = querySnap.documents;
-    snaps.forEach((snapshot) {
-      //print("[PostProvider] snapshotData: " + snapshot.data.toString());
-      results.add(Post.fromDocument(snapshot));
-    });
+    print("[PostProvider] uid: " +
+        uid +
+        " length: " +
+        querySnap.documents.length.toString());
 
-    return results;
+    return querySnap.documents;
   }
 
   void deletePost({String ownderId, String postId}) async {

@@ -1,7 +1,8 @@
+import 'package:bandmates/views/HomeScreen.dart';
 import 'package:bandmates/views/UI/Progress.dart';
-import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
 import 'package:bandmates/models/Post.dart';
+import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:geoflutterfire/geoflutterfire.dart';
@@ -12,14 +13,15 @@ import 'package:file_picker/file_picker.dart';
 import 'package:koukicons/pic2.dart';
 import 'package:koukicons/speaker.dart';
 import 'package:koukicons/film.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter_video_compress/flutter_video_compress.dart';
 
 import 'package:image/image.dart' as Im;
 
 import 'dart:io';
 
 import 'package:location/location.dart';
-import 'package:geocoder/geocoder.dart';
-import 'package:geocoder/geocoder.dart' as prefix1;
+
 import 'package:path_provider/path_provider.dart';
 import '../UI/AspectRatioVideo.dart';
 import '../../models/User.dart';
@@ -41,9 +43,10 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
   GeoFirePoint point;
   Geoflutterfire geo = Geoflutterfire();
   Location location = new Location();
-  bool _isVideo = false;
   VideoPlayerController _controller;
   Future<void> _initializeVideoPlayerFuture;
+  AudioPlayer _audioPlayer;
+  bool _isAudioPlaying;
   String _postID = Uuid().v4();
 
   final _textFocusNode = FocusNode();
@@ -54,16 +57,35 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
   File _uploadFile;
   int _fileType;
 
-  ChewieController _chewieController;
+  bool _isVisible;
+
   @override
   void initState() {
     super.initState();
+    _isVisible = true;
+    KeyboardVisibilityNotification().addNewListener(
+      onChange: (bool visible) {
+        if (visible) {
+          setState(() {
+            _isVisible = false;
+          });
+        } else {
+          setState(() {
+            _isVisible = true;
+          });
+        }
+      },
+    );
   }
 
   @override
   void dispose() {
     if (_controller != null) {
       _controller.dispose();
+    }
+
+    if (_audioPlayer != null) {
+      _audioPlayer.dispose();
     }
     super.dispose();
   }
@@ -81,6 +103,22 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
   _pauseVideo() async {
     setState(() {
       _controller.pause();
+    });
+  }
+
+  _playAudio() async {
+    if (mounted) {
+      setState(() {
+        _audioPlayer.resume();
+        _isAudioPlaying = true;
+      });
+    }
+  }
+
+  _pauseAudio() async {
+    setState(() {
+      _audioPlayer.pause();
+      _isAudioPlaying = false;
     });
   }
 
@@ -102,29 +140,50 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
     });
   }
 
+  _compressVideo() async {
+    final _flutterVideoCompress = FlutterVideoCompress();
+
+    final info = await _flutterVideoCompress.compressVideo(_uploadFile.path,
+        quality: VideoQuality.LowQuality,
+        deleteOrigin: false,
+        includeAudio: true);
+    print("[PostUploadScreen] video title: " + info.title);
+    setState(() {
+      _uploadFile = info.file;
+    });
+  }
+
   _handleSubmit() async {
     FocusScope.of(context).unfocus();
-    _fbKey.currentState.value['loc'] = locationController.text;
     if (_fbKey.currentState.saveAndValidate()) {
       setState(() {
         _isUploading = true;
       });
-      if (_uploadFile != null) {
+      if (_uploadFile != null && _fileType == 0) {
         await _compressImage();
       }
 
-      User userObject = Provider.of<UserProvider>(context).currentUser;
+      if (_uploadFile != null && _fileType == 2) {
+        await _compressVideo();
+      }
+
+      User userObject = currentUser;
       String downloadURL =
           await Provider.of<PostProvider>(context, listen: false)
               .uploadMedia(_uploadFile, _postID);
 
       Post post = new Post(
-          postId: _postID,
-          text: _fbKey.currentState.value['text'],
-          mediaUrl: downloadURL,
-          time: DateTime.now(),
-          likes: {},
-          location: _fbKey.currentState.value['loc']);
+        type: _fileType,
+        postId: _postID,
+        title: _fbKey.currentState.value['title'],
+        text: _fbKey.currentState.value['text'],
+        ownerId: currentUser.uid,
+        avatar: currentUser.photoUrl,
+        username: currentUser.name,
+        mediaUrl: downloadURL,
+        time: DateTime.now(),
+        likes: {},
+      );
       await Provider.of<PostProvider>(context, listen: false).uploadPost(
           post: post,
           postId: _postID,
@@ -151,6 +210,15 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
 
   /// Remove image
   void _clear() {
+    if (_audioPlayer != null) {
+      _audioPlayer.stop();
+      _audioPlayer.release();
+      _audioPlayer.dispose();
+    }
+
+    if (_controller.value.isPlaying) {
+      _controller.pause();
+    }
     setState(() => _uploadFile = null);
   }
 
@@ -203,18 +271,18 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
                 ],
               ),
             ),
-            Positioned.fill(
-              bottom: 40,
-              child: Align(
-                alignment: Alignment.bottomCenter,
-                child: FloatingActionButton.extended(
-                  icon: Icon(Icons.cloud_upload),
-                  label: Text("Upload Work"),
-                  onPressed: () => _handleSubmit(),
-                  backgroundColor: Theme.of(context).primaryColor,
-                ),
-              ),
-            ),
+            if (_isVisible)
+              Positioned.fill(
+                bottom: 40,
+                child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: FloatingActionButton.extended(
+                      icon: Icon(Icons.cloud_upload),
+                      label: Text("Upload Work"),
+                      onPressed: () => _handleSubmit(),
+                      backgroundColor: Theme.of(context).primaryColor,
+                    )),
+              )
           ],
         ),
       ),
@@ -228,8 +296,9 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
         return _buildImageFilePreview();
       } else if (_fileType == 1) {
         //Audio
-
+        return _buildAudioFilePreview();
       } else if (_fileType == 2) {
+        //Video
         return _buildVideoFilePreview();
       }
     }
@@ -266,11 +335,12 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
                         onPressed: () async {
                           File file =
                               await FilePicker.getFile(type: FileType.IMAGE);
-
-                          setState(() {
-                            _fileType = 0;
-                            _uploadFile = file;
-                          });
+                          if (file != null) {
+                            setState(() {
+                              _fileType = 0;
+                              _uploadFile = file;
+                            });
+                          }
                         },
                       ),
                     ),
@@ -302,10 +372,27 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
                           File file =
                               await FilePicker.getFile(type: FileType.AUDIO);
 
-                          setState(() {
-                            _fileType = 1;
-                            _uploadFile = file;
-                          });
+                          if (file != null) {
+                            setState(() {
+                              _fileType = 1;
+                              _uploadFile = file;
+                            });
+
+                            _audioPlayer = AudioPlayer();
+                            await _audioPlayer.setReleaseMode(ReleaseMode
+                                .STOP); // set release mode so that it never releases
+
+                            int result = await _audioPlayer.play(file.path,
+                                isLocal: true);
+
+                            if (result != 1) {
+                              //TODO: Display error
+                            }
+
+                            setState(() {
+                              _isAudioPlaying = true;
+                            });
+                          }
                         },
                       ),
                     ),
@@ -333,25 +420,21 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
                         onPressed: () async {
                           File file =
                               await FilePicker.getFile(type: FileType.VIDEO);
-                          print(file.path);
-                          setState(() {
-                            _controller = VideoPlayerController.file(file);
-                            _fileType = 2;
-                            _uploadFile = file;
-                            _chewieController = ChewieController(
-                              videoPlayerController: _controller,
-                              aspectRatio: 3 / 2,
-                              autoPlay: true,
-                              looping: true,
-                            );
-                          });
 
-                          // _initializeVideoPlayerFuture =
-                          //     _controller.initialize();
-                          // _controller.setVolume(1.0);
-                          // _controller.setLooping(true);
+                          if (file != null) {
+                            setState(() {
+                              _controller = VideoPlayerController.file(file);
+                              _fileType = 2;
+                              _uploadFile = file;
+                            });
 
-                          // await _controller.play();
+                            _initializeVideoPlayerFuture =
+                                _controller.initialize();
+                            _controller.setVolume(1.0);
+                            _controller.setLooping(true);
+
+                            await _controller.play();
+                          }
                         },
                       ),
                     ),
@@ -389,88 +472,90 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
 
   _buildPostUploadCard() {
     return Container(
-        width: MediaQuery.of(context).size.width,
-        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        child: Card(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-          elevation: 10,
-          child: Container(
-            padding: EdgeInsets.all(25),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: <Widget>[
-                Container(
-                  height: 300,
-                  child: _uploadFile == null
-                      ? _buildFileSelection()
-                      : _buildFilePreview(),
-                ),
-                SizedBox(
-                  height: 24,
-                ),
-                FormBuilder(
-                  key: _fbKey,
-                  child: Column(
-                    children: <Widget>[
-                      TextFormField(
-                        textInputAction: TextInputAction.next,
-                        focusNode: _titleFocusNode,
-                        onFieldSubmitted: (_) =>
-                            FocusScope.of(context).requestFocus(_textFocusNode),
-                        decoration: new InputDecoration(
-                          focusColor: Theme.of(context).primaryColor,
-                          border: new OutlineInputBorder(
-                            borderRadius: const BorderRadius.all(
-                              const Radius.circular(15.0),
-                            ),
+      width: MediaQuery.of(context).size.width,
+      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: Card(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        elevation: 10,
+        child: Container(
+          padding: EdgeInsets.all(25),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: <Widget>[
+              Container(
+                height: 300,
+                child: _uploadFile == null
+                    ? _buildFileSelection()
+                    : _buildFilePreview(),
+              ),
+              SizedBox(
+                height: 24,
+              ),
+              FormBuilder(
+                key: _fbKey,
+                child: Column(
+                  children: <Widget>[
+                    FormBuilderTextField(
+                      attribute: 'title',
+                      textInputAction: TextInputAction.next,
+                      focusNode: _titleFocusNode,
+                      onFieldSubmitted: (_) =>
+                          FocusScope.of(context).requestFocus(_textFocusNode),
+                      decoration: InputDecoration(
+                        focusColor: Theme.of(context).primaryColor,
+                        border: OutlineInputBorder(
+                          borderRadius: const BorderRadius.all(
+                            const Radius.circular(15.0),
                           ),
-                          hintText: "Work Title",
                         ),
-                        validator: FormBuilderValidators.required(),
+                        hintText: "Post Title",
                       ),
-                      SizedBox(
-                        height: 16,
-                      ),
-                      TextFormField(
-                        maxLines: null,
-                        textInputAction: TextInputAction.done,
-                        focusNode: _textFocusNode,
-                        onFieldSubmitted: (_) =>
-                            FocusScope.of(context).unfocus(),
-                        decoration: new InputDecoration(
-                          focusColor: Theme.of(context).primaryColor,
-                          border: new OutlineInputBorder(
-                            borderRadius: const BorderRadius.all(
-                              const Radius.circular(15.0),
-                            ),
+                      validators: [FormBuilderValidators.required()],
+                    ),
+                    SizedBox(
+                      height: 16,
+                    ),
+                    FormBuilderTextField(
+                      attribute: 'text',
+                      maxLines: null,
+                      textInputAction: TextInputAction.done,
+                      focusNode: _textFocusNode,
+                      onFieldSubmitted: (_) => FocusScope.of(context).unfocus(),
+                      decoration: InputDecoration(
+                        focusColor: Theme.of(context).primaryColor,
+                        border: OutlineInputBorder(
+                          borderRadius: const BorderRadius.all(
+                            const Radius.circular(15.0),
                           ),
-                          hintText: "Describe your work",
                         ),
-                        validator: FormBuilderValidators.required(),
+                        hintText: "Describe your work",
                       ),
-                    ],
-                  ),
+                      validators: [FormBuilderValidators.required()],
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ));
+        ),
+      ),
+    );
   }
 
   Widget _buildImageFilePreview() {
     return Column(
       children: <Widget>[
-        Container(
-          width: 200,
-          height: 180,
-          decoration: new BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            image: new DecorationImage(
-                fit: BoxFit.cover,
-                image: _uploadFile != null
-                    ? FileImage(_uploadFile)
-                    : AssetImage('assets/images/user-placeholder.png')),
+        AspectRatio(
+          aspectRatio: 3 / 2,
+          child: Container(
+            decoration: new BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              image: new DecorationImage(
+                  fit: BoxFit.cover,
+                  image: _uploadFile != null
+                      ? FileImage(_uploadFile)
+                      : AssetImage('assets/images/user-placeholder.png')),
+            ),
           ),
         ),
         SizedBox(
@@ -511,23 +596,20 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
   Widget _buildVideoFilePreview() {
     return Column(
       children: <Widget>[
-        // Container(
-        //   height: 180,
-        //   width: 200,
-        //   child: FutureBuilder(
-        //     future: _initializeVideoPlayerFuture,
-        //     builder: (BuildContext context, snapshot) {
-        //       if (snapshot.connectionState == ConnectionState.done) {
-        //         return AspectRatioVideo(_controller);
-        //       } else {
-        //         return circularProgress(context);
-        //       }
-        //     },
-        //   ),
-        // ),
-
-        Chewie(
-          controller: _chewieController,
+        AspectRatio(
+          aspectRatio: 3 / 2,
+          child: Container(
+            child: FutureBuilder(
+              future: _initializeVideoPlayerFuture,
+              builder: (BuildContext context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.done) {
+                  return VideoPlayer(_controller);
+                } else {
+                  return circularProgress(context);
+                }
+              },
+            ),
+          ),
         ),
         SizedBox(
           height: 8,
@@ -561,6 +643,71 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
                     textColor: Colors.white,
                     label: Text("Pause"),
                     onPressed: () => _pauseVideo(),
+                  ),
+            FlatButton.icon(
+              icon: Icon(LineIcons.refresh),
+              shape: RoundedRectangleBorder(
+                  side: BorderSide(
+                      color: Theme.of(context).primaryColor,
+                      width: 1,
+                      style: BorderStyle.solid),
+                  borderRadius: BorderRadius.circular(50)),
+              label: Text("Clear"),
+              textColor: Theme.of(context).primaryColor,
+              onPressed: () => _clear(),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  _buildAudioFilePreview() {
+    return Column(
+      children: <Widget>[
+        AspectRatio(
+          aspectRatio: 3 / 2,
+          child: Container(
+            decoration: new BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              image: new DecorationImage(
+                  fit: BoxFit.cover,
+                  image: AssetImage('assets/images/audio-placeholder.png')),
+            ),
+          ),
+        ),
+        SizedBox(
+          height: 8,
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: <Widget>[
+            _isAudioPlaying == false
+                ? FlatButton.icon(
+                    shape: RoundedRectangleBorder(
+                        side: BorderSide(
+                            color: Colors.white,
+                            width: 1,
+                            style: BorderStyle.solid),
+                        borderRadius: BorderRadius.circular(50)),
+                    color: Theme.of(context).primaryColor,
+                    icon: Icon(LineIcons.play),
+                    textColor: Colors.white,
+                    label: Text("Play"),
+                    onPressed: () => _playAudio(),
+                  )
+                : FlatButton.icon(
+                    shape: RoundedRectangleBorder(
+                        side: BorderSide(
+                            color: Colors.white,
+                            width: 1,
+                            style: BorderStyle.solid),
+                        borderRadius: BorderRadius.circular(50)),
+                    color: Theme.of(context).primaryColor,
+                    icon: Icon(LineIcons.pause),
+                    textColor: Colors.white,
+                    label: Text("Pause"),
+                    onPressed: () => _pauseAudio(),
                   ),
             FlatButton.icon(
               icon: Icon(LineIcons.refresh),
