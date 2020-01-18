@@ -32,7 +32,7 @@ class SignupScreen extends StatelessWidget {
                   Text(
                     "Hey, get on board",
                     style: TextStyle(
-                      fontFamily: 'Montserrat-Medium',
+                      fontWeight: FontWeight.bold,
                       color: Colors.white,
                       fontSize: 30,
                     ),
@@ -42,8 +42,7 @@ class SignupScreen extends StatelessWidget {
                   ),
                   Text(
                     "Sign up to continue",
-                    style: TextStyle(
-                        fontFamily: 'Montserrat', color: Colors.white),
+                    style: TextStyle(color: Colors.white),
                   ),
                 ],
               ),

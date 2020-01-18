@@ -4,6 +4,7 @@ import 'package:bandmates/models/Event.dart';
 import 'package:bandmates/views/EventsSearchScreen.dart';
 import 'package:bandmates/views/MapScreen.dart';
 import 'package:bandmates/views/MusiciansSearchScreen.dart';
+import 'package:bandmates/views/UI/CustomNetworkImage.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
@@ -48,7 +49,7 @@ class TimelineScreen extends StatelessWidget {
         prefix0.currentUser.location.longitude);
 
     return Container(
-      padding: EdgeInsets.only(left: 12, top: 32, right: 12),
+      padding: EdgeInsets.only(left: 12, top: 24, right: 12),
       height: MediaQuery.of(context).size.height * 0.3,
       width: double.infinity,
       child: Column(
@@ -68,7 +69,7 @@ class TimelineScreen extends StatelessWidget {
             ),
           ),
           SizedBox(
-            height: 24,
+            height: 16,
           ),
           FutureBuilder<List<geocoder.Address>>(
               future: geocoder.Geocoder.google(
@@ -87,7 +88,7 @@ class TimelineScreen extends StatelessWidget {
                 return RichText(
                   text: TextSpan(children: [
                     TextSpan(
-                        text: "Your Set Location: ",
+                        text: "Your Location: ",
                         style: TextStyle(
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
@@ -222,12 +223,14 @@ class TimelineScreen extends StatelessWidget {
                                       mainAxisAlignment:
                                           MainAxisAlignment.spaceBetween,
                                       children: <Widget>[
-                                        Text(
-                                          event.title,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16),
+                                        Flexible(
+                                          child: Text(
+                                            event.title,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 16),
+                                          ),
                                         ),
                                         Container(
                                           padding: EdgeInsets.all(2),
@@ -240,7 +243,9 @@ class TimelineScreen extends StatelessWidget {
                                                 ? "Concert"
                                                 : event.type == 1
                                                     ? "Audition"
-                                                    : "Jam Session",
+                                                    : event.type == 2
+                                                        ? "Jam Session"
+                                                        : "Open Mic",
                                             style: TextStyle(
                                                 fontWeight: FontWeight.bold,
                                                 color: Theme.of(context)
@@ -252,7 +257,10 @@ class TimelineScreen extends StatelessWidget {
                                     SizedBox(
                                       height: 8,
                                     ),
-                                    Text(event.name),
+                                    Text(
+                                      event.name,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                     SizedBox(
                                       height: 8,
                                     ),
@@ -263,8 +271,22 @@ class TimelineScreen extends StatelessWidget {
                                         borderRadius: BorderRadius.all(
                                             Radius.circular(10)),
                                         child: Card(
-                                          elevation: 5,
-                                          child:
+                                          semanticContainer: true,
+                                          clipBehavior:
+                                              Clip.antiAliasWithSaveLayer,
+                                          elevation: 10,
+                                          child: event.photoUrl != null
+                                              ? Container(
+                                                  decoration: BoxDecoration(
+                                                    image: DecorationImage(
+                                                      fit: BoxFit.cover,
+                                                      image:
+                                                          CachedNetworkImageProvider(
+                                                              event.photoUrl),
+                                                    ),
+                                                  ),
+                                                )
+                                              :
                                               /* GoogleMap(
                                         scrollGesturesEnabled: false,
                                         zoomGesturesEnabled: false,

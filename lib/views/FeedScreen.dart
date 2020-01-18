@@ -63,7 +63,7 @@ class FeedScreen extends StatelessWidget {
             );
           }
 
-          return ListView(children: snapshot.data);
+          return ListView(shrinkWrap: true, children: snapshot.data);
         },
       )),
     );

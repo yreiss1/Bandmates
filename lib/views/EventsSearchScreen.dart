@@ -2,6 +2,7 @@ import 'package:bandmates/Utils.dart';
 import 'package:bandmates/models/Event.dart';
 import 'package:bandmates/views/HomeScreen.dart';
 import 'package:bandmates/views/UI/Progress.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:geoflutterfire/geoflutterfire.dart';
@@ -80,7 +81,7 @@ class _EventsSearchScreenState extends State<EventsSearchScreen> {
                             ),
                             Positioned(
                               left: MediaQuery.of(context).size.width * 0.05,
-                              top: 170,
+                              top: 145,
                               child: Container(
                                 height: 60,
                                 width: MediaQuery.of(context).size.width * 0.9,
@@ -119,8 +120,8 @@ class _EventsSearchScreenState extends State<EventsSearchScreen> {
           borderRadius: BorderRadius.only(
               bottomLeft: Radius.circular(25),
               bottomRight: Radius.circular(25))),
-      padding: EdgeInsets.only(left: 12, top: 32),
-      height: 200,
+      padding: EdgeInsets.only(left: 12, top: 16),
+      height: 175,
       width: double.infinity,
       child: Column(
         children: <Widget>[
@@ -148,7 +149,7 @@ class _EventsSearchScreenState extends State<EventsSearchScreen> {
             ],
           ),
           SizedBox(
-            height: 24,
+            height: 16,
           ),
           buildChipInputs()
         ],
@@ -319,24 +320,36 @@ class _EventsSearchScreenState extends State<EventsSearchScreen> {
                 child: ClipRRect(
                   borderRadius: BorderRadius.all(Radius.circular(10)),
                   child: Card(
+                    semanticContainer: true,
+                    clipBehavior: Clip.antiAliasWithSaveLayer,
                     elevation: 5,
-                    child: GoogleMap(
-                      scrollGesturesEnabled: false,
-                      zoomGesturesEnabled: false,
-                      myLocationButtonEnabled: false,
-                      mapType: MapType.normal,
-                      initialCameraPosition: CameraPosition(
-                        target: LatLng(
-                            event.location.latitude, event.location.longitude),
-                        zoom: 14.0000,
-                      ),
-                      markers: {
-                        Marker(
-                            markerId: MarkerId("Event Location"),
-                            position: LatLng(event.location.latitude,
-                                event.location.longitude))
-                      },
-                    ),
+                    child: event.photoUrl != null
+                        ? Container(
+                            decoration: BoxDecoration(
+                              image: DecorationImage(
+                                fit: BoxFit.cover,
+                                image:
+                                    CachedNetworkImageProvider(event.photoUrl),
+                              ),
+                            ),
+                          )
+                        : GoogleMap(
+                            scrollGesturesEnabled: false,
+                            zoomGesturesEnabled: false,
+                            myLocationButtonEnabled: false,
+                            mapType: MapType.normal,
+                            initialCameraPosition: CameraPosition(
+                              target: LatLng(event.location.latitude,
+                                  event.location.longitude),
+                              zoom: 14.0000,
+                            ),
+                            markers: {
+                              Marker(
+                                  markerId: MarkerId("Event Location"),
+                                  position: LatLng(event.location.latitude,
+                                      event.location.longitude))
+                            },
+                          ),
                   ),
                 ),
               ),

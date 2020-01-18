@@ -50,7 +50,6 @@ class _HomeScreenState extends State<HomeScreen>
     _pageController = PageController();
 
     _getUser = getSnapshot(widget.uid);
-    configurePushNotifications();
   }
 
   Future<DocumentSnapshot> getSnapshot(String uid) async {
@@ -149,6 +148,8 @@ class _HomeScreenState extends State<HomeScreen>
                 body: OnboardingScreen(),
               );
             } else {
+              configurePushNotifications();
+
               return Scaffold(
                 backgroundColor: Theme.of(context).primaryColor,
                 key: _scaffoldKey,

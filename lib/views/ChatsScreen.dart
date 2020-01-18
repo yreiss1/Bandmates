@@ -186,6 +186,8 @@ buildChatList(context) {
                                                   Expanded(
                                                     child: Text(
                                                       futureSnapshot.data.name,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
                                                       style: TextStyle(
                                                           fontWeight:
                                                               FontWeight.w600,
@@ -199,7 +201,7 @@ buildChatList(context) {
                                                           .data['time']
                                                           .toDate()),
                                                       style: TextStyle(
-                                                          fontSize: 16,
+                                                          fontSize: 14,
                                                           fontWeight:
                                                               FontWeight.w300,
                                                           fontStyle:

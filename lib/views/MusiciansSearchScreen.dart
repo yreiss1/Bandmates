@@ -66,13 +66,14 @@ class _MusiciansSearchScreenState extends State<MusiciansSearchScreen> {
         DropdownMenuItem(
           child: Row(
             children: <Widget>[
+              /*
               Icon(
                 genre.icon.icon,
                 size: 40,
               ),
               SizedBox(
                 width: 10,
-              ),
+              ),*/
               Text(genre.name)
             ],
           ),
@@ -188,7 +189,47 @@ class _MusiciansSearchScreenState extends State<MusiciansSearchScreen> {
           SizedBox(
             height: 24,
           ),
-          buildChipInputs()
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              Transform(
+                transform: new Matrix4.identity()..scale(0.9),
+                child: Chip(
+                  elevation: 10,
+                  backgroundColor: Colors.white,
+                  label: DropdownButton(
+                    value: selectedInstrument,
+                    hint: Text("Instrument"),
+                    items: instruments,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedInstrument = value;
+                      });
+                      _searchUsers();
+                    },
+                  ),
+                ),
+              ),
+              Transform(
+                transform: new Matrix4.identity()..scale(0.9),
+                child: Chip(
+                  elevation: 10,
+                  backgroundColor: Colors.white,
+                  label: DropdownButton(
+                    value: selectedGenre,
+                    hint: Text("Genre"),
+                    items: genres,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedGenre = value;
+                      });
+                      _searchUsers();
+                    },
+                  ),
+                ),
+              ),
+            ],
+          )
         ],
       ),
     );
@@ -196,51 +237,51 @@ class _MusiciansSearchScreenState extends State<MusiciansSearchScreen> {
 
   buildMainArea(context) {
     return Container(
-        padding: EdgeInsets.only(top: 0),
-        color: Colors.white,
-        height: MediaQuery.of(context).size.height * 0.80,
-        width: double.infinity,
-        child: _usersList.length == 0
-            ? StreamBuilder(
-                stream: Provider.of<UserProvider>(context).getClosest(center),
-                builder: (BuildContext context,
-                    AsyncSnapshot<List<DocumentSnapshot>> snapshot) {
-                  if (!snapshot.hasData) {
-                    return circularProgress(context);
-                  }
+      color: Colors.white,
+      width: double.infinity,
+      height: MediaQuery.of(context).size.height * 0.67,
+      child: _usersList.length == 0
+          ? StreamBuilder(
+              stream: Provider.of<UserProvider>(context).getClosest(center),
+              builder: (BuildContext context,
+                  AsyncSnapshot<List<DocumentSnapshot>> snapshot) {
+                if (!snapshot.hasData) {
+                  return circularProgress(context);
+                }
 
-                  if (snapshot.hasError) {
-                    Utils.buildErrorDialog(context,
-                        "Error fetching data, please try again later!");
-                  }
+                if (snapshot.hasError) {
+                  Utils.buildErrorDialog(
+                      context, "Error fetching data, please try again later!");
+                }
 
-                  if (snapshot.data.length == 0) {
-                    return Center(
-                      child: Text(
-                          "No musicians in your area, please try again later!"),
-                    );
-                  }
-
-                  return ListView.builder(
-                    padding: EdgeInsets.only(top: 30),
-                    itemCount: snapshot.data.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      User user = User.fromDocument(snapshot.data[index]);
-                      if (user.uid == currentUser.uid) {
-                        return Container();
-                      }
-                      return buildUserCard(user, context);
-                    },
+                if (snapshot.data.length == 0) {
+                  return Center(
+                    child: Text(
+                        "No musicians in your area, please try again later!"),
                   );
-                },
-              )
-            : ListView.builder(
-                padding: EdgeInsets.only(top: 30),
-                itemCount: _usersList.length,
-                itemBuilder: (BuildContext context, int index) {
-                  return buildUserCard(_usersList[index], context);
-                },
-              ));
+                }
+
+                return ListView.builder(
+                  padding: EdgeInsets.only(top: 30),
+                  itemCount: snapshot.data.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    User user = User.fromDocument(snapshot.data[index]);
+                    if (user.uid == currentUser.uid) {
+                      return Container();
+                    }
+                    return buildUserCard(user, context);
+                  },
+                );
+              },
+            )
+          : ListView.builder(
+              padding: EdgeInsets.only(top: 30),
+              itemCount: _usersList.length,
+              itemBuilder: (BuildContext context, int index) {
+                return buildUserCard(_usersList[index], context);
+              },
+            ),
+    );
   }
 
   buildChipInputs() {
@@ -250,42 +291,6 @@ class _MusiciansSearchScreenState extends State<MusiciansSearchScreen> {
         shrinkWrap: true,
         scrollDirection: Axis.horizontal,
         children: <Widget>[
-          Transform(
-            transform: new Matrix4.identity()..scale(0.9),
-            child: Chip(
-              elevation: 10,
-              backgroundColor: Colors.white,
-              label: DropdownButton(
-                value: selectedInstrument,
-                hint: Text("Instrument"),
-                items: instruments,
-                onChanged: (value) {
-                  setState(() {
-                    selectedInstrument = value;
-                  });
-                  _searchUsers();
-                },
-              ),
-            ),
-          ),
-          Transform(
-            transform: new Matrix4.identity()..scale(0.9),
-            child: Chip(
-              elevation: 10,
-              backgroundColor: Colors.white,
-              label: DropdownButton(
-                value: selectedGenre,
-                hint: Text("Genre"),
-                items: genres,
-                onChanged: (value) {
-                  setState(() {
-                    selectedGenre = value;
-                  });
-                  _searchUsers();
-                },
-              ),
-            ),
-          ),
           Transform(
             transform: new Matrix4.identity()..scale(0.9),
             child: Chip(
@@ -383,123 +388,149 @@ class _MusiciansSearchScreenState extends State<MusiciansSearchScreen> {
     });
   }
 
-  String buildSubtitle(Map<dynamic, dynamic> map) {
-    List l = map.keys.toList();
-
-    String result = l.fold(
-        "",
-        (inc, ins) =>
-            inc +
-            " " +
-            ins.toString()[0].toUpperCase() +
-            ins.toString().substring(1) +
-            " " +
-            "\\");
-
-    result = result.substring(1, result.length - 1);
-    if (result.length > 40) {
-      result = result.substring(0, 40);
-      result += "...";
-    }
-    return result;
-  }
-}
-
-buildUserCard(User user, BuildContext context) {
-  return GestureDetector(
-    onTap: () => Navigator.pushNamed(context, ProfileScreen.routeName,
-        arguments: ProfileScreenArguments(userId: user.uid)),
-    child: Container(
-      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      child: Card(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        elevation: 10,
-        child: Container(
-          padding: EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Row(
-                children: <Widget>[
-                  CircleAvatar(
-                    radius: 35,
-                    backgroundImage: user.photoUrl == null
-                        ? AssetImage('assets/images/user-placeholder.png')
-                        : CachedNetworkImageProvider(user.photoUrl),
-                  ),
-                  SizedBox(
-                    width: 30,
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
-                        user.name,
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 20),
+  buildUserCard(User user, BuildContext context) {
+    return GestureDetector(
+      onTap: () => Navigator.pushNamed(context, ProfileScreen.routeName,
+          arguments: ProfileScreenArguments(userId: user.uid)),
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Card(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          elevation: 10,
+          child: Container(
+            padding: EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Row(
+                  mainAxisSize: MainAxisSize.max,
+                  children: <Widget>[
+                    CircleAvatar(
+                      radius: 35,
+                      backgroundImage: user.photoUrl == null
+                          ? AssetImage('assets/images/user-placeholder.png')
+                          : CachedNetworkImageProvider(user.photoUrl),
+                    ),
+                    SizedBox(
+                      width: 30,
+                    ),
+                    Flexible(
+                      fit: FlexFit.loose,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            user.name,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 20),
+                          ),
+                          Text(
+                            user.location
+                                    .distance(
+                                        lat: currentUser.location.latitude,
+                                        lng: currentUser.location.longitude)
+                                    .round()
+                                    .toString() +
+                                "km away",
+                            style: TextStyle(fontStyle: FontStyle.italic),
+                          )
+                        ],
                       ),
-                      Text(
-                        user.location
-                                .distance(
-                                    lat: currentUser.location.latitude,
-                                    lng: currentUser.location.longitude)
-                                .round()
-                                .toString() +
-                            "km away",
-                        style: TextStyle(fontStyle: FontStyle.italic),
+                    ),
+                  ],
+                ),
+                SizedBox(
+                  height: 10,
+                ),
+                Text(
+                  "Instruments: ",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                SizedBox(
+                  height: 5,
+                ),
+                user.instruments.keys.length > 8
+                    ? Row(
+                        children: <Widget>[
+                          for (String inst
+                              in user.instruments.keys.toList().sublist(0, 8))
+                            Container(
+                              margin: EdgeInsets.symmetric(horizontal: 2),
+                              child: Icon(
+                                Utils.valueToIcon(inst),
+                                size: 30,
+                              ),
+                            ),
+                          SizedBox(
+                            width: 8,
+                          ),
+                          Text("+" +
+                              (user.instruments.keys.length - 8).toString() +
+                              " More"),
+                        ],
                       )
-                    ],
-                  ),
-                ],
-              ),
-              SizedBox(
-                height: 10,
-              ),
-              Text(
-                "Instruments: ",
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              SizedBox(
-                height: 5,
-              ),
-              Row(
-                children: <Widget>[
-                  for (String inst in user.instruments.keys)
-                    Container(
-                      margin: EdgeInsets.symmetric(horizontal: 2),
-                      child: Icon(
-                        Utils.valueToIcon(inst),
-                        size: 30,
+                    : Row(
+                        children: <Widget>[
+                          for (String inst in user.instruments.keys)
+                            Container(
+                              margin: EdgeInsets.symmetric(horizontal: 2),
+                              child: Icon(
+                                Utils.valueToIcon(inst),
+                                size: 30,
+                              ),
+                            )
+                        ],
                       ),
-                    )
-                ],
-              ),
-              SizedBox(
-                height: 5,
-              ),
-              Text(
-                "Genres: ",
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              SizedBox(
-                height: 5,
-              ),
-              Row(
-                children: <Widget>[
-                  for (String genre in user.genres.keys)
-                    Container(
-                      margin: EdgeInsets.symmetric(horizontal: 2),
-                      child: Chip(
-                        label: Text(genre),
+                SizedBox(
+                  height: 5,
+                ),
+                Text(
+                  "Genres: ",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                SizedBox(
+                  height: 5,
+                ),
+                user.genres.keys.length > 3
+                    ? Row(
+                        children: <Widget>[
+                          for (String genre
+                              in user.genres.keys.toList().sublist(0, 3))
+                            Container(
+                              margin: EdgeInsets.symmetric(horizontal: 2),
+                              child: Chip(
+                                label: Text(genre),
+                              ),
+                            ),
+                          SizedBox(
+                            width: 8,
+                          ),
+                          Text(
+                            ("+" +
+                                (user.genres.keys.length - 3).toString() +
+                                " More"),
+                          ),
+                        ],
+                      )
+                    : Row(
+                        children: <Widget>[
+                          for (String genre in user.genres.keys)
+                            Container(
+                              margin: EdgeInsets.symmetric(horizontal: 2),
+                              child: Chip(
+                                label: Text(genre),
+                              ),
+                            )
+                        ],
                       ),
-                    )
-                ],
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }

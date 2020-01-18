@@ -85,6 +85,7 @@ class Post with ChangeNotifier {
         "userId": user.uid,
         "avatar": user.photoUrl,
         "postId": postId,
+        "postType": this.type,
         "mediaUrl": mediaUrl,
         "time": DateTime.now()
       });
@@ -188,7 +189,7 @@ class PostProvider with ChangeNotifier {
               if (doc.exists) {doc.reference.delete()}
             });
 
-    storageRef.child("post_$postId.jpg").delete();
+    storageRef.child("posts").child("post_$postId.jpg").delete();
 
     QuerySnapshot feedSnapshot = await Firestore.instance
         .collection("feed")

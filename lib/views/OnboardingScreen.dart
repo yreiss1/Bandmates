@@ -1,22 +1,12 @@
-import 'package:achievement_view/achievement_widget.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:bandmates/views/OnboardingScreens/GenreCapture.dart';
-import 'package:bandmates/views/OnboardingScreens/InstrumentCapture.dart';
-import 'package:bandmates/views/OnboardingScreens/QuestionsCapture.dart';
-import 'package:bandmates/views/UI/IntroButton.dart';
-import 'package:bandmates/views/UI/PageViewModels.dart';
-import 'package:line_icons/line_icons.dart';
-import 'package:dots_indicator/dots_indicator.dart';
+
 import 'package:flutter_form_builder/flutter_form_builder.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:achievement_view/achievement_view.dart';
-import './UI/IntroPage.dart';
-import 'dart:async';
-import 'dart:math';
-import 'package:provider/provider.dart';
+import 'package:flutter_swiper/flutter_swiper.dart';
+import 'package:image_cropper/image_cropper.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:line_icons/line_icons.dart';
 import 'HomeScreen.dart';
-import '../models/User.dart';
 import 'dart:io';
 import 'package:image/image.dart' as Im;
 import 'package:path_provider/path_provider.dart';
@@ -41,16 +31,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final _scaffoldKey =
       GlobalKey<ScaffoldState>(debugLabel: "OnboardingScreenScaffold");
 
-  int _currentPage;
+  static GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
-  PageController _controller;
-  bool _isScrolling = false;
   File _imageFile;
 
-  List<PageViewModels> _listPagesViewModel;
+  SwiperController _swiperController;
+
   @override
   void initState() {
     super.initState();
+
+    _swiperController = SwiperController();
 
     _userData = {
       'name': "",
@@ -62,39 +53,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       'instruments': [],
       'location': null,
     };
-    _currentPage = 0;
-
-    _controller = PageController(initialPage: _currentPage, keepPage: true);
-
-    _listPagesViewModel = [
-      PageViewModels(
-          bodyWidget: Text("Welcome to BandMates!!"),
-          footer: null,
-          title: "Welcome to your Bandmates!",
-          scroll: false),
-      PageViewModels(
-          bodyWidget: QuestionsCapture(
-            fbKey: personalKey,
-            getInfo: getUserData,
-          ),
-          footer: null,
-          title: "Your Profile",
-          scroll: true),
-      PageViewModels(
-          bodyWidget: InstrumentCapture(
-              getInstruments: getInstrumentsData, fbKey: instrumentKey),
-          footer: null,
-          title: "Your Intruments",
-          scroll: true),
-      PageViewModels(
-          bodyWidget: GenreCapture(
-            getGenres: getGenresData,
-            fbKey: genreKey,
-          ),
-          footer: null,
-          title: "You Genres",
-          scroll: true),
-    ];
   }
 
   getGenresData(List<dynamic> genres) {
@@ -125,9 +83,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       File imageFile) {
     setState(() {
       _userData['name'] = name;
-      _userData['birthday'] = birthday;
       _userData['bio'] = bio;
-      _userData['gender'] = gender;
       _userData['transportation'] =
           hasTransportation == null ? false : hasTransportation;
       _userData['practice'] =
@@ -151,210 +107,492 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     });
   }
 
-  void _onNext() {
-    switch (_currentPage) {
-      case 1:
-        if (personalKey.currentState.validate()) {
-          animateScroll(min(_currentPage + 1, _listPagesViewModel.length - 1));
-        }
-        break;
-      case 2:
-        if (instrumentKey.currentState.validate()) {
-          animateScroll(min(_currentPage + 1, _listPagesViewModel.length - 1));
-        }
-        break;
-      case 3:
-        if (genreKey.currentState.validate()) {
-          animateScroll(min(_currentPage + 1, _listPagesViewModel.length - 1));
-        }
-        break;
-      default:
-        animateScroll(min(_currentPage + 1, _listPagesViewModel.length - 1));
-    }
+  Future<void> _pickImage(ImageSource source) async {
+    File selected = await ImagePicker.pickImage(source: source);
+
+    setState(() {
+      _imageFile = selected;
+    });
   }
 
-  void _onBack() {
-    animateScroll(max(0, _currentPage - 1));
+  /// Remove image
+  void _clear() {
+    setState(() => _imageFile = null);
   }
 
-  Future<void> animateScroll(int page) async {
-    setState(() => _isScrolling = true);
-    await _controller.animateToPage(
-      page,
-      duration: Duration(milliseconds: 350),
-      curve: Curves.easeIn,
+  Future<void> _cropImage() async {
+    File cropped = await ImageCropper.cropImage(
+      sourcePath: _imageFile.path,
     );
-    setState(() => _isScrolling = false);
+
+    setState(() {
+      _imageFile = cropped ?? _imageFile;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final isLastPage = (_currentPage == _listPagesViewModel.length - 1);
-    final isFirstPage = (_currentPage == 0);
+    return SafeArea(
+      top: false,
+      child: Container(
+        color: Colors.white,
+        child: Stack(
+          children: <Widget>[
+            _buildHeader(),
+            _buildSwiperArea(),
+          ],
+        ),
+      ),
+    );
+  }
 
-    return Scaffold(
-      key: _scaffoldKey,
-      body: Stack(
+  _buildHeader() {
+    return Container(
+      decoration: BoxDecoration(
+          color: Theme.of(context).primaryColor,
+          borderRadius: BorderRadius.only(
+              bottomLeft: Radius.circular(25),
+              bottomRight: Radius.circular(25))),
+      padding: EdgeInsets.only(left: 12, top: 44),
+      height: 250,
+      width: double.infinity,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          PageView(
-            controller: _controller,
-            physics: const NeverScrollableScrollPhysics(),
-            children: _listPagesViewModel
-                .map((p) => IntroPage(
-                      page: p,
-                      scroll: p.scroll,
-                    ))
-                .toList(),
-            onPageChanged: (index) {
-              setState(() {
-                _currentPage = index;
-              });
-            },
+          Text(
+            "Welcome to Bandmates",
+            style: TextStyle(
+                fontWeight: FontWeight.bold, color: Colors.white, fontSize: 24),
           ),
-          Positioned(
-            bottom: 16,
-            left: 16,
-            right: 16,
-            child: SafeArea(
-              top: false,
-              child: Row(
-                children: <Widget>[
-                  Expanded(
-                    flex: 1,
-                    child: isFirstPage
-                        ? Opacity(
-                            opacity: 0.0,
-                            child: IntroButton(
-                              child: Icon(LineIcons.arrow_left),
-                              onPressed: () {},
-                            ),
-                          )
-                        : IntroButton(
-                            child: Icon(LineIcons.arrow_left),
-                            onPressed: _onBack,
-                          ),
-                  ),
-                  Expanded(
-                    flex: 1,
-                    child: Center(
-                      child: DotsIndicator(
-                        dotsCount: _listPagesViewModel.length,
-                        position: _currentPage.toDouble(),
-                        decorator: DotsDecorator(
-                          activeColor: const Color(0xff53172c),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                      flex: 1,
-                      child: isLastPage
-                          ? IntroButton(
-                              child: Icon(LineIcons.check),
-                              onPressed: () async {
-                                var userAuth = Provider.of<FirebaseUser>(
-                                    context,
-                                    listen: false);
-                                String downloadUrl;
-                                if (_imageFile != null) {
-                                  await _compressImage();
-                                  downloadUrl =
-                                      await Provider.of<UserProvider>(context)
-                                          .uploadProfileImage(
-                                              _imageFile, userAuth.uid);
-                                }
-                                User user = new User(
-                                  uid: userAuth.uid,
-                                  email: userAuth.email,
-                                  bio: _userData['bio'],
-                                  name: _userData['name'],
-                                  instruments: _userData['instruments'],
-                                  genres: _userData['genres'],
-                                  transportation: _userData['transportation'],
-                                  practiceSpace: _userData['practice'],
-                                  location: _userData['location'],
-                                  time: DateTime.now(),
-                                  photoUrl: downloadUrl,
-                                );
-                                Provider.of<UserProvider>(context)
-                                    .uploadUser(userAuth.uid, user);
-                                var name = _userData['name'];
-
-                                AchievementView(context,
-                                        title: "Bandmates",
-                                        subTitle: "Welcome $name!",
-                                        color: Theme.of(context).primaryColor,
-                                        duration: Duration(seconds: 2),
-                                        alignment: Alignment.topCenter,
-                                        icon: Icon(
-                                          LineIcons.trophy,
-                                          color: Colors.white,
-                                        ),
-                                        typeAnimationContent:
-                                            AnimationTypeAchievement
-                                                .fadeSlideToUp,
-                                        listener: (status) {})
-                                    .show();
-
-                                Timer(Duration(seconds: 2), () {
-                                  Navigator.pushReplacement(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (ctx) => HomeScreen(
-                                                uid: userAuth.uid,
-                                              )));
-                                });
-                              },
-                            )
-                          : IntroButton(
-                              child: Icon(LineIcons.arrow_right),
-                              onPressed: !_isScrolling ? _onNext : null,
-                            ))
-                ],
-              ),
-            ),
+          SizedBox(
+            height: 4,
+          ),
+          Text(
+            "Now to get to know you alittle better",
+            style: TextStyle(color: Colors.white),
           )
         ],
       ),
     );
+  }
 
-/*
-    Container(
-      child: IntroductionScreen(
-          onChange: (val) => {},
-          pages: _listPagesViewModel,
-          onDone: () {
-            User user = new User(
-                name: name,
-                practiceSpace: hasPracticeSpace,
-                transportation: hasTransportation,
-                genres: genres,
-                instruments: instruments,
-                gender: gender,
-                birthday: birthday,
-                bio: bio);
+  _buildSwiperArea() {
+    return Column(
+      children: <Widget>[
+        Expanded(
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8),
+            child: Swiper(
+              //physics: NeverScrollableScrollPhysics(),
+              curve: Curves.easeInOut,
+              loop: false,
+              scrollDirection: Axis.vertical,
+              itemCount: 5,
+              viewportFraction: 0.6,
+              scale: 0.55,
 
-            Utils.uploadUser(context, user);
-            Navigator.popAndPushNamed(context, HomeScreen.routeName);
-          },
-          onSkip: () {
-            // You can also override onSkip callback
-          },
-          showSkipButton: true,
-          skip: const Text(
-            "Skip",
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
+              // pagination: SwiperPagination(
+              //   alignment: Alignment.centerLeft,
+              // ),
+              controller: _swiperController,
+              itemBuilder: (BuildContext context, int index) {
+                switch (index) {
+                  case 0:
+                    return _buildZero();
+                    break;
+                  case 1:
+                    return _buildOne();
+                    break;
+                  case 2:
+                    return _buildTwo();
+                    break;
+                  case 3:
+                    return _buildThree();
+                    break;
+                  case 4:
+                    return _buildFour();
+                    break;
+                  default:
+                    return Container();
+                }
+              },
             ),
           ),
-          next: Icon(
-            LineIcons.arrow_right,
-          ),
-          done: const Icon(
-            LineIcons.check,
-            color: const Color(0xff53172c),
-          )),
+        ),
+      ],
     );
-    */
+  }
+
+  Widget _buildZero() {
+    FocusNode _descFocus = new FocusNode();
+
+    return Card(
+      semanticContainer: true,
+      clipBehavior: Clip.antiAliasWithSaveLayer,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      elevation: 10,
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 18),
+        child: ListView(
+          //physics: NeverScrollableScrollPhysics(),
+          children: <Widget>[
+            SizedBox(
+              height: 32,
+            ),
+            Text(
+              "Who are you?",
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(
+              height: 24,
+            ),
+            Form(
+              key: _formKey,
+              child: Column(children: [
+                TextFormField(
+                  onFieldSubmitted: (_) =>
+                      FocusScope.of(context).requestFocus(_descFocus),
+                  textInputAction: TextInputAction.next,
+                  decoration: new InputDecoration(
+                    focusColor: Theme.of(context).primaryColor,
+                    border: new OutlineInputBorder(
+                      borderRadius: const BorderRadius.all(
+                        const Radius.circular(15.0),
+                      ),
+                    ),
+                    hintText: "Enter your Name",
+                  ),
+                  validator: (value) {
+                    if (value.isEmpty) {
+                      return 'Name cannot be empty';
+                    }
+
+                    if (value.length <= 3) {
+                      return 'Name must be longer than 3 characters';
+                    }
+
+                    return null;
+                  },
+                ),
+                SizedBox(
+                  height: 24,
+                ),
+                TextFormField(
+                  focusNode: _descFocus,
+                  textInputAction: TextInputAction.done,
+                  maxLines: null,
+                  decoration: new InputDecoration(
+                    focusColor: Theme.of(context).primaryColor,
+                    border: new OutlineInputBorder(
+                      borderRadius: const BorderRadius.all(
+                        const Radius.circular(15.0),
+                      ),
+                    ),
+                    hintText: "Who are you? What are you looking for?",
+                  ),
+                  validator: (value) {
+                    if (value.isEmpty) {
+                      return 'Your bio cannot be empty';
+                    }
+
+                    if (value.length <= 6) {
+                      return 'Bio must be longer than 6 characters';
+                    }
+
+                    return null;
+                  },
+                ),
+              ]),
+            ),
+            SizedBox(
+              height: 24,
+            ),
+            FlatButton.icon(
+                color: Theme.of(context).primaryColor,
+                icon: Icon(Icons.keyboard_arrow_down),
+                shape: RoundedRectangleBorder(
+                    side: BorderSide(
+                        color: Colors.white,
+                        width: 1,
+                        style: BorderStyle.solid),
+                    borderRadius: BorderRadius.circular(50)),
+                label: Text(
+                  "Next",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                textColor: Colors.white,
+                onPressed: () {
+                  if (_formKey.currentState.validate()) {
+                    _swiperController.next();
+                  }
+                }),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOne() {
+    return Card(
+      semanticContainer: true,
+      clipBehavior: Clip.antiAliasWithSaveLayer,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      elevation: 10,
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 18),
+        child: ListView(
+          physics: NeverScrollableScrollPhysics(),
+          children: <Widget>[
+            SizedBox(
+              height: 16,
+            ),
+            Text(
+              "Your Image",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(
+              height: 16,
+            ),
+            _imageFile == null
+                ? GestureDetector(
+                    onTap: () => _pickImage(ImageSource.gallery),
+                    child: Material(
+                      elevation: 10,
+                      clipBehavior: Clip.antiAlias,
+                      shape: CircleBorder(),
+                      child: Container(
+                        width: 180,
+                        height: 180,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: <Widget>[
+                            Icon(
+                              Icons.image,
+                              size: 32,
+                            ),
+                            SizedBox(
+                              height: 4,
+                            ),
+                            Text("Upload a Profile Image"),
+                          ],
+                        ),
+                      ),
+                    ),
+                  )
+                : Material(
+                    elevation: 10,
+                    clipBehavior: Clip.antiAlias,
+                    shape: CircleBorder(),
+                    child: Container(
+                      width: 180,
+                      height: 180,
+                      decoration: new BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                            color: Theme.of(context).primaryColor, width: 0),
+                        image: new DecorationImage(
+                            fit: BoxFit.cover,
+                            image: new FileImage(_imageFile)),
+                      ),
+                    ),
+                  ),
+            SizedBox(
+              height: 16,
+            ),
+            _imageFile != null
+                ? Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: <Widget>[
+                      FlatButton.icon(
+                        shape: RoundedRectangleBorder(
+                            side: BorderSide(
+                                color: Colors.white,
+                                width: 1,
+                                style: BorderStyle.solid),
+                            borderRadius: BorderRadius.circular(50)),
+                        color: Theme.of(context).primaryColor,
+                        icon: Icon(LineIcons.crop),
+                        textColor: Colors.white,
+                        label: Text("Crop",
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        onPressed: () => _cropImage(),
+                      ),
+                      FlatButton.icon(
+                        icon: Icon(LineIcons.refresh),
+                        shape: RoundedRectangleBorder(
+                            side: BorderSide(
+                                color: Theme.of(context).primaryColor,
+                                width: 1,
+                                style: BorderStyle.solid),
+                            borderRadius: BorderRadius.circular(50)),
+                        label: Text("Redo",
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        textColor: Theme.of(context).primaryColor,
+                        onPressed: () => _clear(),
+                      ),
+                    ],
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: <Widget>[
+                      FlatButton.icon(
+                        shape: RoundedRectangleBorder(
+                            side: BorderSide(
+                                color: Colors.white,
+                                width: 1,
+                                style: BorderStyle.solid),
+                            borderRadius: BorderRadius.circular(50)),
+                        color: Theme.of(context).primaryColor,
+                        icon: Icon(LineIcons.camera),
+                        textColor: Colors.white,
+                        label: Text("Camera",
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        onPressed: () => _pickImage(ImageSource.camera),
+                      ),
+                      FlatButton.icon(
+                        icon: Icon(LineIcons.file_photo_o),
+                        shape: RoundedRectangleBorder(
+                            side: BorderSide(
+                                color: Theme.of(context).primaryColor,
+                                width: 1,
+                                style: BorderStyle.solid),
+                            borderRadius: BorderRadius.circular(50)),
+                        label: Text("Gallery",
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        textColor: Theme.of(context).primaryColor,
+                        onPressed: () => _pickImage(ImageSource.gallery),
+                      ),
+                    ],
+                  ),
+            SizedBox(
+              height: 16,
+            ),
+            FlatButton.icon(
+              color: Theme.of(context).primaryColor,
+              icon: Icon(Icons.keyboard_arrow_down),
+              shape: RoundedRectangleBorder(
+                  side: BorderSide(
+                      color: Colors.white, width: 1, style: BorderStyle.solid),
+                  borderRadius: BorderRadius.circular(50)),
+              label: Text(
+                "Next",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              textColor: Colors.white,
+              onPressed: () => _swiperController.next(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTwo() {
+    return Card(
+      semanticContainer: true,
+      clipBehavior: Clip.antiAliasWithSaveLayer,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      elevation: 10,
+      child: Column(
+        children: <Widget>[
+          SizedBox(
+            height: 8,
+          ),
+          Text(
+            "Your Location",
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(
+            height: 8,
+          ),
+          TextField(
+            textInputAction: TextInputAction.next,
+
+            decoration: new InputDecoration(
+              focusColor: Theme.of(context).primaryColor,
+              border: new OutlineInputBorder(
+                borderRadius: const BorderRadius.all(
+                  const Radius.circular(15.0),
+                ),
+              ),
+              hintText: "Event Title",
+            ),
+            //validator: FormBuilderValidators.required(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildThree() {
+    return Card(
+      semanticContainer: true,
+      clipBehavior: Clip.antiAliasWithSaveLayer,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      elevation: 10,
+      child: Column(
+        children: <Widget>[
+          Text("Your Genre"),
+          SizedBox(
+            height: 8,
+          ),
+          TextField(
+            textInputAction: TextInputAction.next,
+
+            decoration: new InputDecoration(
+              focusColor: Theme.of(context).primaryColor,
+              border: new OutlineInputBorder(
+                borderRadius: const BorderRadius.all(
+                  const Radius.circular(15.0),
+                ),
+              ),
+              hintText: "Event Title",
+            ),
+            //validator: FormBuilderValidators.required(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFour() {
+    return Card(
+      semanticContainer: true,
+      clipBehavior: Clip.antiAliasWithSaveLayer,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      elevation: 10,
+      child: Column(
+        children: <Widget>[
+          Text("Your Instruments"),
+          SizedBox(
+            height: 8,
+          ),
+          TextField(
+            textInputAction: TextInputAction.next,
+
+            decoration: new InputDecoration(
+              focusColor: Theme.of(context).primaryColor,
+              border: new OutlineInputBorder(
+                borderRadius: const BorderRadius.all(
+                  const Radius.circular(15.0),
+                ),
+              ),
+              hintText: "Event Title",
+            ),
+            //validator: FormBuilderValidators.required(),
+          ),
+        ],
+      ),
+    );
   }
 }

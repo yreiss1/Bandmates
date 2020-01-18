@@ -3,8 +3,10 @@ import 'dart:io';
 import 'package:bandmates/models/Genre.dart';
 import 'package:bandmates/views/HomeScreen.dart';
 import 'package:bandmates/views/MapScreen.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
+import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:geocoder/geocoder.dart' as geocoder;
@@ -51,10 +53,27 @@ class _EventUploadScreenState extends State<EventUploadScreen> {
 
   int _eventType;
 
+  bool _isVisible;
+
   CameraPosition _initialCamera;
   @override
   void initState() {
     super.initState();
+    _isVisible = true;
+
+    KeyboardVisibilityNotification().addNewListener(
+      onChange: (bool visible) {
+        if (visible) {
+          setState(() {
+            _isVisible = false;
+          });
+        } else {
+          setState(() {
+            _isVisible = true;
+          });
+        }
+      },
+    );
   }
 
   @override
@@ -133,7 +152,7 @@ class _EventUploadScreenState extends State<EventUploadScreen> {
       //TODO: Show message that says that location must not be null!!
     }
 
-    if (_fbKey.currentState.saveAndValidate()) {
+    if (_fbKey.currentState.saveAndValidate() && _eventType != null) {
       setState(() {
         _isUploading = true;
       });
@@ -144,11 +163,22 @@ class _EventUploadScreenState extends State<EventUploadScreen> {
           ? null
           : Map.fromIterable(_fbKey.currentState.value['audition'],
               key: (k) => k.value, value: (v) => true);
+      String downloadUrl;
+      if (_imageFile != null) {
+        StorageUploadTask uploadTask = FirebaseStorage.instance
+            .ref()
+            .child("events")
+            .child("event_$_eventID.jpg")
+            .putFile(_imageFile);
+        StorageTaskSnapshot storageSnap = await uploadTask.onComplete;
+        downloadUrl = await storageSnap.ref.getDownloadURL();
+      }
 
       Event event = new Event(
         name: currentUser.name,
         ownerId: currentUser.uid,
         eventId: _eventID,
+        photoUrl: downloadUrl,
         title: _fbKey.currentState.value['title'],
         text: _fbKey.currentState.value['text'],
         location: GeoFirePoint(_coordinates.latitude, _coordinates.longitude),
@@ -214,18 +244,19 @@ class _EventUploadScreenState extends State<EventUploadScreen> {
                 ],
               ),
             ),
-            Positioned.fill(
-              bottom: 40,
-              child: Align(
-                alignment: Alignment.bottomCenter,
-                child: FloatingActionButton.extended(
-                  icon: Icon(Icons.add),
-                  label: Text("Create Event"),
-                  onPressed: () => _handleSubmit(),
-                  backgroundColor: Theme.of(context).primaryColor,
+            if (_isVisible)
+              Positioned.fill(
+                bottom: 40,
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: FloatingActionButton.extended(
+                    icon: Icon(Icons.add),
+                    label: Text("Create Event"),
+                    onPressed: () => _handleSubmit(),
+                    backgroundColor: Theme.of(context).primaryColor,
+                  ),
                 ),
               ),
-            ),
           ],
         ),
       ),
@@ -373,7 +404,8 @@ class _EventUploadScreenState extends State<EventUploadScreen> {
                 key: _fbKey,
                 child: Column(
                   children: <Widget>[
-                    TextFormField(
+                    FormBuilderTextField(
+                      attribute: 'title',
                       textInputAction: TextInputAction.next,
                       focusNode: _titleFocusNode,
                       onFieldSubmitted: (_) =>
@@ -387,12 +419,13 @@ class _EventUploadScreenState extends State<EventUploadScreen> {
                         ),
                         hintText: "Event Title",
                       ),
-                      validator: FormBuilderValidators.required(),
+                      validators: [FormBuilderValidators.required()],
                     ),
                     SizedBox(
                       height: 16,
                     ),
-                    TextFormField(
+                    FormBuilderTextField(
+                      attribute: 'text',
                       focusNode: _textFocusNode,
                       onFieldSubmitted: (_) =>
                           FocusScope.of(context).requestFocus(_timeFocusNode),
@@ -406,7 +439,7 @@ class _EventUploadScreenState extends State<EventUploadScreen> {
                         ),
                         hintText: "Event Description",
                       ),
-                      validator: FormBuilderValidators.required(),
+                      validators: [FormBuilderValidators.required()],
                     ),
                     SizedBox(
                       height: 16,

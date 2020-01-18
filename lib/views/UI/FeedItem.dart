@@ -71,7 +71,8 @@ class _FeedItemState extends State<FeedItem> {
 
   showPost(context) async {
     Post post = await Provider.of<PostProvider>(context)
-        .getPost(postId: widget.postId, userId: widget.userId);
+        .getPost(postId: widget.postId, userId: currentUser.uid);
+    print("[FeedItem] post: " + post.title);
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -208,11 +209,11 @@ class _FeedItemState extends State<FeedItem> {
     return Padding(
         padding: EdgeInsets.only(bottom: 2.0),
         child: Container(
-          //color: Colors.white54,
           child: ListTile(
             title: GestureDetector(
               onTap: () => showProfile(context),
               child: RichText(
+                textWidthBasis: TextWidthBasis.parent,
                 overflow: TextOverflow.ellipsis,
                 text: TextSpan(
                     style: TextStyle(fontSize: 14.0, color: Colors.black),

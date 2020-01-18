@@ -199,217 +199,131 @@ class _QuestionsCaptureState extends State<QuestionsCapture> {
 
   @override
   Widget build(BuildContext context) {
+    return Stack(
+      children: <Widget>[
+        _buildHeader(),
+        _buildMainArea(),
+      ],
+    );
+  }
+
+  _buildHeader() {
     return Container(
-      child: FormBuilder(
-        onChanged: (val) => {
-          widget.fbKey.currentState.save(),
-          widget.getInfo(
-              val['name'],
-              val['birthday'],
-              val['bio'],
-              val['gender'],
-              val['transportation'],
-              val['practice'],
-              point,
-              _imageFile)
-        },
-        key: widget.fbKey,
-        autovalidate: false,
-        child: Stepper(
-          steps: _mySteps(),
-          physics: ClampingScrollPhysics(),
-          currentStep: this._currentStep,
-          controlsBuilder: (BuildContext context,
-              {VoidCallback onStepContinue, VoidCallback onStepCancel}) {
-            return Padding(
-              padding: const EdgeInsets.only(top: 16.0),
-              child: Row(
-                mainAxisSize: MainAxisSize.max,
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: <Widget>[
-                  _currentStep == 4 // this is the last step
-                      ? Container(child: null)
-                      : RaisedButton.icon(
-                          icon: Icon(
-                            LineIcons.caret_square_o_down,
-                            color: Colors.white,
-                          ),
-                          onPressed: onStepContinue,
-                          label: Text(
-                            'Next',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          color: Theme.of(context).primaryColor,
-                        ),
-                  _currentStep == 0
-                      ? Container(
-                          child: null,
-                        )
-                      : FlatButton.icon(
-                          icon: Icon(LineIcons.caret_square_o_up),
-                          label: const Text('Back'),
-                          onPressed: onStepCancel,
-                        )
-                ],
-              ),
-            );
-          },
-          onStepTapped: (step) {
-            setState(() {
-              this._currentStep = step;
-            });
-          },
-          onStepContinue: () {
-            FocusScope.of(context).unfocus();
+      decoration: BoxDecoration(
+          color: Theme.of(context).primaryColor,
+          borderRadius: BorderRadius.only(
+              bottomLeft: Radius.circular(25),
+              bottomRight: Radius.circular(25))),
+      padding: EdgeInsets.only(left: 12, top: 32),
+      height: 250,
+      width: double.infinity,
+      child: Container(),
+    );
+  }
 
-            AchievementView(context,
-                title: "Bandmates",
-                subTitle: "Welcome to Bandmates!",
-                color: Theme.of(context).primaryColor,
-                duration: Duration(seconds: 2),
-                alignment: Alignment.topCenter,
-                icon: Icon(
-                  LineIcons.trophy,
-                  color: Colors.white,
+  _buildMainArea() {
+    return Card(
+      elevation: 10,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      child: Container(
+        child: FormBuilder(
+          onChanged: (val) => {
+            widget.fbKey.currentState.save(),
+            widget.getInfo(
+                val['name'],
+                val['birthday'],
+                val['bio'],
+                val['gender'],
+                val['transportation'],
+                val['practice'],
+                point,
+                _imageFile)
+          },
+          key: widget.fbKey,
+          autovalidate: false,
+          child: Stepper(
+            steps: _mySteps(),
+            physics: ClampingScrollPhysics(),
+            currentStep: this._currentStep,
+            controlsBuilder: (BuildContext context,
+                {VoidCallback onStepContinue, VoidCallback onStepCancel}) {
+              return Padding(
+                padding: const EdgeInsets.only(top: 16.0),
+                child: Row(
+                  mainAxisSize: MainAxisSize.max,
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: <Widget>[
+                    _currentStep == 4 // this is the last step
+                        ? Container(child: null)
+                        : RaisedButton.icon(
+                            icon: Icon(
+                              LineIcons.check,
+                              color: Colors.white,
+                            ),
+                            onPressed: onStepContinue,
+                            label: Text(
+                              'Next',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                            color: Theme.of(context).primaryColor,
+                          ),
+                    _currentStep == 0
+                        ? Container(
+                            child: null,
+                          )
+                        : FlatButton.icon(
+                            icon: Icon(LineIcons.arrow_left),
+                            label: const Text('Back'),
+                            onPressed: onStepCancel,
+                          )
+                  ],
                 ),
-                typeAnimationContent: AnimationTypeAchievement.fadeSlideToUp,
-                listener: (status) {
-              print(status);
-            }).show();
+              );
+            },
+            onStepTapped: (step) {
+              setState(() {
+                this._currentStep = step;
+              });
+            },
+            onStepContinue: () {
+              FocusScope.of(context).unfocus();
 
-            setState(() {
-              if (this._currentStep < this._mySteps().length - 1) {
-                this._currentStep = this._currentStep + 1;
-              } else {
-                //Logic to check if everything is completed
-                if (!widget.fbKey.currentState.validate()) {}
-                print('Completed, check fields.');
-              }
-            });
-          },
-          onStepCancel: () {
-            setState(() {
-              if (this._currentStep > 0) {
-                this._currentStep = this._currentStep - 1;
-              } else {
-                this._currentStep = 0;
-              }
-            });
-          },
+              AchievementView(context,
+                  title: "Bandmates",
+                  subTitle: "Welcome to Bandmates!",
+                  color: Theme.of(context).primaryColor,
+                  duration: Duration(seconds: 2),
+                  alignment: Alignment.topCenter,
+                  icon: Icon(
+                    LineIcons.trophy,
+                    color: Colors.white,
+                  ),
+                  typeAnimationContent: AnimationTypeAchievement.fadeSlideToUp,
+                  listener: (status) {
+                print(status);
+              }).show();
+
+              setState(() {
+                if (this._currentStep < this._mySteps().length - 1) {
+                  this._currentStep = this._currentStep + 1;
+                } else {
+                  //Logic to check if everything is completed
+                  if (!widget.fbKey.currentState.validate()) {}
+                  print('Completed, check fields.');
+                }
+              });
+            },
+            onStepCancel: () {
+              setState(() {
+                if (this._currentStep > 0) {
+                  this._currentStep = this._currentStep - 1;
+                } else {
+                  this._currentStep = 0;
+                }
+              });
+            },
+          ),
         ),
-
-        /*
-                    ImageCapture(),
-                    FormBuilderTextField(
-                      onFieldSubmitted: (value) {
-                        FocusScope.of(context).requestFocus(_birthdayFocusNode);
-                      },
-                      attribute: "name",
-                      decoration: InputDecoration(
-                        labelText: "Name",
-                        hintText: 'What\'s your name?',
-                      ),
-                      keyboardType: TextInputType.text,
-                      validators: [
-                        FormBuilderValidators.required(),
-                      ],
-                    ),
-                    FormBuilderDropdown(
-                      attribute: "gender",
-                      decoration: InputDecoration(labelText: "Gender"),
-                      hint: Text('Select Gender'),
-                      validators: [FormBuilderValidators.required()],
-                      items: [
-                        'Male',
-                        'Female',
-                        'Transgender Female',
-                        'Transgender Male',
-                        'Non-Conforming'
-                      ]
-                          .map((gender) => DropdownMenuItem(
-                                value: gender,
-                                child: Text('$gender'),
-                              ))
-                          .toList(),
-                    ),
-                    FormBuilderDateTimePicker(
-                      focusNode: _birthdayFocusNode,
-                      onFieldSubmitted: (val) {
-                        FocusScope.of(context).requestFocus(_bioFocusNode);
-                      },
-                      attribute: "birthday",
-                      inputType: InputType.date,
-                      format: DateFormat("yyyy-MM-dd"),
-                      decoration: InputDecoration(labelText: "Your Birthday"),
-                      cursorColor: Theme.of(context).primaryColor,
-                      enabled: true,
-                      firstDate:
-                          DateTime.now().subtract(Duration(days: 365 * 120)),
-                      initialDate:
-                          DateTime.now().subtract(Duration(days: 365 * 18)),
-                      lastDate:
-                          DateTime.now().subtract(Duration(days: 365 * 8)),
-                      validators: [
-                        FormBuilderValidators.required(),
-                      ],
-                      readOnly: false,
-                      keyboardType: TextInputType.datetime,
-                      textInputAction: TextInputAction.done,
-                    ),
-                    FormBuilderCheckbox(
-                      attribute: 'transportation',
-                      checkColor: Theme.of(context).primaryColor,
-                      activeColor: Colors.white,
-                      label: Text("I have a reliable mode of transportation"),
-                      validators: [],
-                    ),
-                    FormBuilderCheckbox(
-                      attribute: 'practice',
-                      checkColor: Theme.of(context).primaryColor,
-                      activeColor: Colors.white,
-                      label: Text("I have practice space"),
-                      validators: [],
-                    ),
-                    FormBuilderTextField(
-                      focusNode: _bioFocusNode,
-                      attribute: "bio",
-                      decoration: InputDecoration(
-                        labelText: "Bio",
-                        hintText: 'Tell us about yourself...',
-                      ),
-                      keyboardType: TextInputType.text,
-                      minLines: 1,
-                      maxLines: 3,
-                      validators: [FormBuilderValidators.required()],
-                    ),
-                    FormBuilderTextField(
-                      attribute: 'location',
-                      decoration: InputDecoration(
-                        labelText: "Hit the button to find your location",
-                      ),
-                      readOnly: true,
-                      controller: locationController,
-                      validators: [FormBuilderValidators.required()],
-                    ),
-                    SizedBox(
-                      height: 20,
-                    ),
-                    FlatButton.icon(
-                        shape: RoundedRectangleBorder(
-                            side: BorderSide(
-                                color: Colors.white,
-                                width: 1,
-                                style: BorderStyle.solid),
-                            borderRadius: BorderRadius.circular(50)),
-                        color: Theme.of(context).primaryColor,
-                        icon: Icon(LineIcons.camera),
-                        textColor: Colors.white,
-                        label: Text("Get My Location"),
-                        onPressed: () => _getLocation()),
-                    SizedBox(
-                      height: 40,
-                    ),
-                    */
       ),
     );
   }

@@ -60,12 +60,12 @@ class _StartScreenState extends State<StartScreen>
                             Text(
                               "Sign In",
                               style: TextStyle(
-                                  fontSize: 17, fontWeight: FontWeight.w500),
+                                  fontSize: 17, fontWeight: FontWeight.bold),
                             ),
                             Text(
                               "Sign Up",
                               style: TextStyle(
-                                  fontSize: 17, fontWeight: FontWeight.w500),
+                                  fontSize: 17, fontWeight: FontWeight.bold),
                             )
                           ],
                         )
