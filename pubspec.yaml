@@ -63,6 +63,8 @@ dependencies:
   flutter_video_compress:
   video_thumbnail:
   flutter_tagging: ^2.2.0+1
+  http:
+  xml2json:
 
 flutter_icons:
   image_path: "assets/launcher_icons/launcher_icon.png"

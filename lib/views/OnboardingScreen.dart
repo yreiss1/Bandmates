@@ -1,5 +1,14 @@
+import 'package:bandmates/AuthService.dart';
+import 'package:bandmates/models/Genre.dart';
+import 'package:bandmates/models/Influence.dart';
 import 'package:bandmates/models/Instrument.dart';
+import 'package:bandmates/models/User.dart';
 import 'package:bandmates/views/MapScreen.dart';
+
+import 'package:bandmates/views/UI/OnboardingSelections/GenreSelection.dart';
+import 'package:bandmates/views/UI/OnboardingSelections/InfluenceSelection.dart';
+import 'package:bandmates/views/UI/OnboardingSelections/InstrumentSelection.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -12,6 +21,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:geocoder/geocoder.dart' as geocoder;
 import 'package:location/location.dart';
+import 'package:provider/provider.dart';
 import '../Utils.dart';
 import 'HomeScreen.dart';
 import 'dart:async';
@@ -20,6 +30,9 @@ import 'package:image/image.dart' as Im;
 import 'package:path_provider/path_provider.dart';
 import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:flutter_tagging/flutter_tagging.dart';
+import 'dart:convert' as convert;
+import 'package:http/http.dart' as http;
+import 'package:xml2json/xml2json.dart';
 
 final GlobalKey<FormBuilderState> personalKey =
     GlobalKey<FormBuilderState>(debugLabel: "PersonalCapture");
@@ -54,20 +67,60 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Swiper _swiper;
 
   List<Instrument> _initialValues = [Instrument(name: "guitar")];
+  Xml2Json xml2json;
+
+  InfluenceSelection _influenceSelection;
+  GenreSelection _genreSelection;
+  InstrumentSelection _instrumentSelection;
+
+  bool _lastCard = false;
 
   @override
   void initState() {
     super.initState();
+    xml2json = new Xml2Json();
     _getCurrentLocation();
+    _lastCard = false;
+    _userData = {
+      'name': "",
+      'bio': "",
+      'transportation': false,
+      'practice': false,
+      'genres': [],
+      'instruments': [],
+      'influences': [],
+      'location': null,
+      'photoUrl': null,
+    };
+    _influenceSelection = InfluenceSelection(
+      swiperController: _swiperController,
+      userData: _userData,
+    );
+
+    _genreSelection = GenreSelection(
+      swiperController: _swiperController,
+      userData: _userData,
+    );
+
+    _instrumentSelection = InstrumentSelection(
+      swiperController: _swiperController,
+      userData: _userData,
+    );
     _swiper = Swiper(
-      //physics: NeverScrollableScrollPhysics(),
+      physics: NeverScrollableScrollPhysics(),
       curve: Curves.easeInOut,
       loop: false,
       scrollDirection: Axis.vertical,
-      itemCount: 5,
-      viewportFraction: 0.65,
-      scale: 0.0,
-
+      itemCount: 6,
+      viewportFraction: 0.7,
+      scale: 0,
+      onIndexChanged: (index) => index == 5
+          ? setState(() {
+              _lastCard = true;
+            })
+          : setState(() {
+              _lastCard = false;
+            }),
       controller: _swiperController,
       itemBuilder: (BuildContext context, int index) {
         switch (index) {
@@ -86,45 +139,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           case 4:
             return _buildFour();
             break;
+          case 5:
+            return _buildFive();
+            break;
           default:
             return Container();
         }
       },
     );
-    _userData = {
-      'name': "",
-      'bio': "",
-      'birthday': null,
-      'transportation': false,
-      'practice': false,
-      'genres': [],
-      'instruments': [],
-      'location': null,
-    };
   }
 
   @override
   void dispose() {
     _swiperController.dispose();
     _initialValues.clear();
+
     super.dispose();
-  }
-
-  getGenresData(List<dynamic> genres) {
-    print('[OnboardingScreen] genres: ' + genres.toString());
-    setState(() {
-      _userData['genres'] =
-          Map.fromIterable(genres, key: (k) => k, value: (v) => true);
-    });
-  }
-
-  getInstrumentsData(List<dynamic> instruments) {
-    print("[OnboardingScreen] instruments: " + instruments.toString());
-
-    setState(() {
-      _userData['instruments'] =
-          Map.fromIterable(instruments, key: (k) => k, value: (v) => true);
-    });
   }
 
   _getCurrentLocation() async {
@@ -162,12 +192,31 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  static Future<List<Instrument>> tempFunction(String query) async {
-    await Future.delayed(Duration(milliseconds: 300), null);
-    return Utils.instrumentList
-        .map((inst) => inst)
-        .where((inst) => inst.name.toLowerCase().contains(query.toLowerCase()))
-        .toList();
+  _createUser() async {
+    var uid = Provider.of<FirebaseUser>(context).uid;
+
+    if (_imageFile != null) {
+      _compressImage();
+      await Provider.of<UserProvider>(context)
+          .uploadProfileImage(_imageFile, uid);
+    }
+    await Provider.of<UserProvider>(context).uploadUser(
+      uid,
+      User(
+        bio: _userData['bio'],
+        name: _userData['name'],
+        uid: uid,
+        influences: _userData['influences'],
+        genres: _userData['genres'],
+        instruments: _userData['instruments'],
+        practiceSpace: _userData['practice'],
+        transportation: _userData['transportation'],
+        location: _userData['location'],
+        photoUrl: _userData['photoUrl'],
+      ),
+    );
+
+    Navigator.pop(context);
   }
 
   getUserData(
@@ -233,13 +282,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return SafeArea(
       top: false,
       child: Scaffold(
-        resizeToAvoidBottomInset: false,
-        resizeToAvoidBottomPadding: false,
         backgroundColor: Colors.white,
         body: Stack(
           children: <Widget>[
             _buildHeader(),
             _buildSwiperArea(),
+            if (_lastCard)
+              Positioned.fill(
+                bottom: 16,
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: FloatingActionButton.extended(
+                    heroTag: 'onboarding',
+                    backgroundColor: Theme.of(context).primaryColor,
+                    label: Text(
+                      "Create User",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    icon: Icon(Icons.person),
+                    onPressed: () => print("Create User"),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -281,7 +345,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       children: <Widget>[
         Expanded(
           child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 8), child: _swiper),
+              padding: EdgeInsets.only(left: 8, right: 8, top: 8),
+              child: _swiper),
         ),
       ],
     );
@@ -340,6 +405,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             return 'Name must be longer than 3 characters';
                           }
 
+                          setState(() {
+                            _userData['name'] = value;
+                          });
+
                           return null;
                         },
                       ),
@@ -367,6 +436,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           if (value.length <= 6) {
                             return 'Bio must be longer than 6 characters';
                           }
+
+                          setState(() {
+                            _userData['bio'] = value;
+                          });
 
                           return null;
                         },
@@ -417,6 +490,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           children: <Widget>[
             Expanded(
               child: ListView(
+                physics: NeverScrollableScrollPhysics(),
                 children: <Widget>[
                   Text(
                     "Your Image",
@@ -551,8 +625,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             Container(
               width: double.infinity,
               child: FlatButton.icon(
-                color: Theme.of(context).primaryColor,
-                icon: Icon(Icons.keyboard_arrow_down),
+                color: Theme.of(context).accentColor,
+                icon: Icon(Icons.keyboard_arrow_up),
                 shape: RoundedRectangleBorder(
                     side: BorderSide(
                         color: Colors.white,
@@ -560,12 +634,36 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         style: BorderStyle.solid),
                     borderRadius: BorderRadius.circular(50)),
                 label: Text(
-                  "Next",
+                  "Back",
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 textColor: Colors.white,
-                onPressed: () => _swiperController.next(),
+                onPressed: () {
+                  //FocusScope.of(context).unfocus();
+
+                  _swiperController.previous();
+                },
               ),
+            ),
+            Container(
+              width: double.infinity,
+              child: FlatButton.icon(
+                  color: Theme.of(context).primaryColor,
+                  icon: Icon(Icons.keyboard_arrow_down),
+                  shape: RoundedRectangleBorder(
+                      side: BorderSide(
+                          color: Colors.white,
+                          width: 1,
+                          style: BorderStyle.solid),
+                      borderRadius: BorderRadius.circular(50)),
+                  label: Text(
+                    "Next",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  textColor: Colors.white,
+                  onPressed: () {
+                    _swiperController.next();
+                  }),
             ),
           ],
         ),
@@ -696,8 +794,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             Container(
               width: double.infinity,
               child: FlatButton.icon(
-                color: Theme.of(context).primaryColor,
-                icon: Icon(Icons.keyboard_arrow_down),
+                color: Theme.of(context).accentColor,
+                icon: Icon(Icons.keyboard_arrow_up),
                 shape: RoundedRectangleBorder(
                     side: BorderSide(
                         color: Colors.white,
@@ -705,12 +803,38 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         style: BorderStyle.solid),
                     borderRadius: BorderRadius.circular(50)),
                 label: Text(
-                  "Next",
+                  "Back",
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 textColor: Colors.white,
-                onPressed: () => _swiperController.next(),
+                onPressed: () {
+                  //FocusScope.of(context).unfocus();
+
+                  _swiperController.previous();
+                },
               ),
+            ),
+            Container(
+              width: double.infinity,
+              child: FlatButton.icon(
+                  color: Theme.of(context).primaryColor,
+                  icon: Icon(Icons.keyboard_arrow_down),
+                  shape: RoundedRectangleBorder(
+                      side: BorderSide(
+                          color: Colors.white,
+                          width: 1,
+                          style: BorderStyle.solid),
+                      borderRadius: BorderRadius.circular(50)),
+                  label: Text(
+                    "Next",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  textColor: Colors.white,
+                  onPressed: () {
+                    _userData['location'] = GeoFirePoint(
+                        _currentLocation.longitude, _currentLocation.longitude);
+                    _swiperController.next();
+                  }),
             ),
           ],
         ),
@@ -719,141 +843,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Widget _buildThree() {
-    return Card(
-      semanticContainer: true,
-      clipBehavior: Clip.antiAliasWithSaveLayer,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      elevation: 10,
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-        child: Column(
-          children: <Widget>[
-            Expanded(
-              child: ListView(
-                children: <Widget>[
-                  SizedBox(
-                    height: 16,
-                  ),
-                  Text(
-                    "Instruments you play",
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(
-                    height: 24,
-                  ),
-                  FlutterTagging<Instrument>(
-                    initialItems: [],
-                    hideOnEmpty: true,
-                    textFieldConfiguration: TextFieldConfiguration(
-                      decoration: InputDecoration(
-                        focusColor: Theme.of(context).primaryColor,
-                        border: const OutlineInputBorder(
-                          borderRadius: const BorderRadius.all(
-                            const Radius.circular(15.0),
-                          ),
-                        ),
-                        hintText: "Search for your Instruments",
-                      ),
-                    ),
-                    findSuggestions: tempFunction,
-                    additionCallback: (String value) {
-                      return Instrument(name: value);
-                    },
-                    configureChip: (inst) {
-                      return ChipConfiguration(
-                        label: Text(inst.name),
-                        backgroundColor: Theme.of(context).primaryColor,
-                        labelStyle: TextStyle(color: Colors.white),
-                        deleteIconColor: Colors.white,
-                      );
-                    },
-                    wrapConfiguration: WrapConfiguration(
-                      runSpacing: 4,
-                      spacing: 4,
-                    ),
-                    configureSuggestion: (inst) {
-                      return SuggestionConfiguration(
-                        title: Text(inst.name),
-                        additionWidget: Chip(
-                          avatar: Icon(
-                            Icons.add_circle,
-                            color: Colors.white,
-                          ),
-                          label: Text('Add New Tag'),
-                          labelStyle: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14.0,
-                            fontWeight: FontWeight.w300,
-                          ),
-                          backgroundColor: Theme.of(context).primaryColor,
-                        ),
-                      );
-                    },
-                    onChanged: () {},
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              width: double.infinity,
-              child: FlatButton.icon(
-                color: Theme.of(context).primaryColor,
-                icon: Icon(Icons.keyboard_arrow_down),
-                shape: RoundedRectangleBorder(
-                    side: BorderSide(
-                        color: Colors.white,
-                        width: 1,
-                        style: BorderStyle.solid),
-                    borderRadius: BorderRadius.circular(50)),
-                label: Text(
-                  "Next",
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                textColor: Colors.white,
-                onPressed: () {
-                  //FocusScope.of(context).unfocus();
-
-                  _swiperController.next();
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    return _instrumentSelection;
   }
 
   Widget _buildFour() {
-    return Card(
-      semanticContainer: true,
-      clipBehavior: Clip.antiAliasWithSaveLayer,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      elevation: 10,
-      child: Column(
-        children: <Widget>[
-          Text("Your Genre"),
-          SizedBox(
-            height: 8,
-          ),
-          TextField(
-            textInputAction: TextInputAction.next,
+    return _genreSelection;
+  }
 
-            decoration: new InputDecoration(
-              focusColor: Theme.of(context).primaryColor,
-              border: new OutlineInputBorder(
-                borderRadius: const BorderRadius.all(
-                  const Radius.circular(15.0),
-                ),
-              ),
-              hintText: "Event Title",
-            ),
-            //validator: FormBuilderValidators.required(),
-          ),
-        ],
-      ),
-    );
+  Widget _buildFive() {
+    return _influenceSelection;
   }
 }

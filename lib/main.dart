@@ -7,11 +7,9 @@ import 'package:bandmates/models/Follow.dart';
 import 'package:bandmates/models/Post.dart';
 import 'package:bandmates/models/User.dart';
 import 'package:bandmates/views/DiscoverScreen.dart';
-import 'package:bandmates/views/EditProfileScreen.dart';
 import 'package:bandmates/views/LandingScreen.dart';
 import 'package:bandmates/views/OnboardingScreens/ImageCapture.dart';
 import 'package:bandmates/views/ProfileScreen.dart';
-import 'package:bandmates/views/SearchScreen.dart';
 import 'package:bandmates/views/UploadScreens/EventUploadScreen.dart';
 import 'package:bandmates/views/UploadScreens/PostUploadScreen.dart';
 import './views/HomeScreen.dart';
@@ -81,14 +79,12 @@ class MyApp extends StatelessWidget {
           StartScreen.routeName: (ctx) => StartScreen(),
           ImageCapture.routeName: (ctx) => ImageCapture(),
           HomeScreen.routeName: (ctx) => HomeScreen(),
-          SearchScreen.routeName: (ctx) => SearchScreen(),
           ProfileScreen.routeName: (ctx) =>
               ProfileScreen(ModalRoute.of(ctx).settings.arguments),
           DiscoverScreen.routeName: (ctx) =>
               DiscoverScreen(ModalRoute.of(ctx).settings.arguments),
           PostUploadScreen.routeName: (ctx) => PostUploadScreen(),
           EventUploadScreen.routeName: (ctx) => EventUploadScreen(),
-          EditProfileScreen.routeName: (ctx) => EditProfileScreen(),
           MusiciansSearchScreen.routeName: (ctx) => MusiciansSearchScreen(),
           EventsSearchScreen.routeName: (ctx) => EventsSearchScreen(),
         },

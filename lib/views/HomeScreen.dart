@@ -5,8 +5,6 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:bandmates/views/OnboardingScreen.dart';
-import 'package:bandmates/views/SearchScreen.dart';
-import 'package:bandmates/views/UI/Header.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../presentation/InstrumentIcons.dart';
@@ -41,6 +39,11 @@ class _HomeScreenState extends State<HomeScreen>
   User _currentUser;
   Future<DocumentSnapshot> _getUser;
 
+  Widget _chatScreen;
+  Widget _uploadScreen;
+  Widget _feedScreen;
+
+  OnboardingScreen _onboardingScreen;
   @override
   bool get wantKeepAlive => true;
 
@@ -50,6 +53,11 @@ class _HomeScreenState extends State<HomeScreen>
     _pageController = PageController();
 
     _getUser = getSnapshot(widget.uid);
+
+    _onboardingScreen = OnboardingScreen();
+    _chatScreen = ChatsScreen();
+    _uploadScreen = UploadScreen();
+    _feedScreen = FeedScreen();
   }
 
   Future<DocumentSnapshot> getSnapshot(String uid) async {
@@ -144,9 +152,7 @@ class _HomeScreenState extends State<HomeScreen>
         builder: (context, AsyncSnapshot<DocumentSnapshot> snapshot) {
           if (snapshot.error == null && snapshot.data != null) {
             if (snapshot.data.data == null) {
-              return Scaffold(
-                body: OnboardingScreen(),
-              );
+              return Scaffold(body: _onboardingScreen);
             } else {
               configurePushNotifications();
 
@@ -156,9 +162,9 @@ class _HomeScreenState extends State<HomeScreen>
                 body: PageView(
                   children: <Widget>[
                     TimelineScreen(currentUser: _currentUser),
-                    ChatsScreen(),
-                    UploadScreen(),
-                    FeedScreen(),
+                    _chatScreen,
+                    _uploadScreen,
+                    _feedScreen,
                     ProfileScreen(
                         ProfileScreenArguments(userId: _currentUser.uid)),
                   ],

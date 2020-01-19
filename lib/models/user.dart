@@ -11,10 +11,10 @@ class User {
   User(
       {@required this.uid,
       @required this.name,
-      @required this.email,
       @required this.bio,
       @required this.practiceSpace,
       @required this.transportation,
+      this.influences,
       this.location,
       this.genres,
       this.instruments,
@@ -24,12 +24,12 @@ class User {
   final String uid;
   final DateTime time;
   final String name;
-  final String email;
   final String bio;
   final bool transportation;
   GeoFirePoint location;
   final Map<dynamic, dynamic> genres;
   final Map<dynamic, dynamic> instruments;
+  final List<String> influences;
   final String photoUrl;
 
   // Clips
@@ -38,12 +38,12 @@ class User {
 
   Map<String, dynamic> toJson() => {
         'name': this.name,
-        'email': this.email,
         'bio': this.bio,
         'transport': this.transportation,
         'practice': this.practiceSpace,
         'genres': this.genres,
         'instruments': this.instruments,
+        'influences': this.influences,
         'location': this.location == null ? null : location.data,
         'photoUrl': this.photoUrl,
         'time': DateTime.now(),
@@ -64,7 +64,6 @@ class User {
 
     return User(
       uid: doc.documentID,
-      email: doc.data['email'],
       name: doc.data['name'],
       photoUrl: doc.data['photoUrl'],
       bio: doc.data['bio'],
@@ -72,6 +71,7 @@ class User {
       instruments: doc.data['instruments'],
       practiceSpace: doc.data['practice'],
       transportation: doc.data['transport'],
+      influences: doc.data['influences'],
       location: loc,
       time: doc.data['time'] == null ? null : doc.data['time'].toDate(),
     );
