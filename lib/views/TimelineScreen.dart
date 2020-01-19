@@ -17,6 +17,7 @@ import 'package:geocoder/geocoder.dart' as geocoder;
 import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:location/location.dart';
 import 'package:provider/provider.dart';
 import '../Utils.dart';
 
@@ -115,7 +116,10 @@ class TimelineScreen extends StatelessWidget {
               context,
               MaterialPageRoute(
                 builder: (context) => MapScreen(
+                  isEvent: false,
                   paramFunction: changeLocation,
+                  currentLocation: LatLng(currentUser.location.latitude,
+                      currentUser.location.longitude),
                 ),
               ),
             ),

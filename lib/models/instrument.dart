@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_tagging/flutter_tagging.dart';
 import '../presentation/InstrumentIcons.dart';
 
-class Instrument {
+class Instrument extends Taggable {
   final String name;
   final String value;
   final Icon icon;
@@ -13,6 +14,9 @@ class Instrument {
   String get instrumentValue => this.value;
 
   Icon get instrumentIcon => this.icon;
+
+  @override
+  List<Object> get props => [this.name];
 }
 
 final List<Instrument> instruments = [

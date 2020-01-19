@@ -569,7 +569,11 @@ class _EventUploadScreenState extends State<EventUploadScreen> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => MapScreen(
+                            isEvent: true,
                             paramFunction: changeLocation,
+                            currentLocation: LatLng(
+                                currentUser.location.latitude,
+                                currentUser.location.longitude),
                           ),
                         ),
                       ),
