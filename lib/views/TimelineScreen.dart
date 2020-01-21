@@ -1,10 +1,8 @@
-import 'dart:async';
-
 import 'package:bandmates/models/Event.dart';
+import 'package:bandmates/views/EventScreen.dart';
 import 'package:bandmates/views/EventsSearchScreen.dart';
 import 'package:bandmates/views/MapScreen.dart';
 import 'package:bandmates/views/MusiciansSearchScreen.dart';
-import 'package:bandmates/views/UI/CustomNetworkImage.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
@@ -30,10 +28,11 @@ class TimelineScreen extends StatelessWidget {
 
   TimelineScreen({this.currentUser});
 
-  final GeoFirePoint center = prefix0.currentUser.location;
+  GeoFirePoint center;
 
   @override
   Widget build(BuildContext context) {
+    center = this.currentUser.location;
     print("[Timeline] Rebuilding the widget");
 
     return ListView(
@@ -211,87 +210,95 @@ class TimelineScreen extends StatelessWidget {
                     itemBuilder: (BuildContext context, int index) {
                       Event event = Event.fromDocument(snapshot.data[index]);
                       return Container(
-                        child: Column(
-                          children: <Widget>[
-                            Card(
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10)),
-                              elevation: 10,
-                              child: Container(
-                                padding: EdgeInsets.all(8),
-                                width: 250,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: <Widget>[
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: <Widget>[
-                                        Flexible(
-                                          child: Text(
-                                            event.title,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 16),
+                        child: GestureDetector(
+                          onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (ctx) => EventScreen(
+                                        event: event,
+                                      ))),
+                          child: Column(
+                            children: <Widget>[
+                              Card(
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10)),
+                                elevation: 10,
+                                child: Container(
+                                  padding: EdgeInsets.all(8),
+                                  width: 250,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: <Widget>[
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: <Widget>[
+                                          Flexible(
+                                            child: Text(
+                                              event.title,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 16),
+                                            ),
                                           ),
-                                        ),
-                                        Container(
-                                          padding: EdgeInsets.all(2),
-                                          decoration: BoxDecoration(
-                                              border: Border.all(
+                                          Container(
+                                            padding: EdgeInsets.all(2),
+                                            decoration: BoxDecoration(
+                                                border: Border.all(
+                                                    color: Theme.of(context)
+                                                        .primaryColor)),
+                                            child: Text(
+                                              event.type == 0
+                                                  ? "Concert"
+                                                  : event.type == 1
+                                                      ? "Audition"
+                                                      : event.type == 2
+                                                          ? "Jam Session"
+                                                          : "Open Mic",
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
                                                   color: Theme.of(context)
-                                                      .primaryColor)),
-                                          child: Text(
-                                            event.type == 0
-                                                ? "Concert"
-                                                : event.type == 1
-                                                    ? "Audition"
-                                                    : event.type == 2
-                                                        ? "Jam Session"
-                                                        : "Open Mic",
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                color: Theme.of(context)
-                                                    .primaryColor),
+                                                      .primaryColor),
+                                            ),
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                    SizedBox(
-                                      height: 8,
-                                    ),
-                                    Text(
-                                      event.name,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    SizedBox(
-                                      height: 8,
-                                    ),
-                                    Container(
-                                      height: 100,
-                                      width: double.infinity,
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.all(
-                                            Radius.circular(10)),
-                                        child: Card(
-                                          semanticContainer: true,
-                                          clipBehavior:
-                                              Clip.antiAliasWithSaveLayer,
-                                          elevation: 10,
-                                          child: event.photoUrl != null
-                                              ? Container(
-                                                  decoration: BoxDecoration(
-                                                    image: DecorationImage(
-                                                      fit: BoxFit.cover,
-                                                      image:
-                                                          CachedNetworkImageProvider(
-                                                              event.photoUrl),
+                                        ],
+                                      ),
+                                      SizedBox(
+                                        height: 8,
+                                      ),
+                                      Text(
+                                        event.name,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      SizedBox(
+                                        height: 8,
+                                      ),
+                                      Container(
+                                        height: 100,
+                                        width: double.infinity,
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.all(
+                                              Radius.circular(10)),
+                                          child: Card(
+                                            semanticContainer: true,
+                                            clipBehavior:
+                                                Clip.antiAliasWithSaveLayer,
+                                            elevation: 10,
+                                            child: event.photoUrl != null
+                                                ? Container(
+                                                    decoration: BoxDecoration(
+                                                      image: DecorationImage(
+                                                        fit: BoxFit.cover,
+                                                        image:
+                                                            CachedNetworkImageProvider(
+                                                                event.photoUrl),
+                                                      ),
                                                     ),
-                                                  ),
-                                                )
-                                              :
-                                              /* GoogleMap(
+                                                  )
+                                                :
+                                                /* GoogleMap(
                                         scrollGesturesEnabled: false,
                                         zoomGesturesEnabled: false,
                                         myLocationButtonEnabled: false,
@@ -319,60 +326,61 @@ class TimelineScreen extends StatelessWidget {
                                                       .longitude))
                                         },
                                       ), */
-                                              Container(),
+                                                Container(),
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                    SizedBox(
-                                      height: 4,
-                                    ),
-                                    Text(
-                                      event.text,
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.w500),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    SizedBox(
-                                      height: 4,
-                                    ),
-                                    Container(
-                                      padding: EdgeInsets.all(2),
-                                      decoration: BoxDecoration(
-                                          border: Border.all(
-                                              color: Theme.of(context)
-                                                  .accentColor)),
-                                      child: Text(
-                                        DateFormat.yMMMd()
-                                            .add_jm()
-                                            .format(event.time),
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            color:
-                                                Theme.of(context).accentColor),
+                                      SizedBox(
+                                        height: 4,
                                       ),
-                                    ),
-                                    SizedBox(
-                                      height: 8,
-                                    ),
-                                    Text(
-                                      event.location
-                                              .distance(
-                                                  lat: prefix0.currentUser
-                                                      .location.latitude,
-                                                  lng: prefix0.currentUser
-                                                      .location.longitude)
-                                              .round()
-                                              .toString() +
-                                          " km away",
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.w300,
-                                          fontStyle: FontStyle.italic),
-                                    )
-                                  ],
+                                      Text(
+                                        event.text,
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.w500),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      SizedBox(
+                                        height: 4,
+                                      ),
+                                      Container(
+                                        padding: EdgeInsets.all(2),
+                                        decoration: BoxDecoration(
+                                            border: Border.all(
+                                                color: Theme.of(context)
+                                                    .accentColor)),
+                                        child: Text(
+                                          DateFormat.yMMMd()
+                                              .add_jm()
+                                              .format(event.time),
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              color: Theme.of(context)
+                                                  .accentColor),
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        height: 8,
+                                      ),
+                                      Text(
+                                        event.location
+                                                .distance(
+                                                    lat: prefix0.currentUser
+                                                        .location.latitude,
+                                                    lng: prefix0.currentUser
+                                                        .location.longitude)
+                                                .round()
+                                                .toString() +
+                                            " km away",
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.w300,
+                                            fontStyle: FontStyle.italic),
+                                      )
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       );
                     },
@@ -440,7 +448,8 @@ class TimelineScreen extends StatelessWidget {
                   ),
                 );
               }
-
+              snapshot.data
+                  .removeWhere((user) => user.documentID == currentUser.uid);
               return Expanded(
                 child: ListView.separated(
                   padding: EdgeInsets.only(left: 12, right: 12),
@@ -453,9 +462,6 @@ class TimelineScreen extends StatelessWidget {
                   itemCount: snapshot.data.length,
                   itemBuilder: (BuildContext context, int index) {
                     User user = User.fromDocument(snapshot.data[index]);
-                    if (user.uid == prefix0.currentUser.uid) {
-                      return Container();
-                    }
                     return Container(
                       width: 134,
                       child: GestureDetector(

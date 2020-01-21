@@ -9,7 +9,6 @@ class SignupScreen extends StatelessWidget {
   static final GlobalKey<FormBuilderState> _fbKey =
       GlobalKey<FormBuilderState>(debugLabel: "SignupScreen");
 
-  FocusNode _emailFocusNode = FocusNode();
   FocusNode _pass1FocusNode = FocusNode();
   FocusNode _pass2FocusNode = FocusNode();
 
@@ -69,7 +68,6 @@ class SignupScreen extends StatelessWidget {
                       child: Column(
                         children: <Widget>[
                           FormBuilderTextField(
-                            focusNode: _emailFocusNode,
                             onFieldSubmitted: (val) {
                               FocusScope.of(context)
                                   .requestFocus(_pass1FocusNode);

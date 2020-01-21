@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:bandmates/AuthService.dart';
 import 'package:bandmates/Utils.dart';
+import 'package:bandmates/models/Influence.dart';
 import 'package:bandmates/views/ChatRoomScreen.dart';
 import 'package:bandmates/views/PostScreen.dart';
 import 'package:bandmates/views/UI/Progress.dart';
@@ -356,6 +357,24 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody>
                       for (String genre in widget.user.genres.keys)
                         Chip(
                           label: Text(genre),
+                        )
+                    ],
+                  ),
+                ),
+                Divider(),
+                Text(
+                  "Influences",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Wrap(
+                    runSpacing: 0,
+                    spacing: 4,
+                    children: [
+                      for (String influence in widget.user.influences)
+                        Chip(
+                          label: Text(influence),
                         )
                     ],
                   ),

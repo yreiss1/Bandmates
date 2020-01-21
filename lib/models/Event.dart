@@ -18,7 +18,8 @@ class Event {
   final int type;
   final String title;
   final String photoUrl;
-  final Map<dynamic, dynamic> audition;
+  final List<dynamic> genres;
+  final List<dynamic> audition;
   final Map<dynamic, dynamic> attending;
 
   Event(
@@ -30,6 +31,7 @@ class Event {
       this.audition,
       this.ownerId,
       this.eventId,
+      this.genres,
       this.name,
       this.attending,
       this.photoUrl});
@@ -54,6 +56,7 @@ class Event {
         title: doc.data['title'],
         text: doc.data['text'],
         type: doc.data['type'],
+        genres: doc.data['genres'],
         time: doc.data['time'].toDate(),
         eventId: doc.documentID,
         audition: doc.data['audition'],
@@ -79,6 +82,7 @@ class EventProvider with ChangeNotifier {
       "ownerId": event.ownerId,
       "user": event.name,
       "title": event.title,
+      "genres": event.genres,
       "type": event.type,
       "text": event.text,
       "loc": event.location == null ? null : event.location.data,

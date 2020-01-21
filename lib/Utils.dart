@@ -3,68 +3,64 @@ import 'package:bandmates/models/Instrument.dart';
 import 'package:bandmates/presentation/GenreIcons.dart';
 import 'package:bandmates/presentation/InstrumentIcons.dart';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:provider/provider.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import './models/user.dart';
 
 class Utils {
   static final List<Instrument> instrumentList = [
     Instrument(
-        name: "guitar",
+        name: "Guitar",
         value: 'guitar',
         icon: Icon(InstrumentIcons.electric_guitar)),
     Instrument(
-        name: "piano", value: 'piano', icon: Icon(InstrumentIcons.piano)),
+        name: "Piano", value: 'piano', icon: Icon(InstrumentIcons.piano)),
     Instrument(
-        name: "bass", value: 'bass', icon: Icon(InstrumentIcons.bass_guitar)),
+        name: "Bass", value: 'bass', icon: Icon(InstrumentIcons.bass_guitar)),
     Instrument(
-        name: "drums", value: 'drums', icon: Icon(InstrumentIcons.drum_set)),
+        name: "Drums", value: 'drums', icon: Icon(InstrumentIcons.drum_set)),
     Instrument(
-        name: "flute", value: 'flute', icon: Icon(InstrumentIcons.flute)),
+        name: "Flute", value: 'flute', icon: Icon(InstrumentIcons.flute)),
     Instrument(
-        name: "harmonica",
+        name: "Harmonica",
         value: 'harmonica',
         icon: Icon(InstrumentIcons.harmonica)),
     Instrument(
-        name: "violin", value: 'violin', icon: Icon(InstrumentIcons.violin)),
+        name: "Violin", value: 'violin', icon: Icon(InstrumentIcons.violin)),
     Instrument(
-        name: "ukelele", value: 'ukelele', icon: Icon(InstrumentIcons.ukelele)),
+        name: "Ukelele", value: 'ukelele', icon: Icon(InstrumentIcons.ukelele)),
     Instrument(
-        name: "banjo", value: 'banjo', icon: Icon(InstrumentIcons.banjo)),
+        name: "Banjo", value: 'banjo', icon: Icon(InstrumentIcons.banjo)),
     Instrument(
-        name: "xylophone",
+        name: "Xylophone",
         value: 'xylophone',
         icon: Icon(InstrumentIcons.xylophone)),
     Instrument(
-        name: "saxophone", value: 'sax', icon: Icon(InstrumentIcons.saxophone)),
+        name: "Saxophone", value: 'sax', icon: Icon(InstrumentIcons.saxophone)),
     Instrument(
-        name: "vocals",
+        name: "Vocals",
         value: 'vocals',
         icon: Icon(InstrumentIcons.microphone)),
     Instrument(
-        name: "accordion",
+        name: "Accordion",
         value: 'accordion',
         icon: Icon(InstrumentIcons.accordion)),
     Instrument(
-        name: "trumpet", value: 'trumpet', icon: Icon(InstrumentIcons.trumpet)),
+        name: "Trumpet", value: 'trumpet', icon: Icon(InstrumentIcons.trumpet)),
     Instrument(
-        name: "contrabass",
+        name: "Contrabass",
         value: 'contrabass',
         icon: Icon(InstrumentIcons.contrabass)),
     Instrument(
-        name: "trombone",
+        name: "Trombone",
         value: 'trombone',
         icon: Icon(InstrumentIcons.trombone)),
     Instrument(
-        name: "turntable",
+        name: "Turntable",
         value: 'turntable',
         icon: Icon(InstrumentIcons.turntable)),
     Instrument(
-        name: "mandolin",
+        name: "Mandolin",
         value: 'mandolin',
         icon: Icon(InstrumentIcons.mandolin)),
-    Instrument(name: "harp", value: 'harp', icon: Icon(InstrumentIcons.harp)),
+    Instrument(name: "Harp", value: 'harp', icon: Icon(InstrumentIcons.harp)),
   ];
 
   static final List<Genre> genresList = [
@@ -118,6 +114,25 @@ class Utils {
       },
       context: context,
     );
+  }
+
+  static String deserializeEventType(int value) {
+    switch (value) {
+      case 0:
+        return "Concert";
+        break;
+      case 1:
+        return "Audition";
+        break;
+      case 2:
+        return "Jam Session";
+        break;
+      case 3:
+        return "Open Mic";
+        break;
+      default:
+        return "Unkown";
+    }
   }
 
   static IconData valueToIcon(String value) {

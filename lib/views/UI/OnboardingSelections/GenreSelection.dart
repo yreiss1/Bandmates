@@ -9,6 +9,8 @@ class GenreSelection extends StatelessWidget {
   final Map<dynamic, dynamic> userData;
   GenreSelection({this.swiperController, this.userData});
 
+  List<Genre> _selectedGenres = [];
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -22,6 +24,7 @@ class GenreSelection extends StatelessWidget {
           children: <Widget>[
             Expanded(
               child: ListView(
+                physics: BouncingScrollPhysics(),
                 children: <Widget>[
                   SizedBox(
                     height: 16,
@@ -37,9 +40,10 @@ class GenreSelection extends StatelessWidget {
                     height: 24,
                   ),
                   FlutterTagging<Genre>(
-                    initialItems: [],
+                    initialItems: _selectedGenres,
                     hideOnEmpty: true,
                     textFieldConfiguration: TextFieldConfiguration(
+                      textCapitalization: TextCapitalization.sentences,
                       decoration: InputDecoration(
                         focusColor: Theme.of(context).primaryColor,
                         border: const OutlineInputBorder(
@@ -55,7 +59,6 @@ class GenreSelection extends StatelessWidget {
                       return Genre(name: value);
                     },
                     configureChip: (genre) {
-                      userData['genres'].add(genre);
                       return ChipConfiguration(
                         label: Text(genre.name),
                         backgroundColor: Theme.of(context).primaryColor,
@@ -85,7 +88,11 @@ class GenreSelection extends StatelessWidget {
                         ),
                       );
                     },
-                    onChanged: () {},
+                    onChanged: () {
+                      _selectedGenres.forEach((inst) {
+                        userData['genres'][inst.name] = true;
+                      });
+                    },
                   ),
                 ],
               ),

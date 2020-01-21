@@ -159,10 +159,9 @@ class _EventUploadScreenState extends State<EventUploadScreen> {
 
       if (_imageFile != null) {}
 
-      Map<String, bool> audition = _isAudition == false
+      List<dynamic> audition = _isAudition == false
           ? null
-          : Map.fromIterable(_fbKey.currentState.value['audition'],
-              key: (k) => k.value, value: (v) => true);
+          : _fbKey.currentState.value['audition'].toList();
       String downloadUrl;
       if (_imageFile != null) {
         StorageUploadTask uploadTask = FirebaseStorage.instance

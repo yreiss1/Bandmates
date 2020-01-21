@@ -37,11 +37,12 @@ class _HomeScreenState extends State<HomeScreen>
   PageController _pageController;
   int pageIndex = 0;
   User _currentUser;
-  Future<DocumentSnapshot> _getUser;
+  Stream<DocumentSnapshot> _getUserStream;
 
-  Widget _chatScreen;
-  Widget _uploadScreen;
-  Widget _feedScreen;
+  ChatsScreen _chatScreen;
+  UploadScreen _uploadScreen;
+  FeedScreen _feedScreen;
+  ProfileScreen _profileScreen;
 
   OnboardingScreen _onboardingScreen;
   @override
@@ -51,31 +52,27 @@ class _HomeScreenState extends State<HomeScreen>
   void initState() {
     super.initState();
     _pageController = PageController();
-
-    _getUser = getSnapshot(widget.uid);
+    _getUserStream = getStream(widget.uid);
 
     _onboardingScreen = OnboardingScreen();
+
     _chatScreen = ChatsScreen();
     _uploadScreen = UploadScreen();
     _feedScreen = FeedScreen();
+    _profileScreen = ProfileScreen(ProfileScreenArguments(userId: widget.uid));
   }
 
-  Future<DocumentSnapshot> getSnapshot(String uid) async {
-    //print("[HomeScreen] In getSnapshot");
-    DocumentSnapshot snapshot =
-        await Provider.of<UserProvider>(context, listen: false)
-            .getSnapshot(uid);
+  Stream<DocumentSnapshot> getStream(String uid) {
+    Stream<DocumentSnapshot> snapshot =
+        Firestore.instance.collection('users').document(uid).snapshots();
 
-    if (snapshot.data != null) {
-      User user = User.fromDocument(snapshot);
-
+    snapshot.first.then((documentSnapshot) {
+      User user = User.fromDocument(documentSnapshot);
       setState(() {
         _currentUser = user;
         currentUser = user;
       });
-
-      Provider.of<UserProvider>(context).setCurrentUser(user);
-    }
+    });
 
     return snapshot;
   }
@@ -147,8 +144,9 @@ class _HomeScreenState extends State<HomeScreen>
 
     return SafeArea(
       top: false,
-      child: FutureBuilder<DocumentSnapshot>(
-        future: _getUser,
+      bottom: false,
+      child: StreamBuilder<DocumentSnapshot>(
+        stream: _getUserStream,
         builder: (context, AsyncSnapshot<DocumentSnapshot> snapshot) {
           if (snapshot.error == null && snapshot.data != null) {
             if (snapshot.data.data == null) {
@@ -161,12 +159,13 @@ class _HomeScreenState extends State<HomeScreen>
                 key: _scaffoldKey,
                 body: PageView(
                   children: <Widget>[
-                    TimelineScreen(currentUser: _currentUser),
+                    TimelineScreen(
+                      currentUser: currentUser,
+                    ),
                     _chatScreen,
                     _uploadScreen,
                     _feedScreen,
-                    ProfileScreen(
-                        ProfileScreenArguments(userId: _currentUser.uid)),
+                    _profileScreen
                   ],
                   controller: _pageController,
                   onPageChanged: onPageChanged,

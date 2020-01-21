@@ -1,4 +1,5 @@
 import 'package:bandmates/Utils.dart';
+import 'package:bandmates/views/HomeScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:bandmates/views/UI/Progress.dart';
 import 'package:line_icons/line_icons.dart';
@@ -10,7 +11,6 @@ import './UI/FeedItem.dart';
 class FeedScreen extends StatelessWidget {
   Future<List<FeedItem>> getActivityFeed(BuildContext context) async {
     //print("[ActivityScreen]: in getActivityFeed function");
-    User currentUser = Provider.of<UserProvider>(context).user;
     QuerySnapshot snapshot = await Firestore.instance
         .collection("feed")
         .document(currentUser.uid)
@@ -51,10 +51,10 @@ class FeedScreen extends StatelessWidget {
           if (!snapshot.hasData) {
             return circularProgress(context);
           }
-
           if (snapshot.hasError) {
             Utils.buildErrorDialog(context,
                 "Cannot access activity feed items, please try again later!");
+            print("[FeedScreen] error: " + snapshot.error.toString());
           }
 
           if (snapshot.data.isEmpty) {

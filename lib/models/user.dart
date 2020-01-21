@@ -1,3 +1,4 @@
+import 'package:bandmates/models/Instrument.dart';
 import 'package:flutter/widgets.dart';
 import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:location/location.dart';
@@ -12,35 +13,28 @@ class User {
       {@required this.uid,
       @required this.name,
       @required this.bio,
-      @required this.practiceSpace,
-      @required this.transportation,
-      this.influences,
-      this.location,
-      this.genres,
-      this.instruments,
+      @required this.influences,
+      @required this.location,
+      @required this.genres,
+      @required this.instruments,
       this.time,
-      this.photoUrl});
+      @required this.photoUrl});
 
   final String uid;
   final DateTime time;
   final String name;
   final String bio;
-  final bool transportation;
   GeoFirePoint location;
   final Map<dynamic, dynamic> genres;
   final Map<dynamic, dynamic> instruments;
-  final List<String> influences;
+  final List<dynamic> influences;
   final String photoUrl;
 
   // Clips
 
-  final bool practiceSpace;
-
   Map<String, dynamic> toJson() => {
         'name': this.name,
         'bio': this.bio,
-        'transport': this.transportation,
-        'practice': this.practiceSpace,
         'genres': this.genres,
         'instruments': this.instruments,
         'influences': this.influences,
@@ -50,6 +44,9 @@ class User {
       };
 
   factory User.fromDocument(DocumentSnapshot doc) {
+    if (doc.data == null) {
+      return null;
+    }
     Geoflutterfire geo = Geoflutterfire();
     GeoFirePoint loc;
     if (doc.data['location'] != null) {
@@ -69,8 +66,6 @@ class User {
       bio: doc.data['bio'],
       genres: doc.data['genres'],
       instruments: doc.data['instruments'],
-      practiceSpace: doc.data['practice'],
-      transportation: doc.data['transport'],
       influences: doc.data['influences'],
       location: loc,
       time: doc.data['time'] == null ? null : doc.data['time'].toDate(),
@@ -106,22 +101,23 @@ class UserProvider with ChangeNotifier {
     currentUser = user;
   }
 
-  Future<DocumentSnapshot> getSnapshot(String uid) async {
-    print("In getSnapshot");
-    return await userRef
-        .document(uid)
-        .get()
-        .catchError((error) => print(error));
+  Stream<DocumentSnapshot> getUserStream(String uid) {
+    return userRef.document(uid).snapshots();
   }
 
   Future<void> uploadUser(String uid, User userIn) async {
-    print("In uploadUser" + userIn.instruments.toString());
-
     currentUser = userIn;
-    await Firestore.instance
-        .collection("users")
-        .document(uid)
-        .setData(userIn.toJson());
+    //print("[UserProvider] userIn: " + userIn.toJson().toString());
+    await userRef.document(uid).setData({
+      'name': userIn.name,
+      'bio': userIn.bio,
+      'genres': userIn.genres,
+      'instruments': userIn.instruments,
+      'influences': userIn.influences,
+      'photoUrl': userIn.photoUrl,
+      'time': DateTime.now(),
+      'location': userIn.location.data,
+    });
   }
 
   Future<String> uploadProfileImage(File imageFile, String uid) async {

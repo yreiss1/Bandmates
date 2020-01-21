@@ -1,3 +1,4 @@
+import 'package:bandmates/views/HomeScreen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:bandmates/views/ChatRoomScreen.dart';
@@ -73,7 +74,7 @@ class ChatsScreen extends StatelessWidget {
 }
 
 buildChatList(context) {
-  String uid = Provider.of<UserProvider>(context).currentUser.uid;
+  String uid = currentUser.uid;
 
   return Container(
     decoration: BoxDecoration(

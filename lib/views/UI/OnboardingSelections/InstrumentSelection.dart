@@ -10,6 +10,8 @@ class InstrumentSelection extends StatelessWidget {
   final Map<dynamic, dynamic> userData;
   InstrumentSelection({this.swiperController, this.userData});
 
+  List<Instrument> _selectedInstruments = [];
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -23,6 +25,7 @@ class InstrumentSelection extends StatelessWidget {
           children: <Widget>[
             Expanded(
               child: ListView(
+                physics: BouncingScrollPhysics(),
                 children: <Widget>[
                   SizedBox(
                     height: 16,
@@ -38,9 +41,10 @@ class InstrumentSelection extends StatelessWidget {
                     height: 24,
                   ),
                   FlutterTagging<Instrument>(
-                    initialItems: [],
-                    hideOnEmpty: true,
+                    initialItems: _selectedInstruments,
+                    debounceDuration: Duration(milliseconds: 100),
                     textFieldConfiguration: TextFieldConfiguration(
+                      textCapitalization: TextCapitalization.sentences,
                       decoration: InputDecoration(
                         focusColor: Theme.of(context).primaryColor,
                         border: const OutlineInputBorder(
@@ -52,9 +56,6 @@ class InstrumentSelection extends StatelessWidget {
                       ),
                     ),
                     findSuggestions: searchInstruments,
-                    additionCallback: (String value) {
-                      return Instrument(name: value);
-                    },
                     configureChip: (inst) {
                       return ChipConfiguration(
                         label: Text(inst.name),
@@ -70,22 +71,13 @@ class InstrumentSelection extends StatelessWidget {
                     configureSuggestion: (inst) {
                       return SuggestionConfiguration(
                         title: Text(inst.name),
-                        additionWidget: Chip(
-                          avatar: Icon(
-                            Icons.add_circle,
-                            color: Colors.white,
-                          ),
-                          label: Text('Add New Tag'),
-                          labelStyle: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14.0,
-                            fontWeight: FontWeight.w300,
-                          ),
-                          backgroundColor: Theme.of(context).primaryColor,
-                        ),
                       );
                     },
-                    onChanged: () {},
+                    onChanged: () {
+                      _selectedInstruments.forEach((inst) {
+                        userData['instruments'][inst.name] = true;
+                      });
+                    },
                   ),
                 ],
               ),
@@ -107,7 +99,7 @@ class InstrumentSelection extends StatelessWidget {
                 ),
                 textColor: Colors.white,
                 onPressed: () {
-                  //FocusScope.of(context).unfocus();
+                  FocusScope.of(context).unfocus();
 
                   swiperController.previous();
                 },
@@ -130,7 +122,7 @@ class InstrumentSelection extends StatelessWidget {
                 ),
                 textColor: Colors.white,
                 onPressed: () {
-                  //FocusScope.of(context).unfocus();
+                  FocusScope.of(context).unfocus();
 
                   swiperController.next();
                 },

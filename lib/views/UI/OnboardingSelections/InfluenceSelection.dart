@@ -4,6 +4,7 @@ import 'package:flutter_swiper/flutter_swiper.dart';
 import 'package:flutter_tagging/flutter_tagging.dart';
 import 'dart:convert' as convert;
 import 'package:http/http.dart' as http;
+import 'package:line_icons/line_icons.dart';
 import 'package:xml2json/xml2json.dart';
 
 class InfluenceSelection extends StatelessWidget {
@@ -12,6 +13,8 @@ class InfluenceSelection extends StatelessWidget {
 
   InfluenceSelection({this.swiperController, this.userData});
   Xml2Json xml2json = new Xml2Json();
+
+  List<Influence> _selectedInfluences = [];
 
   @override
   Widget build(BuildContext context) {
@@ -26,6 +29,7 @@ class InfluenceSelection extends StatelessWidget {
           children: <Widget>[
             Expanded(
               child: ListView(
+                physics: BouncingScrollPhysics(),
                 children: <Widget>[
                   SizedBox(
                     height: 16,
@@ -41,9 +45,16 @@ class InfluenceSelection extends StatelessWidget {
                     height: 24,
                   ),
                   FlutterTagging<Influence>(
-                    initialItems: [],
+                    emptyBuilder: (context) {
+                      return ListTile(
+                        leading: Icon(Icons.not_interested),
+                        title: Text("No Artist with that name exists"),
+                      );
+                    },
+                    initialItems: _selectedInfluences,
                     hideOnEmpty: false,
                     textFieldConfiguration: TextFieldConfiguration(
+                      textCapitalization: TextCapitalization.sentences,
                       decoration: InputDecoration(
                         focusColor: Theme.of(context).primaryColor,
                         border: const OutlineInputBorder(
@@ -55,9 +66,9 @@ class InfluenceSelection extends StatelessWidget {
                       ),
                     ),
                     findSuggestions: searchInfluence,
-                    additionCallback: (String value) {
-                      return Influence(name: value);
-                    },
+                    // additionCallback: (String value) {
+                    //   return Influence(name: value);
+                    // },
                     configureChip: (influence) {
                       return ChipConfiguration(
                         label: Text(influence.name),
@@ -75,22 +86,25 @@ class InfluenceSelection extends StatelessWidget {
                           influence.name,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        additionWidget: Chip(
-                          avatar: Icon(
-                            Icons.add_circle,
-                            color: Colors.white,
-                          ),
-                          label: Text('Add New Influence'),
-                          labelStyle: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14.0,
-                            fontWeight: FontWeight.w300,
-                          ),
-                          backgroundColor: Theme.of(context).primaryColor,
-                        ),
+                        subtitle: (influence.country == null &&
+                                influence.date == null)
+                            ? Text("")
+                            : (influence.country == null &&
+                                    influence.date != null)
+                                ? Text(influence.date)
+                                : (influence.date == null &&
+                                        influence.country != null)
+                                    ? Text(influence.country)
+                                    : Text(influence.country +
+                                        " - " +
+                                        influence.date),
                       );
                     },
-                    onChanged: () {},
+                    onChanged: () {
+                      userData['influences'] = _selectedInfluences
+                          .map((influence) => influence.name)
+                          .toList();
+                    },
                   ),
                 ],
               ),
@@ -112,8 +126,7 @@ class InfluenceSelection extends StatelessWidget {
                 ),
                 textColor: Colors.white,
                 onPressed: () {
-                  //FocusScope.of(context).unfocus();
-
+                  FocusScope.of(context).unfocus();
                   swiperController.previous();
                 },
               ),
@@ -125,6 +138,9 @@ class InfluenceSelection extends StatelessWidget {
   }
 
   Future<List<Influence>> searchInfluence(String query) async {
+    if (query.isEmpty) {
+      return [];
+    }
     var url = "http://musicbrainz.org/ws/2/artist/?query=artist:" +
         query.replaceAll(' ', '%20');
 
@@ -143,6 +159,8 @@ class InfluenceSelection extends StatelessWidget {
         influences = List<Influence>.from(body['metadata']['artist-list']
                 ['artist']
             .map((x) => Influence.fromJson(x)));
+      } else if (int.parse(body['metadata']['artist-list']['count']) == 0) {
+        influences = [];
       } else {
         influences = [
           Influence.fromJson(body['metadata']['artist-list']['artist'])
