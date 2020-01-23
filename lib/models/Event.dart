@@ -68,6 +68,7 @@ class Event {
 
 class EventProvider with ChangeNotifier {
   CollectionReference eventsRef = Firestore.instance.collection("events");
+  CollectionReference attendingRef = Firestore.instance.collection('attending');
   StorageReference storageRef = FirebaseStorage.instance.ref();
   final Geoflutterfire geo = Geoflutterfire();
 
@@ -114,5 +115,9 @@ class EventProvider with ChangeNotifier {
     return geo
         .collection(collectionRef: eventsRef)
         .within(center: center, radius: 100, field: 'loc', strictMode: true);
+  }
+
+  Stream<QuerySnapshot> getAttending(String eventId) {
+    return attendingRef.document(eventId).collection("attending").snapshots();
   }
 }

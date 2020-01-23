@@ -370,6 +370,7 @@ class _PostScreenState extends State<PostScreen> {
                   .collection("comments")
                   .orderBy("time", descending: false)
                   .snapshots(),
+              //TODO: Add limit to number of comments pulled
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
                   return circularProgress(context);

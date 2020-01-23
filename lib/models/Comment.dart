@@ -25,6 +25,9 @@ class Comment extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: <Widget>[
+        Divider(
+          height: 0,
+        ),
         ListTile(
           title: Text(text),
           leading: CircleAvatar(
@@ -34,9 +37,6 @@ class Comment extends StatelessWidget {
           ),
           subtitle: Text(timeago.format(time)),
         ),
-        Divider(
-          height: 0,
-        )
       ],
     );
   }

@@ -1,11 +1,15 @@
+import 'package:bandmates/models/Attending.dart';
 import 'package:bandmates/models/Event.dart';
 import 'package:bandmates/views/HomeScreen.dart';
 import 'package:bandmates/views/UI/CustomNetworkImage.dart';
+import 'package:bandmates/views/UI/Progress.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:geocoder/geocoder.dart' as geocoder;
+import 'package:provider/provider.dart';
 
 import '../Utils.dart';
 
@@ -35,10 +39,9 @@ class EventScreen extends StatelessWidget {
                         fontWeight: FontWeight.bold),
                   ),
                 ),
-                SliverFillRemaining(
-                  fillOverscroll: false,
-                  hasScrollBody: false,
-                  child: _buildEventCard(context),
+                SliverList(
+                  delegate: SliverChildListDelegate(
+                      [_buildEventCard(context), _buildAttendingList(context)]),
                 ),
               ],
             )
@@ -83,14 +86,6 @@ class EventScreen extends StatelessWidget {
                           height: 180,
                           width: double.infinity,
                           child: customNetworkImage(event.photoUrl),
-                          //  Container(
-                          //       width: 180,
-                          //       height: 180,
-                          //       decoration: new BoxDecoration(
-                          //         borderRadius: BorderRadius.circular(10),
-                          //         image:
-                          //       ),
-                          //     )),
                         ),
                       )
                     : Container(
@@ -190,7 +185,14 @@ class EventScreen extends StatelessWidget {
                   ],
                 ),
                 SizedBox(
-                  height: 8,
+                  height: 2,
+                ),
+                Text(
+                  "Hosted By: " + event.name,
+                  style: TextStyle(fontStyle: FontStyle.italic),
+                ),
+                SizedBox(
+                  height: 16,
                 ),
                 Text(
                   event.text,
@@ -220,10 +222,10 @@ class EventScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                Divider(),
                 if (event.genres != null && event.genres.isNotEmpty)
                   Column(
                     children: <Widget>[
+                      Divider(),
                       Text(
                         "Genres",
                         style: TextStyle(fontWeight: FontWeight.bold),
@@ -246,16 +248,29 @@ class EventScreen extends StatelessWidget {
                 SizedBox(
                   height: 4,
                 ),
-                Container(
-                  padding: EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                      border: Border.all(color: Theme.of(context).accentColor)),
-                  child: Text(
-                    DateFormat.yMMMd().add_jm().format(event.time),
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).accentColor),
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: <Widget>[
+                    Container(
+                      padding: EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                          border:
+                              Border.all(color: Theme.of(context).accentColor)),
+                      child: Text(
+                        DateFormat.yMMMd().add_jm().format(event.time),
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).accentColor),
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        LineIcons.thumbs_up,
+                        size: 32,
+                      ),
+                      onPressed: () => print("Attending!"),
+                    )
+                  ],
                 ),
               ]),
         ),
@@ -263,5 +278,47 @@ class EventScreen extends StatelessWidget {
     );
   }
 
-  _buildAttendingList() {}
+  _buildAttendingList(context) {
+    return Container(
+      constraints: BoxConstraints(minHeight: 100),
+      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: Card(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        elevation: 10,
+        child: Container(
+          padding: EdgeInsets.all(15),
+          child: StreamBuilder<QuerySnapshot>(
+            stream:
+                Provider.of<EventProvider>(context).getAttending(event.eventId),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return Center(
+                  child: circularProgress(context),
+                );
+              }
+
+              if (snapshot.hasError) {
+                Utils.buildErrorDialog(context,
+                    "Cannot obtain attending list, please try again soon!");
+              }
+
+              if (snapshot.data.documents.isEmpty) {
+                return Center(
+                  child: Text("No attendees currently"),
+                );
+              }
+              List<Attending> attending = [];
+
+              snapshot.data.documents.forEach((doc) {
+                attending.add(Attending.fromDocument(doc));
+              });
+
+              return Column(
+                  mainAxisSize: MainAxisSize.min, children: attending);
+            },
+          ),
+        ),
+      ),
+    );
+  }
 }

@@ -366,19 +366,26 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody>
                   "Influences",
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Wrap(
-                    runSpacing: 0,
-                    spacing: 4,
-                    children: [
-                      for (String influence in widget.user.influences)
-                        Chip(
-                          label: Text(influence),
-                        )
-                    ],
-                  ),
-                ),
+                widget.user.influences != null
+                    ? Align(
+                        alignment: Alignment.centerLeft,
+                        child: Wrap(
+                          runSpacing: 0,
+                          spacing: 4,
+                          children: [
+                            for (String influence in widget.user.influences)
+                              Chip(
+                                label: Text(influence),
+                              )
+                          ],
+                        ),
+                      )
+                    : Padding(
+                        padding: EdgeInsets.all(8),
+                        child: Text(
+                          "No influences to show",
+                        ),
+                      ),
               ]),
             ),
           ),
