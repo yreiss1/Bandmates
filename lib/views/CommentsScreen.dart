@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:bandmates/views/UI/Header.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:bandmates/views/UI/Progress.dart';
 import 'package:line_icons/line_icons.dart';

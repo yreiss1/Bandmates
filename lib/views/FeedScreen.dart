@@ -9,22 +9,15 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import './UI/FeedItem.dart';
 
 class FeedScreen extends StatelessWidget {
-  Future<List<FeedItem>> getActivityFeed(BuildContext context) async {
+  Stream<QuerySnapshot> getActivityFeed(BuildContext context) {
     //print("[ActivityScreen]: in getActivityFeed function");
-    QuerySnapshot snapshot = await Firestore.instance
+    return Firestore.instance
         .collection("feed")
         .document(currentUser.uid)
         .collection("feedItems")
         .orderBy("time", descending: true)
         .limit(50)
-        .getDocuments();
-
-    List<FeedItem> feedItems = [];
-
-    snapshot.documents.forEach((item) {
-      feedItems.add(FeedItem.fromDocument(item));
-    });
-    return feedItems;
+        .snapshots();
   }
 
   @override
@@ -45,8 +38,8 @@ class FeedScreen extends StatelessWidget {
       height: MediaQuery.of(context).size.height,
       width: double.infinity,
       child: Container(
-          child: FutureBuilder<List<FeedItem>>(
-        future: getActivityFeed(context),
+          child: StreamBuilder<QuerySnapshot>(
+        stream: getActivityFeed(context),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return circularProgress(context);
@@ -57,13 +50,17 @@ class FeedScreen extends StatelessWidget {
             print("[FeedScreen] error: " + snapshot.error.toString());
           }
 
-          if (snapshot.data.isEmpty) {
+          if (snapshot.data.documents.length == 0) {
             return Center(
               child: Text("No activity feed items to display"),
             );
           }
 
-          return ListView(shrinkWrap: true, children: snapshot.data);
+          List<FeedItem> feedItems = [];
+          snapshot.data.documents
+              .forEach((doc) => feedItems.add(FeedItem.fromDocument(doc)));
+
+          return ListView(shrinkWrap: true, children: feedItems);
         },
       )),
     );
@@ -87,14 +84,15 @@ class FeedScreen extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                     fontSize: 22),
               ),
-              IconButton(
-                icon: Icon(
-                  LineIcons.search,
-                  size: 28,
-                  color: Colors.white,
-                ),
-                onPressed: () {},
-              )
+              //TODO: Add search functionality
+              // IconButton(
+              //   icon: Icon(
+              //     Icons.search,
+              //     size: 28,
+              //     color: Colors.white,
+              //   ),
+              //   onPressed: () {},
+              // )
             ],
           ),
         ],

@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:bandmates/AuthService.dart';
 import 'package:bandmates/Utils.dart';
+import 'package:bandmates/models/Chat.dart';
 import 'package:bandmates/models/Influence.dart';
 import 'package:bandmates/views/ChatRoomScreen.dart';
 import 'package:bandmates/views/PostScreen.dart';
@@ -15,6 +16,7 @@ import 'package:bandmates/views/UI/PostItem.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
+import '../EditProfileScreen.dart';
 import 'CustomNetworkImage.dart';
 import '../../models/User.dart';
 import 'package:line_icons/line_icons.dart';
@@ -42,6 +44,8 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody>
   User _currentUser;
   String _tempDir;
 
+  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
+
   @override
   void initState() {
     super.initState();
@@ -53,11 +57,102 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody>
   Widget build(BuildContext context) {
     print("[ProfileScreenBody] uid: " + widget.user.uid.toString());
 
-    return Scaffold(
-      body: SafeArea(
-        bottom: false,
-        top: false,
-        child: Stack(
+    return SafeArea(
+      top: false,
+      bottom: false,
+      child: Scaffold(
+        key: _scaffoldKey,
+        endDrawer: Drawer(
+          child: ListView(
+            children: <Widget>[
+              DrawerHeader(
+                child: Row(
+                  children: <Widget>[
+                    CircularProfileAvatar(
+                      widget.user.photoUrl != null
+                          ? widget.user.photoUrl
+                          : "https://w5insight.com/wp-content/uploads/2014/07/placeholder-user-400x400.png",
+                      radius: 35,
+                    ),
+                    SizedBox(
+                      width: 16,
+                    ),
+                    Flexible(
+                      child: Text(
+                        widget.user.name,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    )
+                  ],
+                ),
+              ),
+              ListTile(
+                leading: Icon(
+                  LineIcons.edit,
+                  color: Theme.of(context).primaryColor,
+                  size: 28,
+                ),
+                title: Text("Edit Profile"),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (ctx) => EditProfileScreen(
+                                user: widget.user,
+                              )));
+                },
+              ),
+              ListTile(
+                leading: Icon(
+                  LineIcons.key,
+                  color: Theme.of(context).primaryColor,
+                  size: 28,
+                ),
+                title: Text("Change Password"),
+                onTap: () {
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: Icon(
+                  LineIcons.gear,
+                  color: Theme.of(context).primaryColor,
+                  size: 28,
+                ),
+                title: Text("Settings"),
+                onTap: () {
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: Icon(
+                  LineIcons.question,
+                  color: Theme.of(context).primaryColor,
+                  size: 28,
+                ),
+                title: Text("Help & Feedback"),
+                onTap: () {
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: Icon(
+                  LineIcons.sign_out,
+                  color: Theme.of(context).primaryColor,
+                  size: 28,
+                ),
+                title: Text("Sign Out"),
+                onTap: () {
+                  Navigator.pop(context);
+
+                  Provider.of<AuthService>(context).signOut();
+                },
+              )
+            ],
+          ),
+        ),
+        body: Stack(
           children: <Widget>[
             buildHeader(),
             CustomScrollView(
@@ -68,17 +163,25 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody>
                         actions: <Widget>[
                           IconButton(
                             icon: Icon(
-                              LineIcons.sign_out,
+                              LineIcons.ellipsis_h,
                               size: 32,
-                              color: Colors.white,
                             ),
                             onPressed: () =>
-                                Provider.of<AuthService>(context).signOut(),
+                                _scaffoldKey.currentState.openEndDrawer(),
                           ),
+                          // IconButton(
+                          //   icon: Icon(
+                          //     LineIcons.sign_out,
+                          //     size: 32,
+                          //     color: Colors.white,
+                          //   ),
+                          //   onPressed: () =>
+                          //       Provider.of<AuthService>(context).signOut(),
+                          // ),
                         ],
                       )
                     : SliverAppBar(
-                        expandedHeight: 100,
+                        expandedHeight: 80,
                         actions: <Widget>[
                           IconButton(
                             icon: Icon(
@@ -125,7 +228,7 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody>
             Container(
               width: MediaQuery.of(context).size.width,
               padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              margin: EdgeInsets.only(top: 60),
+              margin: EdgeInsets.only(top: 90),
               child: Card(
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),
@@ -144,14 +247,17 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody>
                             fontWeight: FontWeight.bold, fontSize: 24),
                       ),
                       SizedBox(
-                        height: 4,
+                        height: 8,
                       ),
                       Text(widget.user.bio),
+                      SizedBox(
+                        height: 8,
+                      ),
                       widget.user.uid == _currentUser.uid
                           ? FittedBox(
                               child: Row(
                                 mainAxisAlignment:
-                                    MainAxisAlignment.spaceEvenly,
+                                    MainAxisAlignment.spaceBetween,
                                 children: <Widget>[
                                   FlatButton.icon(
                                     shape: RoundedRectangleBorder(
@@ -171,6 +277,9 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody>
                                     ),
                                     onPressed: () => Navigator.pushNamed(
                                         context, EventUploadScreen.routeName),
+                                  ),
+                                  SizedBox(
+                                    width: 8,
                                   ),
                                   FlatButton.icon(
                                     icon: Icon(LineIcons.music),
@@ -201,23 +310,36 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody>
                                       width: 1,
                                       style: BorderStyle.solid),
                                   borderRadius: BorderRadius.circular(50)),
-                              color: Color(0xff829abe),
+                              color: Theme.of(context).accentColor,
                               icon: Icon(LineIcons.comment),
                               textColor: Colors.white,
                               label: Text(
                                 "Chat",
                                 style: TextStyle(fontWeight: FontWeight.bold),
                               ),
-                              onPressed: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (BuildContext context) {
-                                  return ChatRoomScreen(
-                                    otherUser: widget.user,
-                                  );
-                                }),
-                              ),
-                            ),
+                              onPressed: () async {
+                                DocumentSnapshot doc =
+                                    await Provider.of<ChatProvider>(context)
+                                        .getIndividualChat(
+                                            _currentUser.uid,
+                                            _currentUser.name,
+                                            _currentUser.photoUrl,
+                                            _currentUser.token,
+                                            widget.user.uid,
+                                            widget.user.name,
+                                            widget.user.photoUrl,
+                                            widget.user.token);
+
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (BuildContext context) {
+                                    return ChatRoomScreen(
+                                      chat: Chat.fromDocument(doc),
+                                    );
+                                  }),
+                                );
+                              }),
                     ],
                   ),
                 ),
@@ -231,13 +353,13 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody>
             child: widget.user.photoUrl != null
                 ? CircularProfileAvatar(
                     widget.user.photoUrl,
-                    radius: 60,
+                    radius: 80,
                     borderColor: Colors.white,
                     borderWidth: 6,
                   )
                 : CircularProfileAvatar(
                     "https://www.bsn.eu/wp-content/uploads/2016/12/user-icon-image-placeholder-300-grey.jpg",
-                    radius: 60,
+                    radius: 80,
                     borderColor: Colors.white,
                     borderWidth: 3,
                   ),

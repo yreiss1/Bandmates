@@ -1,12 +1,23 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:search_app_bar/searcher.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Chat {
   final String id;
-  final List<String> users;
+  final Map<dynamic, dynamic> users;
+  final String name;
+  final String photoUrl;
+  final String lastMessage;
 
-  Chat({this.id, this.users});
+  Chat({this.id, this.users, this.name, this.photoUrl, this.lastMessage});
+
+  factory Chat.fromDocument(DocumentSnapshot doc) {
+    return Chat(
+        id: doc.documentID,
+        users: doc['users'],
+        name: doc['name'],
+        photoUrl: doc['avatar'],
+        lastMessage: doc['lastMsg']);
+  }
 }
 
 class ChatProvider with ChangeNotifier {
@@ -17,48 +28,83 @@ class ChatProvider with ChangeNotifier {
   }
 
   CollectionReference chatsRef = Firestore.instance.collection("chats");
+  CollectionReference messagesRef = Firestore.instance.collection("messages");
   CollectionReference userRef = Firestore.instance.collection("users");
 
-  Future<DocumentSnapshot> getChat(String fromID, String toID) async {
+  Future<DocumentSnapshot> createChat(
+      Map<String, Map<String, dynamic>> users) async {
+    DocumentReference chat = await chatsRef.add({
+      'time': DateTime.now(),
+      'users': users,
+      'lastMsg': null,
+      'idList': users.keys.toList(),
+    });
+
+    return await chat.get();
+  }
+
+  Future<void> sendMessage(
+      {String text, int type, String chatID, String userID}) async {
+    Firestore.instance.runTransaction((transaction) async {
+      transaction.set(
+          Firestore.instance
+              .collection("chats")
+              .document(chatID)
+              .collection('msgs')
+              .document(),
+          {
+            "user": userID,
+            "content": text,
+            "time": DateTime.now(),
+            "type": type
+          });
+      transaction.update(
+          Firestore.instance.collection("chats").document(chatID),
+          {'lastMsg': text, 'time': DateTime.now()});
+    }).catchError((error) => print("There was an error: $error"));
+  }
+
+  Stream<QuerySnapshot> getChats(String uid) {
+    return chatsRef
+        .where('idList', arrayContains: uid)
+        .orderBy('time', descending: true)
+        .limit(20)
+        .snapshots();
+  }
+
+  Stream<QuerySnapshot> getMessages(String chatID) {
+    return chatsRef
+        .document(chatID)
+        .collection("msgs")
+        .orderBy('time', descending: true)
+        .limit(20)
+        .snapshots();
+  }
+
+  Future<DocumentSnapshot> getIndividualChat(
+      String fromID,
+      String fromName,
+      String fromAvatar,
+      String fromToken,
+      String toID,
+      String toName,
+      String toAvatar,
+      String toToken) async {
     QuerySnapshot query =
-        await chatsRef.where("users", arrayContains: fromID).getDocuments();
+        await chatsRef.where('idList', arrayContains: fromID).getDocuments();
 
     DocumentSnapshot chatRoom = query.documents.firstWhere((chatRoom) {
-      return chatRoom.data["users"].contains(toID);
+      return chatRoom.data["idList"].contains(toID) &&
+          chatRoom.data['users'].length == 2;
     }, orElse: () => null);
 
     if (chatRoom != null) {
       return chatRoom;
     } else {
-      Map<String, dynamic> chatMap = {
-        "users": [fromID, toID],
-        "time": DateTime.now(),
-        "lastMsg": null
-      };
-
-      DocumentReference ref = await chatsRef.add(chatMap);
-      userRef
-          .document(fromID)
-          .collection("chats")
-          .document(ref.documentID)
-          .setData({"active": true});
-      userRef
-          .document(toID)
-          .collection("chats")
-          .document(ref.documentID)
-          .setData({"active": true});
-      DocumentSnapshot chat = await ref.get();
-      return chat;
+      return createChat({
+        fromID: {'name': fromName, 'avatar': fromAvatar, 'token': fromToken},
+        toID: {'name': toName, 'avatar': toAvatar, 'token': toToken}
+      });
     }
-  }
-
-  Stream<QuerySnapshot> getChats(String uid) {
-    return Firestore.instance
-        .collection("chats")
-        .where("users", arrayContains: uid)
-        .orderBy("time", descending: true)
-        .snapshots();
-
-    //print("[Chat]: " + chatRefs.documents.toString());
   }
 }

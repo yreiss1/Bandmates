@@ -9,58 +9,15 @@ admin.initializeApp();
 //  response.send("Hello from Firebase!");
 // });
 
-exports.onCreateFollower = functions.firestore
-  .document("/followers/{userId}/followers/{followerId}")
+exports.onCreateUser = functions.firestore
+  .document("/users/{userId}")
   .onCreate(async (snapshot, context) => {
-    console.log("Follower created: ", snapshot.id);
-    const userId = context.params.userId;
-    const followerId = context.params.followerId;
+    const userCreated = snapshot.data();
 
-    const followedUserPostsRef = admin
-      .firestore()
-      .collection("posts")
-      .doc(userId)
-      .collection("userPosts");
-
-    const timelinePostsRef = admin
-      .firestore()
-      .collection("timeline")
-      .doc(followerId)
-      .collection("timelinePosts");
-
-    const querySnapshot = await followedUserPostsRef.get();
-    querySnapshot.forEach(doc => {
-      if (doc.exists) {
-        const postId = doc.id;
-        const postData = doc.data();
-        timelinePostsRef.doc(postId).set(postData);
-      }
-    });
+    //TODO: Send email to user
   });
 
-exports.onDeleteFollower = functions.firestore
-  .document("/followers/{userId}/followers/{followerId}")
-  .onDelete(async (snapshot, context) => {
-    console.log("Follower Deleted", snapshot.id);
-    const userId = context.params.userId;
-    const followerId = context.params.followerId;
-
-    const timelinePostsRef = admin
-      .firestore()
-      .collection("timeline")
-      .doc(followerId)
-      .collection("timelinePosts")
-      .where("ownerId", "==", userId);
-
-    const querySnapshot = await timelinePostsRef.get();
-
-    querySnapshot.forEach(doc => {
-      if (doc.exists) {
-        doc.ref.delete();
-      }
-    });
-  });
-
+//On possibly delete
 exports.onCreatePost = functions.firestore
   .document("/posts/{userId}/userPosts/{postId}")
   .onCreate(async (snapshot, context) => {
@@ -88,6 +45,7 @@ exports.onCreatePost = functions.firestore
     });
   });
 
+//Possibly Delete
 exports.onUpdatePost = functions.firestore
   .document("/posts/{userId}/userPosts/{postId}")
   .onUpdate(async (change, context) => {
@@ -118,6 +76,7 @@ exports.onUpdatePost = functions.firestore
     });
   });
 
+//TODO: Possibly delete
 exports.onDeletePost = functions.firestore
   .document("/posts/{userId}/userPosts/{postId}")
   .onDelete(async (snapshot, context) => {
@@ -158,15 +117,15 @@ exports.onCreateActivityFeedItem = functions.firestore
 
     const doc = await userRef.get();
 
-    const androidNotificationToken = doc.data().androidNotificationToken;
+    const token = doc.data().token;
     const createdActivityFeedItem = snapshot.data();
-    if (androidNotificationToken) {
-      sendNotification(androidNotificationToken, createdActivityFeedItem);
+    if (token) {
+      sendNotification(token, createdActivityFeedItem);
     } else {
       console.log("No token for user, cannot send notification");
     }
 
-    function sendNotification(androidNotificationToken, activityFeedItem) {
+    function sendNotification(token, activityFeedItem) {
       let body;
 
       switch (activityFeedItem.type) {
@@ -178,9 +137,9 @@ exports.onCreateActivityFeedItem = functions.firestore
         case 1:
           body = `${activityFeedItem.user} commented: "${activityFeedItem.text}" on your post`;
           break;
-        //Follow
+        //Attending your event
         case 2:
-          body = `${activityFeedItem.user} started following you`;
+          body = `${activityFeedItem.user} is attending your event "${activityFeedItem.text}"`;
           break;
         default:
           break;
@@ -188,8 +147,84 @@ exports.onCreateActivityFeedItem = functions.firestore
 
       const message = {
         notification: { body: body },
-        token: androidNotificationToken,
+        token: token,
         data: { recipient: userId }
+      };
+
+      admin
+        .messaging()
+        .send(message)
+        .then(response => {
+          console.log("Succesfully sent message", response);
+        })
+        .catch(error => {
+          console.log("Error sending messages", error);
+        });
+    }
+  });
+
+exports.onCreateChatMessage = functions.firestore
+  .document("/chats/{chatId}/msgs/{msgId}")
+  .onCreate(async (snapshot, context) => {
+    const messageCreated = snapshot.data();
+    const chatId = context.params.chatId;
+    const senderId = messageCreated.user;
+
+    const chat = await admin
+      .firestore()
+      .collection("chats")
+      .doc(chatId)
+      .get();
+    console.log(
+      "chat: " +
+        chat.data().toString() +
+        " name: " +
+        chat.data().users.senderId.name +
+        " chatId: " +
+        chatId +
+        " senderId: " +
+        senderId
+    );
+    const sender = chat.data().users.senderId;
+
+    for (let [key, value] of Object.entries(chat.data().users)) {
+      if (key != senderId && value.token != null) {
+        sendNotification(
+          key,
+          value.token,
+          messageCreated.text,
+          messageCreated.type,
+          sender.name
+        );
+      }
+    }
+
+    function sendNotification(recipientId, token, text, type, senderName) {
+      let body;
+
+      console.log(
+        "recipient: " +
+          recipientId +
+          " token: " +
+          token +
+          " text: " +
+          text +
+          " sender: " +
+          sender
+      );
+
+      if (type == 0) {
+        body = text;
+      } else if (type == 1) {
+        body = "Sent an Image";
+      } else if (type == 2) {
+        body = "Sent a Sticker";
+      }
+
+      const message = {
+        notification: { title: senderName, body: body },
+        token: token,
+        data: { recipient: recipientId }
       };
 
       admin

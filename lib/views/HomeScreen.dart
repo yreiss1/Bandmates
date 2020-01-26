@@ -94,19 +94,23 @@ class _HomeScreenState extends State<HomeScreen>
         duration: Duration(milliseconds: 300), curve: Curves.easeInOut);
   }
 
-  configurePushNotifications() {
+  obtainPushNotifications() {
     if (Platform.isIOS) {
       getiOSPermission();
     }
 
     _firebaseMessaging.getToken().then((token) {
       print("Firebase messaging token $token\n");
+      currentUser.token = token;
+
       Firestore.instance
           .collection("users")
           .document(widget.uid)
-          .updateData({"androidNotificationToken": token});
+          .updateData({"token": token});
     });
+  }
 
+  configurePushNotifications() {
     _firebaseMessaging.configure(
         onLaunch: (Map<String, dynamic> message) async {},
         onResume: (Map<String, dynamic> message) async {},
@@ -152,6 +156,9 @@ class _HomeScreenState extends State<HomeScreen>
             if (snapshot.data.data == null) {
               return Scaffold(body: _onboardingScreen);
             } else {
+              if (snapshot.data.data['token'] == null) {
+                obtainPushNotifications();
+              }
               configurePushNotifications();
 
               return Scaffold(

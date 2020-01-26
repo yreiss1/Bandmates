@@ -6,6 +6,7 @@ import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:geoflutterfire/geoflutterfire.dart';
+import 'package:modal_progress_hud/modal_progress_hud.dart';
 import 'package:uuid/uuid.dart';
 import 'package:provider/provider.dart';
 import 'package:image_cropper/image_cropper.dart';
@@ -229,61 +230,67 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
       body: SafeArea(
         top: false,
         bottom: false,
-        child: Stack(
-          children: <Widget>[
-            Scaffold(
-              body: Stack(
-                children: <Widget>[
-                  _buildHeader(),
-                  CustomScrollView(
-                    slivers: <Widget>[
-                      SliverAppBar(
-                        forceElevated: false,
-                        actions: <Widget>[
-                          IconButton(
-                            icon: Icon(
-                              Icons.cloud_upload,
-                              size: 32,
-                              color: Colors.white,
+        child: ModalProgressHUD(
+          inAsyncCall: _isUploading,
+          progressIndicator: circularProgress(context),
+          opacity: .5,
+          dismissible: false,
+          child: Stack(
+            children: <Widget>[
+              Scaffold(
+                body: Stack(
+                  children: <Widget>[
+                    _buildHeader(),
+                    CustomScrollView(
+                      slivers: <Widget>[
+                        SliverAppBar(
+                          forceElevated: false,
+                          actions: <Widget>[
+                            IconButton(
+                              icon: Icon(
+                                Icons.cloud_upload,
+                                size: 32,
+                                color: Colors.white,
+                              ),
+                              onPressed: () => _handleSubmit(),
                             ),
-                            onPressed: () => _handleSubmit(),
+                          ],
+                          expandedHeight: 100,
+                          title: Text(
+                            "Upload Work",
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold),
                           ),
-                        ],
-                        expandedHeight: 100,
-                        title: Text(
-                          "Upload Work",
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold),
                         ),
-                      ),
-                      SliverFillRemaining(
-                        fillOverscroll: false,
-                        hasScrollBody: false,
-                        child: _buildPostUploadCard(),
-                      ),
-                      SliverPadding(
-                        padding: EdgeInsets.all(60),
-                      )
-                    ],
-                  ),
-                ],
+                        SliverFillRemaining(
+                          fillOverscroll: false,
+                          hasScrollBody: false,
+                          child: _buildPostUploadCard(),
+                        ),
+                        SliverPadding(
+                          padding: EdgeInsets.all(60),
+                        )
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-            if (_isVisible)
-              Positioned.fill(
-                bottom: 40,
-                child: Align(
-                    alignment: Alignment.bottomCenter,
-                    child: FloatingActionButton.extended(
-                      icon: Icon(Icons.cloud_upload),
-                      label: Text("Upload Work"),
-                      onPressed: () => _handleSubmit(),
-                      backgroundColor: Theme.of(context).primaryColor,
-                    )),
-              )
-          ],
+              if (_isVisible)
+                Positioned.fill(
+                  bottom: 40,
+                  child: Align(
+                      alignment: Alignment.bottomCenter,
+                      child: FloatingActionButton.extended(
+                        icon: Icon(Icons.cloud_upload),
+                        label: Text("Upload Work"),
+                        onPressed: () => _handleSubmit(),
+                        backgroundColor: Theme.of(context).primaryColor,
+                      )),
+                )
+            ],
+          ),
         ),
       ),
     );

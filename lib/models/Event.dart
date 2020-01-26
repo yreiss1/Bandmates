@@ -1,7 +1,9 @@
 import 'dart:io';
 
+import 'package:bandmates/models/Attending.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -119,5 +121,40 @@ class EventProvider with ChangeNotifier {
 
   Stream<QuerySnapshot> getAttending(String eventId) {
     return attendingRef.document(eventId).collection("attending").snapshots();
+  }
+
+  Future<void> attendEvent(
+      String eventId,
+      String eventTitle,
+      String userId,
+      String username,
+      GeoFirePoint location,
+      String avatar,
+      String ownerId,
+      String mediaUrl) async {
+    Firestore.instance.runTransaction((Transaction transaction) async {
+      transaction.set(
+          attendingRef
+              .document(eventId)
+              .collection("attending")
+              .document(userId),
+          {'name': username, 'avatar': avatar, 'loc': location.data});
+      transaction.set(
+          Firestore.instance
+              .collection("feed")
+              .document(ownerId)
+              .collection('feedItems')
+              .document(),
+          {
+            'avatar': avatar,
+            'type': 2,
+            'time': DateTime.now(),
+            'user': username,
+            'userId': userId,
+            'eventId': eventId,
+            'text': eventTitle,
+            'mediaUrl': mediaUrl
+          });
+    });
   }
 }

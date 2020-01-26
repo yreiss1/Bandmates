@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:bandmates/models/ProfileScreenArguments.dart';
 import 'package:bandmates/models/User.dart';
-import 'package:bandmates/views/UI/Header.dart';
 import 'package:bandmates/views/UI/ProfileScreenBody.dart';
 import 'package:bandmates/views/UI/Progress.dart';
 import 'package:provider/provider.dart';

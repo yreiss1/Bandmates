@@ -2,17 +2,14 @@ import 'package:bandmates/models/Influence.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_swiper/flutter_swiper.dart';
 import 'package:flutter_tagging/flutter_tagging.dart';
-import 'dart:convert' as convert;
-import 'package:http/http.dart' as http;
-import 'package:line_icons/line_icons.dart';
-import 'package:xml2json/xml2json.dart';
+
+import '../../../Utils.dart';
 
 class InfluenceSelection extends StatelessWidget {
   SwiperController swiperController;
   final Map<dynamic, dynamic> userData;
 
   InfluenceSelection({this.swiperController, this.userData});
-  Xml2Json xml2json = new Xml2Json();
 
   List<Influence> _selectedInfluences = [];
 
@@ -65,7 +62,7 @@ class InfluenceSelection extends StatelessWidget {
                         hintText: "Search for your Influences",
                       ),
                     ),
-                    findSuggestions: searchInfluence,
+                    findSuggestions: Utils.searchInfluence,
                     // additionCallback: (String value) {
                     //   return Influence(name: value);
                     // },
@@ -135,43 +132,5 @@ class InfluenceSelection extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  Future<List<Influence>> searchInfluence(String query) async {
-    if (query.isEmpty) {
-      return [];
-    }
-    var url = "http://musicbrainz.org/ws/2/artist/?query=artist:" +
-        query.replaceAll(' ', '%20');
-
-    var response = await http.get(url);
-
-    if (response.statusCode == 200) {
-      xml2json.parse(response.body);
-      var jsonData = xml2json.toGData();
-      var body = convert.json.decode(jsonData);
-
-      List<Influence> influences = [];
-      if (int.parse(body['metadata']['artist-list']['count']) > 1) {
-        // print("[OnboardingScreen] JSON: " +
-        //     body['metadata']['artist-list']['artist'][0].toString());
-
-        influences = List<Influence>.from(body['metadata']['artist-list']
-                ['artist']
-            .map((x) => Influence.fromJson(x)));
-      } else if (int.parse(body['metadata']['artist-list']['count']) == 0) {
-        influences = [];
-      } else {
-        influences = [
-          Influence.fromJson(body['metadata']['artist-list']['artist'])
-        ];
-        // print("[OnboardingScreen] JSON: " +
-        //     body['metadata']['artist-list']['artist'].toString());
-      }
-
-      return influences;
-    }
-
-    return [];
   }
 }

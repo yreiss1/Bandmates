@@ -1,8 +1,12 @@
+import 'package:bandmates/models/ProfileScreenArguments.dart';
+import 'package:bandmates/views/ChatRoomScreen.dart';
 import 'package:bandmates/views/HomeScreen.dart';
+import 'package:bandmates/views/ProfileScreen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:geoflutterfire/geoflutterfire.dart';
+import 'package:line_icons/line_icons.dart';
 
 class Attending extends StatelessWidget {
   final String userId;
@@ -26,10 +30,10 @@ class Attending extends StatelessWidget {
       loc = null;
     }
     return Attending(
-      userId: doc['userId'],
+      userId: doc.documentID,
       username: doc['name'],
       avatar: doc['avatar'],
-      location: doc['loc'],
+      location: loc,
     );
   }
 
@@ -40,18 +44,28 @@ class Attending extends StatelessWidget {
         Divider(
           height: 0,
         ),
-        ListTile(
-          leading: CircleAvatar(
-            backgroundImage: avatar != null
-                ? CachedNetworkImageProvider(avatar)
-                : AssetImage("assets/images/user-placeholder.png"),
+        GestureDetector(
+          onTap: () => Navigator.pushNamed(context, ProfileScreen.routeName,
+              arguments: ProfileScreenArguments(userId: userId)),
+          child: ListTile(
+            leading: CircleAvatar(
+              backgroundImage: avatar != null
+                  ? CachedNetworkImageProvider(avatar)
+                  : AssetImage("assets/images/user-placeholder.png"),
+            ),
+            title: Text(
+              username,
+              style: TextStyle(fontWeight: FontWeight.w500),
+            ),
+            subtitle: Text(
+              currentUser.location
+                      .distance(lat: location.latitude, lng: location.longitude)
+                      .round()
+                      .toString() +
+                  " km away from you",
+              style: TextStyle(fontStyle: FontStyle.italic),
+            ),
           ),
-          title: Text(username),
-          subtitle: Text(currentUser.location
-                  .distance(lat: location.latitude, lng: location.longitude)
-                  .round()
-                  .toString() +
-              " km away"),
         )
       ],
     );

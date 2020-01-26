@@ -17,6 +17,7 @@ class User {
       @required this.location,
       @required this.genres,
       @required this.instruments,
+      this.token,
       this.time,
       @required this.photoUrl});
 
@@ -28,7 +29,8 @@ class User {
   final Map<dynamic, dynamic> genres;
   final Map<dynamic, dynamic> instruments;
   final List<dynamic> influences;
-  final String photoUrl;
+  String photoUrl;
+  String token;
 
   // Clips
 
@@ -67,6 +69,7 @@ class User {
       genres: doc.data['genres'],
       instruments: doc.data['instruments'],
       influences: doc.data['influences'],
+      token: doc.data['token'],
       location: loc,
       time: doc.data['time'] == null ? null : doc.data['time'].toDate(),
     );

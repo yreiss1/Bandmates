@@ -1,14 +1,30 @@
+import 'dart:io';
+
 import 'package:bandmates/models/Genre.dart';
+import 'package:bandmates/models/Influence.dart';
 import 'package:bandmates/models/Instrument.dart';
 import 'package:bandmates/presentation/GenreIcons.dart';
 import 'package:bandmates/presentation/InstrumentIcons.dart';
 import 'package:flutter/material.dart';
+import 'dart:convert' as convert;
+import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
+import 'package:xml2json/xml2json.dart';
+import 'package:image/image.dart' as Im;
 
 class Utils {
   static final List<Instrument> instrumentList = [
     Instrument(
         name: "Guitar",
         value: 'guitar',
+        icon: Icon(InstrumentIcons.acoustic_guitar)),
+    Instrument(
+        name: "Acoustic Guitar",
+        value: 'acoustic guitar',
+        icon: Icon(InstrumentIcons.acoustic_guitar)),
+    Instrument(
+        name: "Electric Guitar",
+        value: 'electric guitar',
         icon: Icon(InstrumentIcons.electric_guitar)),
     Instrument(
         name: "Piano", value: 'piano', icon: Icon(InstrumentIcons.piano)),
@@ -197,5 +213,55 @@ class Utils {
       default:
         return InstrumentIcons.musical_notes;
     }
+  }
+
+  static Future<List<Influence>> searchInfluence(String query) async {
+    Xml2Json xml2json = new Xml2Json();
+
+    if (query.isEmpty) {
+      return [];
+    }
+    var url = "http://musicbrainz.org/ws/2/artist/?query=artist:" +
+        query.replaceAll(' ', '%20');
+
+    var response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      xml2json.parse(response.body);
+      var jsonData = xml2json.toGData();
+      var body = convert.json.decode(jsonData);
+
+      List<Influence> influences = [];
+      if (int.parse(body['metadata']['artist-list']['count']) > 1) {
+        // print("[OnboardingScreen] JSON: " +
+        //     body['metadata']['artist-list']['artist'][0].toString());
+
+        influences = List<Influence>.from(body['metadata']['artist-list']
+                ['artist']
+            .map((x) => Influence.fromJson(x)));
+      } else if (int.parse(body['metadata']['artist-list']['count']) == 0) {
+        influences = [];
+      } else {
+        influences = [
+          Influence.fromJson(body['metadata']['artist-list']['artist'])
+        ];
+        // print("[OnboardingScreen] JSON: " +
+        //     body['metadata']['artist-list']['artist'].toString());
+      }
+
+      return influences;
+    }
+
+    return [];
+  }
+
+  static Future<File> compressImage(File selectedFile, String uid) async {
+    final tempDir = await getTemporaryDirectory();
+    final path = tempDir.path;
+
+    Im.Image imageFile = Im.decodeImage(selectedFile.readAsBytesSync());
+    final compressedImageFile = File('$path/img_$uid.jpg')
+      ..writeAsBytesSync(Im.encodeJpg(imageFile, quality: 85));
+    return compressedImageFile;
   }
 }

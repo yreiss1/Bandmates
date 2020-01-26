@@ -3,9 +3,7 @@ import 'package:bandmates/views/HomeScreen.dart';
 import 'package:bandmates/views/UI/CustomNetworkImage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:bandmates/models/User.dart';
-import 'package:bandmates/views/UI/Header.dart';
-import 'package:bandmates/views/UI/PostItem.dart';
+
 import 'package:bandmates/views/UI/Progress.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:provider/provider.dart';
@@ -247,14 +245,14 @@ class _PostScreenState extends State<PostScreen> {
               else if (widget.post.type == 2)
                 _videoWidget(context),
               SizedBox(
-                height: 16,
+                height: 8,
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
                   Text(
                     widget.post.title,
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                   ),
                   ChangeNotifierProvider<Post>(
                     create: (_) {
@@ -363,36 +361,49 @@ class _PostScreenState extends State<PostScreen> {
         elevation: 10,
         child: Container(
           padding: EdgeInsets.all(15),
-          child: StreamBuilder(
-              stream: Firestore.instance
-                  .collection("comments")
-                  .document(widget.post.postId)
-                  .collection("comments")
-                  .orderBy("time", descending: false)
-                  .snapshots(),
-              //TODO: Add limit to number of comments pulled
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return circularProgress(context);
-                }
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                "Comments",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+              ),
+              SizedBox(
+                height: 8,
+              ),
+              StreamBuilder(
+                  stream: Firestore.instance
+                      .collection("comments")
+                      .document(widget.post.postId)
+                      .collection("comments")
+                      .orderBy("time", descending: false)
+                      .limit(20)
+                      .snapshots(),
+                  //TODO: Add limit to number of comments pulled
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return circularProgress(context);
+                    }
 
-                if (snapshot.data.documents.isEmpty) {
-                  return Center(
-                    child: Text("No Comments"),
-                  );
-                }
+                    if (snapshot.data.documents.isEmpty) {
+                      return Center(
+                        child: Text("No Comments"),
+                      );
+                    }
 
-                List<Comment> comments = [];
+                    List<Comment> comments = [];
 
-                snapshot.data.documents.forEach((doc) {
-                  comments.add(Comment.fromDocument(doc));
-                });
+                    snapshot.data.documents.forEach((doc) {
+                      comments.add(Comment.fromDocument(doc));
+                    });
 
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: comments,
-                );
-              }),
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: comments,
+                    );
+                  }),
+            ],
+          ),
         ),
       ),
     );

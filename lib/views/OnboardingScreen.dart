@@ -218,9 +218,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     var uid = Provider.of<FirebaseUser>(context).uid;
     String downloadUrl;
     if (_imageFile != null) {
-      _compressImage();
+      setState(() {});
+      File selectedImage = await Utils.compressImage(_imageFile, uid);
       downloadUrl = await Provider.of<UserProvider>(context)
-          .uploadProfileImage(_imageFile, uid);
+          .uploadProfileImage(selectedImage, uid);
     }
 
     _userData['photoUrl'] = downloadUrl;
@@ -241,19 +242,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
     //print("[OnboardingScreen] New User: " + newUser.toJson().toString());
     await Provider.of<UserProvider>(context).uploadUser(uid, newUser);
-  }
-
-  _compressImage() async {
-    final tempDir = await getTemporaryDirectory();
-    final path = tempDir.path;
-    final uid = Provider.of<FirebaseUser>(context).uid;
-
-    Im.Image imageFile = Im.decodeImage(_imageFile.readAsBytesSync());
-    final compressedImageFile = File('$path/img_$uid.jpg')
-      ..writeAsBytesSync(Im.encodeJpg(imageFile, quality: 85));
-    setState(() {
-      _imageFile = compressedImageFile;
-    });
   }
 
   @override

@@ -1,3 +1,4 @@
+import 'package:bandmates/views/HomeScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -45,7 +46,7 @@ class Post with ChangeNotifier {
   }
 
   void toggleLikePost(context) async {
-    User user = Provider.of<UserProvider>(context).user;
+    User user = currentUser;
     String uid = user.uid;
     if (likes[uid] == null || likes[uid] == false) {
       likes[uid] = true;
@@ -124,7 +125,7 @@ class PostProvider with ChangeNotifier {
     String downloadUrl;
     if (file != null) {
       StorageUploadTask uploadTask =
-          storageRef.child('posts').child("post_$postId.jpg").putFile(file);
+          storageRef.child('posts').child("post_$postId").putFile(file);
       StorageTaskSnapshot storageSnap = await uploadTask.onComplete;
       downloadUrl = await storageSnap.ref.getDownloadURL();
     }
@@ -158,23 +159,16 @@ class PostProvider with ChangeNotifier {
         .collection("userPosts")
         .document(postId)
         .get();
-    print("[Post]: " + snapshot.data.toString());
 
     return snapshot.data == null ? null : Post.fromDocument(snapshot);
   }
 
   Future<List<DocumentSnapshot>> getUsersPosts(String uid) async {
-    print("[PostProvider] uid: " + uid);
     QuerySnapshot querySnap = await postRef
         .document(uid)
         .collection("userPosts")
         .orderBy("time", descending: true)
         .getDocuments();
-
-    print("[PostProvider] uid: " +
-        uid +
-        " length: " +
-        querySnap.documents.length.toString());
 
     return querySnap.documents;
   }

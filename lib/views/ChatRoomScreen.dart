@@ -1,3 +1,5 @@
+import 'package:bandmates/Utils.dart';
+import 'package:bandmates/views/HomeScreen.dart';
 import 'package:circular_profile_avatar/circular_profile_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:bandmates/views/UI/ChatMessage.dart';
@@ -6,7 +8,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/User.dart';
 import '../models/Chat.dart';
 import './UI/Progress.dart';
-import '../Utils.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:io';
@@ -18,12 +19,12 @@ import 'package:provider/provider.dart';
 class ChatRoomScreen extends StatefulWidget {
   static const routeName = '/chat-screen';
 
-  final User otherUser;
+  final Chat chat;
 
-  ChatRoomScreen({this.otherUser});
+  ChatRoomScreen({this.chat});
 
   @override
-  _ChatRoomScreenState createState() => _ChatRoomScreenState();
+  _ChatRoomScreenState createState() => _ChatRoomScreenState(chat: chat);
 }
 
 class _ChatRoomScreenState extends State<ChatRoomScreen>
@@ -35,96 +36,109 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
   File _imageFile;
   bool _isLoading;
   User _currentUser;
-  DocumentSnapshot _chatRef;
+
+  Chat chat;
+
+  _ChatRoomScreenState({this.chat});
 
   bool _isComposing = false;
 
-  Future<DocumentSnapshot> _getChats;
+  String _chatName;
+  String _chatPhoto;
+
   @override
   void initState() {
-    // TODO: implement initState
-    //_getChats = _getChat(null, widget.otherUser.uid);
     super.initState();
-    _currentUser = Provider.of<UserProvider>(context, listen: false).user;
-    _getChats = getChatRef();
+
+    _currentUser = currentUser;
+    _chatName = _buildChatName();
+    _chatPhoto = _buildChatPhoto();
   }
 
-  getChatRef() {
-    return Provider.of<ChatProvider>(context, listen: false)
-        .getChat(_currentUser.uid, widget.otherUser.uid);
+  String _buildChatName() {
+    if (chat.name != null) {
+      return chat.name;
+    }
+    String chatName;
+    chat.users.forEach((key, value) {
+      if (key != _currentUser.uid) {
+        chatName = value['name'];
+      }
+    });
+
+    return chatName;
+  }
+
+  _buildChatPhoto() {
+    if (chat.photoUrl != null) {
+      return chat.photoUrl;
+    }
+    String chatPhoto;
+    chat.users.forEach((key, value) {
+      if (key != _currentUser.uid) {
+        chatPhoto = value['avatar'];
+      }
+    });
+
+    return chatPhoto;
   }
 
   @override
   Widget build(BuildContext context) {
     print("[ChatRoomScreen] currentUser: " + _currentUser.name);
-    return Scaffold(
+    return SafeArea(
+      top: false,
+      child: Scaffold(
         body: Column(
-      children: <Widget>[
-        builderHeader(),
-        Flexible(
-          child: FutureBuilder<DocumentSnapshot>(
-            future: _getChats,
-            builder: (BuildContext context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.done) {
-                if (snapshot.hasError) {
-                  Utils.buildErrorDialog(context, snapshot.error.toString());
-                } else {
-                  if (snapshot.hasData) {
-                    if (_chatRef == null) {
-                      WidgetsBinding.instance
-                          .addPostFrameCallback((_) => setState(() {
-                                _chatRef = snapshot.data;
-                              }));
-                    }
+          children: <Widget>[
+            builderHeader(),
+            Flexible(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: Provider.of<ChatProvider>(context)
+                    .getMessages(widget.chat.id),
+                builder: (BuildContext context, snapshot) {
+                  if (snapshot.data == null) {
+                    return Center(child: Text("No Messages yet"));
+                  }
 
-                    print(
-                        "[ChatRoomScreen] chatID: " + snapshot.data.documentID);
-                    return StreamBuilder(
-                      stream: Firestore.instance
-                          .collection('chats')
-                          .document(snapshot.data.documentID)
-                          .collection("msgs")
-                          .orderBy('time', descending: true)
-                          .limit(20)
-                          .snapshots(),
-                      builder: (BuildContext streamContext, streamSnapshot) {
-                        if (streamSnapshot.hasData) {
-                          return new ListView.builder(
-                            //new
-                            padding: new EdgeInsets.all(8.0), //new
-                            reverse: true, //new
-                            itemBuilder: (_, int index) => buildItem(
-                                index,
-                                streamSnapshot.data.documents[index],
-                                streamSnapshot.data.documents),
-                            /*Text(
-                                                (streamSnapshot.data.documents[index]
+                  if (snapshot.hasError) {
+                    Utils.buildErrorDialog(context, snapshot.error);
+                  }
+
+                  if (snapshot.data.documents.length == 0) {
+                    return Center(child: Text("No Messages yet"));
+                  }
+
+                  if (snapshot.hasData) {
+                    return new ListView.builder(
+                      padding: new EdgeInsets.all(8.0),
+                      reverse: true,
+                      itemBuilder: (_, int index) => buildItem(
+                          index,
+                          snapshot.data.documents[index],
+                          snapshot.data.documents),
+                      /*Text(
+                                                (snapshot.data.documents[index]
                                                                 ['user'] ==
                                                             _currentUser.uid
                                                         ? _currentUser.name
                                                         : widget.otherUser.name) +
                                                     " - " +
-                                                    streamSnapshot.data.documents[index]
+                                                    snapshot.data.documents[index]
                                                         ['text']),*/
-                            itemCount:
-                                streamSnapshot.data.documents.length, //new
-                          );
-                        } else {
-                          return circularProgress(context);
-                        }
-                      },
+                      itemCount: snapshot.data.documents.length, //new
                     );
+                  } else {
+                    return circularProgress(context);
                   }
-                }
-              } else {
-                return circularProgress(context);
-              }
-            },
-          ),
+                },
+              ),
+            ),
+            _buildTextComposer(context),
+          ],
         ),
-        _buildTextComposer(context),
-      ],
-    ));
+      ),
+    );
   }
 
   Widget _buildTextComposer(BuildContext context) {
@@ -218,29 +232,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
     // type: 0 = text, 1 = image, 2 = sticker
     if (text.trim() != '') {
       _textController.clear();
-      Firestore.instance
-          .collection("chats")
-          .document(_chatRef.documentID)
-          .collection('msgs')
-          .add({
-        "user": _currentUser.uid,
-        "content": text,
-        "time": DateTime.now(),
-        "type": 0
-      });
 
-      Firestore.instance.runTransaction((transaction) async {
-        transaction.update(
-            Firestore.instance
-                .collection("chats")
-                .document(_chatRef.documentID),
-            {'lastMsg': text});
-        transaction.update(
-            Firestore.instance
-                .collection("chats")
-                .document(_chatRef.documentID),
-            {'time': DateTime.now()});
-      });
+      Provider.of<ChatProvider>(context).sendMessage(
+          text: text, chatID: chat.id, userID: _currentUser.uid, type: type);
 
       //listScrollController.animateTo(0.0, duration: Duration(milliseconds: 300), curve: Curves.easeOut);
     } else {
@@ -360,9 +354,11 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
                             height: 35.0,
                             padding: EdgeInsets.all(10.0),
                           ),
-                          imageUrl: widget.otherUser.photoUrl == null
+                          imageUrl: widget.chat.users[document['user']]
+                                      ['avatar'] ==
+                                  null
                               ? "https://llhh.org/pps-medias/14714.jpg"
-                              : widget.otherUser.photoUrl,
+                              : widget.chat.users[document['user']]['avatar'],
                           width: 35.0,
                           height: 35.0,
                           fit: BoxFit.cover,
@@ -503,7 +499,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
                 bottomLeft: Radius.circular(25),
                 bottomRight: Radius.circular(25))),
         padding: EdgeInsets.only(left: 12, top: 32),
-        height: MediaQuery.of(context).size.height * 0.16,
+        height: 100,
         width: double.infinity,
         child: Column(
           children: <Widget>[
@@ -521,9 +517,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
                   ),
                   onPressed: () => Navigator.pop(context),
                 ),
-                if (widget.otherUser.photoUrl != null)
+                if (_chatPhoto != null)
                   CircularProfileAvatar(
-                    widget.otherUser.photoUrl,
+                    _chatPhoto,
                     radius: 25,
                     borderColor: Colors.white,
                     borderWidth: 1,
@@ -532,7 +528,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
                   width: 12,
                 ),
                 Text(
-                  widget.otherUser.name,
+                  _chatName,
                   style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: Colors.white,

@@ -90,7 +90,7 @@ class _FeedItemState extends State<FeedItem> {
   }
 
   configureMediaPreview(context) {
-    // 0: Like, 1: Comment,
+    // 0: Like, 1: Comment, 2 Attending
     if (widget.postType == 0) {
       mediaPreview = GestureDetector(
         onTap: () => showPost(context),
@@ -197,6 +197,8 @@ class _FeedItemState extends State<FeedItem> {
       activityItemText = "liked your post";
     } else if (widget.type == 1) {
       activityItemText = "replied: ${widget.text}";
+    } else if (widget.type == 2) {
+      activityItemText = "is attending your event ${widget.text}";
     } else {
       activityItemText = "Error: unkown type: '${widget.type}'";
     }
@@ -206,27 +208,26 @@ class _FeedItemState extends State<FeedItem> {
   Widget build(BuildContext context) {
     configureMediaPreview(context);
 
-    return Padding(
-        padding: EdgeInsets.only(bottom: 2.0),
-        child: Container(
+    return Column(
+      children: <Widget>[
+        Container(
           child: ListTile(
             title: GestureDetector(
               onTap: () => showProfile(context),
               child: RichText(
                 textWidthBasis: TextWidthBasis.parent,
-                overflow: TextOverflow.ellipsis,
-                text: TextSpan(
-                    style: TextStyle(fontSize: 14.0, color: Colors.black),
-                    children: [
-                      TextSpan(
-                        text: widget.username,
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      TextSpan(text: ' $activityItemText')
-                    ]),
+                text:
+                    TextSpan(style: TextStyle(color: Colors.black), children: [
+                  TextSpan(
+                    text: widget.username,
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  TextSpan(text: ' $activityItemText')
+                ]),
               ),
             ),
             leading: CircleAvatar(
+              radius: 26,
               backgroundImage: widget.avatar != null
                   ? CachedNetworkImageProvider(widget.avatar)
                   : CachedNetworkImageProvider(
@@ -238,6 +239,9 @@ class _FeedItemState extends State<FeedItem> {
             ),
             trailing: mediaPreview,
           ),
-        ));
+        ),
+        Divider(),
+      ],
+    );
   }
 }

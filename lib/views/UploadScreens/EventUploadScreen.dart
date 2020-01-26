@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:bandmates/models/Genre.dart';
 import 'package:bandmates/views/HomeScreen.dart';
 import 'package:bandmates/views/MapScreen.dart';
+import 'package:bandmates/views/UI/Progress.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
@@ -18,6 +19,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:location/location.dart';
 import 'package:geoflutterfire/geoflutterfire.dart';
+import 'package:modal_progress_hud/modal_progress_hud.dart';
 import 'package:provider/provider.dart';
 import '../../Utils.dart';
 import '../../models/Event.dart';
@@ -147,16 +149,20 @@ class _EventUploadScreenState extends State<EventUploadScreen> {
 
   _handleSubmit() async {
     FocusScope.of(context).unfocus();
-
+    setState(() {
+      _isUploading = true;
+    });
     if (_coordinates == null) {
       //TODO: Show message that says that location must not be null!!
+      Utils.buildErrorDialog(
+          context, "You must set a location for this event!");
+      setState(() {
+        _isUploading = false;
+      });
+      return;
     }
 
     if (_fbKey.currentState.saveAndValidate() && _eventType != null) {
-      setState(() {
-        _isUploading = true;
-      });
-
       if (_imageFile != null) {}
 
       List<dynamic> audition = _isAudition == false
@@ -201,62 +207,68 @@ class _EventUploadScreenState extends State<EventUploadScreen> {
       body: SafeArea(
         top: false,
         bottom: false,
-        child: Stack(
-          children: <Widget>[
-            Scaffold(
-              body: Stack(
-                children: <Widget>[
-                  buildHeader(),
-                  CustomScrollView(
-                    slivers: <Widget>[
-                      SliverAppBar(
-                        forceElevated: false,
-                        actions: <Widget>[
-                          IconButton(
-                            icon: Icon(
-                              Icons.add,
-                              size: 32,
-                              color: Colors.white,
+        child: ModalProgressHUD(
+          inAsyncCall: _isUploading,
+          progressIndicator: circularProgress(context),
+          opacity: .5,
+          dismissible: false,
+          child: Stack(
+            children: <Widget>[
+              Scaffold(
+                body: Stack(
+                  children: <Widget>[
+                    buildHeader(),
+                    CustomScrollView(
+                      slivers: <Widget>[
+                        SliverAppBar(
+                          forceElevated: false,
+                          actions: <Widget>[
+                            IconButton(
+                              icon: Icon(
+                                Icons.add,
+                                size: 32,
+                                color: Colors.white,
+                              ),
+                              onPressed: () => _handleSubmit(),
                             ),
-                            onPressed: () => _handleSubmit(),
+                          ],
+                          expandedHeight: 100,
+                          title: Text(
+                            "Create Event",
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold),
                           ),
-                        ],
-                        expandedHeight: 100,
-                        title: Text(
-                          "Create Event",
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold),
                         ),
-                      ),
-                      SliverFillRemaining(
-                        fillOverscroll: false,
-                        hasScrollBody: false,
-                        child: _buildEventUploadCard(),
-                      ),
-                      SliverPadding(
-                        padding: EdgeInsets.all(60),
-                      )
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            if (_isVisible)
-              Positioned.fill(
-                bottom: 40,
-                child: Align(
-                  alignment: Alignment.bottomCenter,
-                  child: FloatingActionButton.extended(
-                    icon: Icon(Icons.add),
-                    label: Text("Create Event"),
-                    onPressed: () => _handleSubmit(),
-                    backgroundColor: Theme.of(context).primaryColor,
-                  ),
+                        SliverFillRemaining(
+                          fillOverscroll: false,
+                          hasScrollBody: false,
+                          child: _buildEventUploadCard(),
+                        ),
+                        SliverPadding(
+                          padding: EdgeInsets.all(60),
+                        )
+                      ],
+                    ),
+                  ],
                 ),
               ),
-          ],
+              if (_isVisible)
+                Positioned.fill(
+                  bottom: 40,
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: FloatingActionButton.extended(
+                      icon: Icon(Icons.add),
+                      label: Text("Create Event"),
+                      onPressed: () => _handleSubmit(),
+                      backgroundColor: Theme.of(context).primaryColor,
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
