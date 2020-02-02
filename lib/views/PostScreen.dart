@@ -1,6 +1,7 @@
 import 'package:bandmates/models/Comment.dart';
 import 'package:bandmates/views/HomeScreen.dart';
 import 'package:bandmates/views/UI/CustomNetworkImage.dart';
+import 'package:chewie_audio/chewie_audio.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
@@ -12,6 +13,7 @@ import '../Utils.dart';
 import '../models/Post.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:video_player/video_player.dart';
+import 'package:chewie/chewie.dart';
 
 class PostScreen extends StatefulWidget {
   final Post post;
@@ -27,6 +29,8 @@ class _PostScreenState extends State<PostScreen> {
   bool _isAudioPlaying = true;
 
   VideoPlayerController _videoPlayerController;
+  ChewieController _chewieController;
+  ChewieAudioController _chewieAudioController;
   bool _isVideoPlaying = true;
 
   TextEditingController _textEditingController = new TextEditingController();
@@ -38,16 +42,35 @@ class _PostScreenState extends State<PostScreen> {
       case 0:
         break;
       case 1:
-        _audioPlayer = AudioPlayer();
-        WidgetsBinding.instance.addPostFrameCallback(
-            (_) => _audioPlayer.play(widget.post.mediaUrl));
+        _videoPlayerController =
+            VideoPlayerController.network(widget.post.mediaUrl);
+
+        _chewieAudioController = ChewieAudioController(
+            videoPlayerController: _videoPlayerController,
+            allowMuting: true,
+            autoPlay: true,
+            showControls: true,
+            looping: true);
+        // _audioPlayer = AudioPlayer();
+        // WidgetsBinding.instance.addPostFrameCallback(
+        //     (_) => _audioPlayer.play(widget.post.mediaUrl));
         break;
       case 2:
         _videoPlayerController =
-            VideoPlayerController.network(widget.post.mediaUrl)..initialize();
-        _videoPlayerController.setLooping(true);
-        WidgetsBinding.instance
-            .addPostFrameCallback((_) => _videoPlayerController.play());
+            VideoPlayerController.network(widget.post.mediaUrl);
+
+        _chewieController = ChewieController(
+            videoPlayerController: _videoPlayerController,
+            autoPlay: true,
+            looping: true,
+            errorBuilder: (context, error) {
+              Utils.buildErrorDialog(context, error);
+            },
+            allowFullScreen: true,
+            allowMuting: true,
+            showControlsOnInitialize: true);
+        // WidgetsBinding.instance
+        //     .addPostFrameCallback((_) => _videoPlayerController.play());
         break;
       default:
         Utils.buildErrorDialog(
@@ -65,36 +88,16 @@ class _PostScreenState extends State<PostScreen> {
       _videoPlayerController.dispose();
     }
 
+    if (_chewieController != null) {
+      _chewieController.dispose();
+    }
+
+    if (_chewieAudioController != null) {
+      _chewieAudioController.dispose();
+    }
+
     _textEditingController.dispose();
     super.dispose();
-  }
-
-  _toggleAudio() {
-    if (_isAudioPlaying) {
-      setState(() {
-        _audioPlayer.pause();
-        _isAudioPlaying = false;
-      });
-    } else {
-      setState(() {
-        _audioPlayer.resume();
-        _isAudioPlaying = true;
-      });
-    }
-  }
-
-  _toggleVideo() {
-    if (_isVideoPlaying) {
-      setState(() {
-        _videoPlayerController.pause();
-        _isVideoPlaying = false;
-      });
-    } else {
-      setState(() {
-        _videoPlayerController.play();
-        _isVideoPlaying = true;
-      });
-    }
   }
 
   addComment() {
@@ -309,32 +312,35 @@ class _PostScreenState extends State<PostScreen> {
   }
 
   _audioWidget(context) {
-    return GestureDetector(
-      onTap: () => _toggleAudio(),
-      child: AspectRatio(
-        aspectRatio: 3 / 2,
-        child: Container(
-          decoration: new BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            image: new DecorationImage(
-              fit: BoxFit.cover,
-              image: AssetImage('assets/images/audio-placeholder.png'),
+    return Column(
+      children: <Widget>[
+        AspectRatio(
+          aspectRatio: 3 / 2,
+          child: Container(
+            decoration: new BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              image: new DecorationImage(
+                fit: BoxFit.cover,
+                image: AssetImage('assets/images/audio-placeholder.png'),
+              ),
             ),
           ),
         ),
-      ),
+        ChewieAudio(
+          controller: _chewieAudioController,
+        ),
+      ],
     );
   }
 
   _videoWidget(context) {
-    return GestureDetector(
-      onTap: () => _toggleVideo(),
-      child: AspectRatio(
-        aspectRatio: 3 / 2,
-        child: Container(
-          decoration: BoxDecoration(
-              borderRadius: BorderRadius.all(Radius.circular(10))),
-          child: VideoPlayer(_videoPlayerController),
+    return AspectRatio(
+      aspectRatio: 3 / 2,
+      child: Container(
+        decoration:
+            BoxDecoration(borderRadius: BorderRadius.all(Radius.circular(10))),
+        child: Chewie(
+          controller: _chewieController,
         ),
       ),
     );

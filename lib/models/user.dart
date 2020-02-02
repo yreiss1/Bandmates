@@ -1,4 +1,3 @@
-import 'package:bandmates/models/Instrument.dart';
 import 'package:flutter/widgets.dart';
 import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:location/location.dart';
@@ -26,8 +25,8 @@ class User {
   final String name;
   final String bio;
   GeoFirePoint location;
-  final Map<dynamic, dynamic> genres;
-  final Map<dynamic, dynamic> instruments;
+  final List<dynamic> genres;
+  final List<dynamic> instruments;
   final List<dynamic> influences;
   String photoUrl;
   String token;
@@ -113,6 +112,7 @@ class UserProvider with ChangeNotifier {
     //print("[UserProvider] userIn: " + userIn.toJson().toString());
     await userRef.document(uid).setData({
       'name': userIn.name,
+      'search': userIn.name.toLowerCase(),
       'bio': userIn.bio,
       'genres': userIn.genres,
       'instruments': userIn.instruments,
@@ -142,8 +142,17 @@ class UserProvider with ChangeNotifier {
     userLocation = pos;
   }
 
-  Stream<List<DocumentSnapshot>> getClosest(GeoFirePoint center) {
-    return geo.collection(collectionRef: userRef).within(
-        center: center, radius: 100, field: 'location', strictMode: true);
+  Stream<List<DocumentSnapshot>> getClosest(
+      GeoFirePoint center, int radius, String instrument) {
+    return geo
+        .collection(
+            collectionRef: instrument == null
+                ? userRef
+                : userRef.where('instruments', arrayContains: instrument))
+        .within(
+            center: center,
+            radius: radius.toDouble(),
+            field: 'location',
+            strictMode: true);
   }
 }

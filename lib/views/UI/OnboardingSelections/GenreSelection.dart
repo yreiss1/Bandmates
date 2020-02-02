@@ -41,7 +41,7 @@ class GenreSelection extends StatelessWidget {
                   ),
                   FlutterTagging<Genre>(
                     initialItems: _selectedGenres,
-                    hideOnEmpty: true,
+                    debounceDuration: Duration(milliseconds: 100),
                     textFieldConfiguration: TextFieldConfiguration(
                       textCapitalization: TextCapitalization.sentences,
                       decoration: InputDecoration(
@@ -55,9 +55,6 @@ class GenreSelection extends StatelessWidget {
                       ),
                     ),
                     findSuggestions: searchGenres,
-                    additionCallback: (String value) {
-                      return Genre(name: value);
-                    },
                     configureChip: (genre) {
                       return ChipConfiguration(
                         label: Text(genre.name),
@@ -73,24 +70,11 @@ class GenreSelection extends StatelessWidget {
                     configureSuggestion: (genre) {
                       return SuggestionConfiguration(
                         title: Text(genre.name),
-                        additionWidget: Chip(
-                          avatar: Icon(
-                            Icons.add_circle,
-                            color: Colors.white,
-                          ),
-                          label: Text('Add New Genre'),
-                          labelStyle: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14.0,
-                            fontWeight: FontWeight.w300,
-                          ),
-                          backgroundColor: Theme.of(context).primaryColor,
-                        ),
                       );
                     },
                     onChanged: () {
-                      _selectedGenres.forEach((inst) {
-                        userData['genres'][inst.name] = true;
+                      _selectedGenres.forEach((genre) {
+                        userData['genres'].add(genre.name);
                       });
                     },
                   ),

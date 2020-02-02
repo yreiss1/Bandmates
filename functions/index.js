@@ -14,7 +14,21 @@ exports.onCreateUser = functions.firestore
   .onCreate(async (snapshot, context) => {
     const userCreated = snapshot.data();
 
+    snapshot.ref.set({ search: userCreated.name.toLowerCase() });
+
     //TODO: Send email to user
+  });
+
+exports.onUpdateUser = functions.firestore
+  .document("/users/{userId}")
+  .onUpdate(async (change, context) => {
+    const userAfter = change.after.data();
+    const userBefore = change.before.data();
+
+    console.log("Username " + userAfter.name.toLowerCase());
+    if (userAfter.name != userBefore.name) {
+      change.after.ref.update({ search: userAfter.name.toLowerCase() });
+    }
   });
 
 //On possibly delete
@@ -179,7 +193,7 @@ exports.onCreateChatMessage = functions.firestore
       "chat: " +
         chat.data().toString() +
         " name: " +
-        chat.data().users.senderId.name +
+        chat.data().users[senderId][name] +
         " chatId: " +
         chatId +
         " senderId: " +

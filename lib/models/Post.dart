@@ -122,13 +122,22 @@ class PostProvider with ChangeNotifier {
   CollectionReference postRef = Firestore.instance.collection("posts");
 
   Future<String> uploadMedia(File file, String postId) async {
+    print("[PostProvider] Starting to upload post media");
+
     String downloadUrl;
     if (file != null) {
       StorageUploadTask uploadTask =
-          storageRef.child('posts').child("post_$postId").putFile(file);
-      StorageTaskSnapshot storageSnap = await uploadTask.onComplete;
+          storageRef.child('posts').child("post_$postId.jpg").putFile(file);
+      print("[PostProvider] Waiting for media to upload");
+
+      StorageTaskSnapshot storageSnap =
+          await uploadTask.onComplete.catchError((error) {
+        throw Exception();
+      });
       downloadUrl = await storageSnap.ref.getDownloadURL();
     }
+
+    print("[PostProvider] Finished uploading post media");
 
     return downloadUrl;
   }
@@ -146,7 +155,11 @@ class PostProvider with ChangeNotifier {
       "type": post.type,
       "time": post.time,
       "likes": {}
+    }).catchError((error) {
+      print(error);
     });
+
+    print("[PostProvider] Finished uploading post");
   }
 
   Future<Post> getPost({String postId, String userId}) async {

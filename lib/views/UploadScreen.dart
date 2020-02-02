@@ -24,152 +24,160 @@ buildMainArea(context) {
             topLeft: Radius.circular(30), topRight: Radius.circular(30))),
     height: MediaQuery.of(context).size.height,
     width: double.infinity,
-    child: ListView(
-      padding: EdgeInsets.only(left: 8, right: 8),
-      children: <Widget>[
-        SizedBox(
-          height: 16,
-        ),
-        GestureDetector(
-          onTap: () => Navigator.pushNamed(context, PostUploadScreen.routeName),
-          child: Container(
-            height: buttonSize,
-            margin: EdgeInsets.only(bottom: 5),
-            child: Card(
-              elevation: 10,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-              child: Container(
-                child: const Padding(
-                  padding: EdgeInsets.all(10),
-                  child: const Text(
-                    "Upload a Post",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
+    child: ClipRRect(
+      borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(30), topRight: Radius.circular(30)),
+      child: ListView(
+        padding: EdgeInsets.only(left: 8, right: 8),
+        children: <Widget>[
+          SizedBox(
+            height: 16,
+          ),
+          GestureDetector(
+            onTap: () =>
+                Navigator.pushNamed(context, PostUploadScreen.routeName),
+            child: Container(
+              height: buttonSize,
+              margin: EdgeInsets.only(bottom: 5),
+              child: Card(
+                elevation: 10,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
+                child: Container(
+                  child: const Padding(
+                    padding: EdgeInsets.all(10),
+                    child: const Text(
+                      "Upload a Post",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
+                  decoration: new BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      image: new DecorationImage(
+                          fit: BoxFit.cover,
+                          colorFilter: new ColorFilter.mode(
+                              Colors.black.withOpacity(.6),
+                              BlendMode.hardLight),
+                          image: const AssetImage(
+                              'assets/images/silhouette.jpg'))),
                 ),
-                decoration: new BoxDecoration(
+              ),
+            ),
+          ),
+          GestureDetector(
+            onTap: () =>
+                Navigator.pushNamed(context, EventUploadScreen.routeName),
+            child: Container(
+              height: buttonSize,
+              margin: EdgeInsets.only(bottom: 5),
+              child: Card(
+                elevation: 10,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
+                child: Container(
+                  child: const Padding(
+                    padding: EdgeInsets.all(10),
+                    child: const Text(
+                      "Create an Event",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(10),
-                    image: new DecorationImage(
-                        fit: BoxFit.cover,
-                        colorFilter: new ColorFilter.mode(
-                            Colors.black.withOpacity(.6), BlendMode.hardLight),
-                        image:
-                            const AssetImage('assets/images/silhouette.jpg'))),
-              ),
-            ),
-          ),
-        ),
-        GestureDetector(
-          onTap: () =>
-              Navigator.pushNamed(context, EventUploadScreen.routeName),
-          child: Container(
-            height: buttonSize,
-            margin: EdgeInsets.only(bottom: 5),
-            child: Card(
-              elevation: 10,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-              child: Container(
-                child: const Padding(
-                  padding: EdgeInsets.all(10),
-                  child: const Text(
-                    "Create an Event",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
+                    image: DecorationImage(
+                      fit: BoxFit.cover,
+                      colorFilter: ColorFilter.mode(
+                          Colors.black.withOpacity(0.6), BlendMode.hardLight),
+                      image: const AssetImage('assets/images/concert.jpg'),
                     ),
                   ),
                 ),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  image: DecorationImage(
-                    fit: BoxFit.cover,
-                    colorFilter: ColorFilter.mode(
-                        Colors.black.withOpacity(0.6), BlendMode.hardLight),
-                    image: const AssetImage('assets/images/concert.jpg'),
-                  ),
-                ),
               ),
             ),
           ),
-        ),
-        GestureDetector(
-          onTap: () => Navigator.pushNamed(
-            context,
-            MusiciansSearchScreen.routeName,
-          ),
-          child: Container(
-            height: buttonSize,
-            margin: EdgeInsets.only(bottom: 5),
-            child: Card(
-              elevation: 10,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-              child: Container(
-                child: const Padding(
-                  padding: EdgeInsets.all(10),
-                  child: const Text(
-                    "Discover Musicans",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
+          GestureDetector(
+            onTap: () => Navigator.pushNamed(
+              context,
+              MusiciansSearchScreen.routeName,
+            ),
+            child: Container(
+              height: buttonSize,
+              margin: EdgeInsets.only(bottom: 5),
+              child: Card(
+                elevation: 10,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
+                child: Container(
+                  child: const Padding(
+                    padding: EdgeInsets.all(10),
+                    child: const Text(
+                      "Discover Musicans",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
+                  decoration: new BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      image: new DecorationImage(
+                          fit: BoxFit.cover,
+                          colorFilter: new ColorFilter.mode(
+                              Colors.black.withOpacity(0.6),
+                              BlendMode.hardLight),
+                          image:
+                              const AssetImage('assets/images/musicians.jpg'))),
                 ),
-                decoration: new BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    image: new DecorationImage(
-                        fit: BoxFit.cover,
-                        colorFilter: new ColorFilter.mode(
-                            Colors.black.withOpacity(0.6), BlendMode.hardLight),
-                        image:
-                            const AssetImage('assets/images/musicians.jpg'))),
               ),
             ),
           ),
-        ),
-        GestureDetector(
-          onTap: () => Navigator.pushNamed(
-            context,
-            EventsSearchScreen.routeName,
-          ),
-          child: Container(
-            height: buttonSize,
-            margin: EdgeInsets.only(bottom: 5),
-            child: Card(
-              elevation: 10,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-              child: Container(
-                child: const Padding(
-                  padding: EdgeInsets.all(10),
-                  child: const Text(
-                    "Discover Events",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
+          GestureDetector(
+            onTap: () => Navigator.pushNamed(
+              context,
+              EventsSearchScreen.routeName,
+            ),
+            child: Container(
+              height: buttonSize,
+              margin: EdgeInsets.only(bottom: 5),
+              child: Card(
+                elevation: 10,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
+                child: Container(
+                  child: const Padding(
+                    padding: EdgeInsets.all(10),
+                    child: const Text(
+                      "Discover Events",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
+                  decoration: new BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      image: new DecorationImage(
+                          fit: BoxFit.cover,
+                          colorFilter: new ColorFilter.mode(
+                              Colors.black.withOpacity(0.6),
+                              BlendMode.hardLight),
+                          image: const AssetImage('assets/images/singer.jpg'))),
                 ),
-                decoration: new BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    image: new DecorationImage(
-                        fit: BoxFit.cover,
-                        colorFilter: new ColorFilter.mode(
-                            Colors.black.withOpacity(0.6), BlendMode.hardLight),
-                        image: const AssetImage('assets/images/singer.jpg'))),
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     ),
   );
 }

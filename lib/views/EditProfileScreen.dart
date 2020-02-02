@@ -61,16 +61,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _userData = {
       'name': currentUser.name,
       'bio': currentUser.bio,
-      'genres': currentUser.genres ?? {},
-      'instruments': currentUser.instruments ?? {},
+      'genres': currentUser.genres ?? [],
+      'instruments': currentUser.instruments ?? [],
       'influences': currentUser.influences ?? [],
       'location': currentUser.location,
       'photoUrl': currentUser.photoUrl,
     };
     _selectedInstruments =
-        user.instruments.keys.map((inst) => Instrument(name: inst)).toList();
-    _selectedGenres =
-        user.genres.keys.map((genre) => Genre(name: genre)).toList();
+        user.instruments.map((inst) => Instrument(name: inst)).toList();
+    _selectedGenres = user.genres.map((genre) => Genre(name: genre)).toList();
     _selectedInfluences = user.influences != null
         ? user.influences
             .map((influence) => Influence(name: influence))
@@ -333,6 +332,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           badgeColor: Colors.grey[400],
                           position: BadgePosition.topRight(right: 10, top: 10),
                           child: CircleAvatar(
+                            backgroundColor: Theme.of(context).primaryColor,
                             radius: 100,
                             backgroundImage:
                                 CachedNetworkImageProvider(user.photoUrl),
@@ -611,65 +611,61 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         );
       },
       onChanged: () {
-        _userData['instruments'] = {};
-
-        _selectedInstruments
-            .forEach((inst) => _userData['instruments'][inst.name] = true);
+        _userData['instruments'] =
+            _selectedInstruments.map((inst) => inst.name).toList();
       },
     );
   }
 
   _buildGenreInput() {
     return FlutterTagging<Genre>(
-      emptyBuilder: (context) {
-        return ListTile(
-          leading: Icon(Icons.not_interested),
-          title: Text("No Genre with that name exists"),
-        );
-      },
-      initialItems: _selectedGenres,
-      hideOnEmpty: true,
-      suggestionsBoxConfiguration:
-          SuggestionsBoxConfiguration(hideSuggestionsOnKeyboardHide: false),
-      textFieldConfiguration: TextFieldConfiguration(
-        textCapitalization: TextCapitalization.sentences,
-        decoration: InputDecoration(
-          focusColor: Theme.of(context).primaryColor,
-          border: const OutlineInputBorder(
-            borderRadius: const BorderRadius.all(
-              const Radius.circular(15.0),
+        emptyBuilder: (context) {
+          return ListTile(
+            leading: Icon(Icons.not_interested),
+            title: Text("No Genre with that name exists"),
+          );
+        },
+        initialItems: _selectedGenres,
+        hideOnEmpty: true,
+        suggestionsBoxConfiguration:
+            SuggestionsBoxConfiguration(hideSuggestionsOnKeyboardHide: false),
+        textFieldConfiguration: TextFieldConfiguration(
+          textCapitalization: TextCapitalization.sentences,
+          decoration: InputDecoration(
+            focusColor: Theme.of(context).primaryColor,
+            border: const OutlineInputBorder(
+              borderRadius: const BorderRadius.all(
+                const Radius.circular(15.0),
+              ),
             ),
+            hintText: "Search for your Genres",
           ),
-          hintText: "Search for your Genres",
         ),
-      ),
-      findSuggestions: searchGenres,
-      configureChip: (genre) {
-        return ChipConfiguration(
-          label: Text(genre.name),
-          backgroundColor: Theme.of(context).primaryColor,
-          labelStyle: TextStyle(color: Colors.white),
-          deleteIconColor: Colors.white,
-        );
-      },
-      wrapConfiguration: WrapConfiguration(
-        runSpacing: 4,
-        spacing: 4,
-      ),
-      configureSuggestion: (genre) {
-        return SuggestionConfiguration(
-          title: Text(
-            genre.name,
-            overflow: TextOverflow.ellipsis,
-          ),
-        );
-      },
-      onChanged: () {
-        _userData['genres'] = {};
-        _selectedGenres
-            .forEach((genre) => _userData['genres'][genre.name] = true);
-      },
-    );
+        findSuggestions: searchGenres,
+        configureChip: (genre) {
+          return ChipConfiguration(
+            label: Text(genre.name),
+            backgroundColor: Theme.of(context).primaryColor,
+            labelStyle: TextStyle(color: Colors.white),
+            deleteIconColor: Colors.white,
+          );
+        },
+        wrapConfiguration: WrapConfiguration(
+          runSpacing: 4,
+          spacing: 4,
+        ),
+        configureSuggestion: (genre) {
+          return SuggestionConfiguration(
+            title: Text(
+              genre.name,
+              overflow: TextOverflow.ellipsis,
+            ),
+          );
+        },
+        onChanged: () {
+          _userData['genres'] =
+              _selectedGenres.map((genre) => genre.name).toList();
+        });
   }
 
   _buildInfluenceInput() {

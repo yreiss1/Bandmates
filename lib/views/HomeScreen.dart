@@ -51,8 +51,9 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void initState() {
     super.initState();
-    _pageController = PageController();
     _getUserStream = getStream(widget.uid);
+
+    _pageController = PageController(keepPage: false);
 
     _onboardingScreen = OnboardingScreen();
 
@@ -68,10 +69,9 @@ class _HomeScreenState extends State<HomeScreen>
 
     snapshot.first.then((documentSnapshot) {
       User user = User.fromDocument(documentSnapshot);
-      setState(() {
-        _currentUser = user;
-        currentUser = user;
-      });
+
+      _currentUser = user;
+      currentUser = user;
     });
 
     return snapshot;
@@ -161,39 +161,41 @@ class _HomeScreenState extends State<HomeScreen>
               }
               configurePushNotifications();
 
-              return Scaffold(
-                backgroundColor: Theme.of(context).primaryColor,
-                key: _scaffoldKey,
-                body: PageView(
-                  children: <Widget>[
-                    TimelineScreen(
-                      currentUser: currentUser,
-                    ),
-                    _chatScreen,
-                    _uploadScreen,
-                    _feedScreen,
-                    _profileScreen
-                  ],
-                  controller: _pageController,
-                  onPageChanged: onPageChanged,
-                  physics: AlwaysScrollableScrollPhysics(),
-                  pageSnapping: true,
-                ),
-                bottomNavigationBar: CupertinoTabBar(
-                  currentIndex: pageIndex,
-                  onTap: onTap,
-                  activeColor: Theme.of(context).primaryColor,
-                  items: [
-                    BottomNavigationBarItem(icon: Icon(Icons.today)),
-                    BottomNavigationBarItem(icon: Icon(LineIcons.comments_o)),
-                    BottomNavigationBarItem(
-                        icon: Icon(
-                      InstrumentIcons.hand,
-                      size: 35.0,
-                    )),
-                    BottomNavigationBarItem(icon: Icon(LineIcons.bell_o)),
-                    BottomNavigationBarItem(icon: Icon(LineIcons.user)),
-                  ],
+              currentUser = User.fromDocument(snapshot.data);
+              return SafeArea(
+                top: false,
+                child: Scaffold(
+                  backgroundColor: Theme.of(context).primaryColor,
+                  key: _scaffoldKey,
+                  body: PageView(
+                    children: <Widget>[
+                      TimelineScreen(),
+                      _chatScreen,
+                      _uploadScreen,
+                      _feedScreen,
+                      _profileScreen
+                    ],
+                    controller: _pageController,
+                    onPageChanged: onPageChanged,
+                    physics: AlwaysScrollableScrollPhysics(),
+                    pageSnapping: true,
+                  ),
+                  bottomNavigationBar: CupertinoTabBar(
+                    currentIndex: pageIndex,
+                    onTap: onTap,
+                    activeColor: Theme.of(context).primaryColor,
+                    items: [
+                      BottomNavigationBarItem(icon: Icon(Icons.today)),
+                      BottomNavigationBarItem(icon: Icon(LineIcons.comments_o)),
+                      BottomNavigationBarItem(
+                          icon: Icon(
+                        InstrumentIcons.hand,
+                        size: 35.0,
+                      )),
+                      BottomNavigationBarItem(icon: Icon(LineIcons.bell_o)),
+                      BottomNavigationBarItem(icon: Icon(LineIcons.user)),
+                    ],
+                  ),
                 ),
               );
             }

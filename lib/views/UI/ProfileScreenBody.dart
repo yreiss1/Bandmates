@@ -458,7 +458,7 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody>
                     runSpacing: 0,
                     spacing: 4,
                     children: [
-                      for (String inst in widget.user.instruments.keys)
+                      for (String inst in widget.user.instruments)
                         Chip(
                           label: Text(inst),
                         )
@@ -476,7 +476,7 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody>
                     runSpacing: 0,
                     spacing: 4,
                     children: [
-                      for (String genre in widget.user.genres.keys)
+                      for (String genre in widget.user.genres)
                         Chip(
                           label: Text(genre),
                         )

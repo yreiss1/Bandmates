@@ -1,12 +1,16 @@
+import 'dart:async';
+
 import 'package:bandmates/Utils.dart';
 import 'package:bandmates/models/ProfileScreenArguments.dart';
 import 'package:bandmates/models/User.dart';
+import 'package:bandmates/presentation/InstrumentIcons.dart';
 import 'package:bandmates/views/HomeScreen.dart';
 import 'package:bandmates/views/ProfileScreen.dart';
 import 'package:bandmates/views/UI/Progress.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_icons/flutter_icons.dart';
 import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:provider/provider.dart';
@@ -21,11 +25,16 @@ class MusiciansSearchScreen extends StatefulWidget {
 
 class _MusiciansSearchScreenState extends State<MusiciansSearchScreen> {
   bool _isLoading = false;
-  String selectedGenre;
-  String selectedInstrument;
+  int _selectedRadius;
+  String _selectedInstrument;
   List<DropdownMenuItem> instruments = [];
-  List<DropdownMenuItem> genres = [];
+  List<DropdownMenuItem> radii = [];
   List<User> _usersList = [];
+  DocumentSnapshot _lastDocument;
+  bool _hasMore = true;
+  ScrollController _scrollController = ScrollController();
+  Timer searchOnStoppedTyping;
+  TextEditingController _searchController = new TextEditingController();
 
   final GeoFirePoint center = currentUser.location;
 
@@ -33,61 +42,107 @@ class _MusiciansSearchScreenState extends State<MusiciansSearchScreen> {
   void initState() {
     super.initState();
 
+    _scrollController.addListener(() {
+      double maxScroll = _scrollController.position.maxScrollExtent;
+      double currentScroll = _scrollController.position.pixels;
+      double delta = MediaQuery.of(context).size.height * 0.2;
+
+      if (maxScroll - currentScroll <= delta) {
+        _getMoreResults(_searchController.text);
+      }
+    });
+    _selectedRadius = 50;
+
     Utils.instrumentList.forEach(
       (inst) => instruments.add(
         DropdownMenuItem(
-          child: Row(
-            children: <Widget>[
-              Icon(
-                inst.icon.icon,
-                size: 40,
-              ),
-              SizedBox(
-                width: 10,
-              ),
-              Text(inst.name)
-            ],
-          ),
-          value: inst.value,
+          child: Text(inst.name),
+          value: inst.name,
         ),
       ),
     );
-    /*
-    instruments.insert(
-      0,
-      DropdownMenuItem(
-        child: Text("None"),
-        value: null,
-      ),
-    );*/
 
-    Utils.genresList.forEach(
-      (genre) => genres.add(
-        DropdownMenuItem(
-          child: Row(
-            children: <Widget>[
-              /*
-              Icon(
-                genre.icon.icon,
-                size: 40,
-              ),
-              SizedBox(
-                width: 10,
-              ),*/
-              Text(genre.name)
-            ],
-          ),
-          value: genre.value,
-        ),
-      ),
-    );
-    // genres.insert(
-    //   0,
-    //   DropdownMenuItem(
-    //     child: Text("None"),
-    //     value: null,
-    //   ),
-    // );
+    for (int i = 10; i <= 100; i += 20) {
+      radii.add(DropdownMenuItem(
+        child: Text(i.toString() + " Kilometers"),
+        value: i,
+      ));
+    }
+  }
+
+  _onChangeHandler(value) {
+    const duration = Duration(
+        milliseconds:
+            400); // set the duration that you want call search() after that.
+    if (searchOnStoppedTyping != null) {
+      setState(() => searchOnStoppedTyping.cancel()); // clear timer
+    }
+    setState(() => searchOnStoppedTyping =
+        new Timer(duration, () => _getMoreResults(value)));
+  }
+
+  void _searchName(String query) async {
+    setState(() {
+      _isLoading = true;
+    });
+    List<User> results = [];
+
+    QuerySnapshot snapshot = await Firestore.instance
+        .collection('users')
+        .where("search", isGreaterThanOrEqualTo: query.toLowerCase())
+        .limit(2)
+        .getDocuments();
+
+    snapshot.documents.forEach((doc) => results.add(User.fromDocument(doc)));
+
+    if (!snapshot.documents.isEmpty) {
+      _lastDocument = snapshot.documents[snapshot.documents.length - 1];
+    }
+    setState(() {
+      _usersList = results;
+      _isLoading = false;
+    });
+  }
+
+  void _getMoreResults(query) async {
+    if (!_hasMore || _isLoading) {
+      return;
+    }
+    setState(() {
+      _isLoading = true;
+    });
+
+    QuerySnapshot snapshot;
+    if (_lastDocument == null) {
+      snapshot = await Firestore.instance
+          .collection('users')
+          .where("search", isGreaterThanOrEqualTo: query.toLowerCase())
+          .limit(10)
+          .getDocuments();
+    } else {
+      snapshot = await Firestore.instance
+          .collection('users')
+          .where("search", isGreaterThanOrEqualTo: query.toLowerCase())
+          .startAfterDocument(_lastDocument)
+          .orderBy('search')
+          .limit(10)
+          .getDocuments();
+    }
+
+    if (snapshot.documents.length < 10) {
+      _hasMore = false;
+    }
+
+    if (!snapshot.documents.isEmpty) {
+      _lastDocument = snapshot.documents[snapshot.documents.length - 1];
+    }
+    List<User> results = [];
+    snapshot.documents.forEach((doc) => results.add(User.fromDocument(doc)));
+
+    setState(() {
+      _usersList.addAll(results);
+      _isLoading = false;
+    });
   }
 
   @override
@@ -99,8 +154,6 @@ class _MusiciansSearchScreenState extends State<MusiciansSearchScreen> {
         child: Scaffold(
           backgroundColor: Colors.white, // Theme.of(context).primaryColor,
           body: Container(
-
-              //height: MediaQuery.of(context).size.height,
               width: double.infinity,
               child: Stack(
                 children: <Widget>[
@@ -111,15 +164,18 @@ class _MusiciansSearchScreenState extends State<MusiciansSearchScreen> {
                           children: <Widget>[
                             SingleChildScrollView(
                               child: Column(
+                                mainAxisSize: MainAxisSize.min,
                                 children: <Widget>[
                                   buildSearchHeader(context),
-                                  buildMainArea(context),
+                                  Flexible(
+                                    child: buildMainArea(context),
+                                  )
                                 ],
                               ),
                             ),
                             Positioned(
                               left: MediaQuery.of(context).size.width * 0.05,
-                              top: 170,
+                              top: 140,
                               child: Container(
                                 height: 60,
                                 width: MediaQuery.of(context).size.width * 0.9,
@@ -127,10 +183,11 @@ class _MusiciansSearchScreenState extends State<MusiciansSearchScreen> {
                                   backgroundColor: Colors.white,
                                   elevation: 10,
                                   label: TextField(
+                                    textCapitalization:
+                                        TextCapitalization.sentences,
+                                    controller: _searchController,
                                     onChanged: (value) {
-                                      if (value.length > 3) {
-                                        _searchName(value);
-                                      }
+                                      _onChangeHandler(value);
                                     },
                                     decoration: InputDecoration(
                                         border: InputBorder.none,
@@ -158,36 +215,26 @@ class _MusiciansSearchScreenState extends State<MusiciansSearchScreen> {
           borderRadius: BorderRadius.only(
               bottomLeft: Radius.circular(25),
               bottomRight: Radius.circular(25))),
-      padding: EdgeInsets.only(left: 12, top: 32),
-      height: 200,
+      padding: EdgeInsets.only(
+        left: 12,
+      ),
+      height: 170,
       width: double.infinity,
       child: Column(
         children: <Widget>[
-          Row(
-            children: <Widget>[
-              IconButton(
-                icon: Icon(
-                  Icons.arrow_back,
-                  size: 32,
+          AppBar(
+            elevation: 0,
+            title: Text(
+              "Search Musicians",
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
                   color: Colors.white,
-                ),
-                onPressed: () => Navigator.pop(context),
-              ),
-              SizedBox(
-                width: 8,
-              ),
-              Text(
-                "Search Musicians",
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 24),
-              ),
-            ],
+                  fontWeight: FontWeight.bold,
+                  fontSize: 24),
+            ),
           ),
           SizedBox(
-            height: 24,
+            height: 16,
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -198,14 +245,14 @@ class _MusiciansSearchScreenState extends State<MusiciansSearchScreen> {
                   elevation: 10,
                   backgroundColor: Colors.white,
                   label: DropdownButton(
-                    value: selectedInstrument,
+                    icon: Icon(FontAwesome5Solid.guitar),
+                    value: _selectedInstrument,
                     hint: Text("Instrument"),
                     items: instruments,
                     onChanged: (value) {
                       setState(() {
-                        selectedInstrument = value;
+                        _selectedInstrument = value;
                       });
-                      _searchUsers();
                     },
                   ),
                 ),
@@ -216,14 +263,14 @@ class _MusiciansSearchScreenState extends State<MusiciansSearchScreen> {
                   elevation: 10,
                   backgroundColor: Colors.white,
                   label: DropdownButton(
-                    value: selectedGenre,
-                    hint: Text("Genre"),
-                    items: genres,
+                    icon: Icon(FontAwesome5Solid.ruler_horizontal),
+                    value: _selectedRadius,
+                    hint: Text("Distance"),
+                    items: radii,
                     onChanged: (value) {
                       setState(() {
-                        selectedGenre = value;
+                        _selectedRadius = value;
                       });
-                      _searchUsers();
                     },
                   ),
                 ),
@@ -237,155 +284,56 @@ class _MusiciansSearchScreenState extends State<MusiciansSearchScreen> {
 
   buildMainArea(context) {
     return Container(
-      color: Colors.white,
-      width: double.infinity,
-      height: MediaQuery.of(context).size.height * 0.67,
-      child: _usersList.length == 0
-          ? StreamBuilder(
-              stream: Provider.of<UserProvider>(context).getClosest(center),
-              builder: (BuildContext context,
-                  AsyncSnapshot<List<DocumentSnapshot>> snapshot) {
-                if (!snapshot.hasData) {
-                  return circularProgress(context);
-                }
+        height: MediaQuery.of(context).size.height * 0.76,
+        child: _searchController.text.isEmpty
+            ? StreamBuilder(
+                stream: Provider.of<UserProvider>(context)
+                    .getClosest(center, _selectedRadius, _selectedInstrument),
+                builder: (BuildContext context,
+                    AsyncSnapshot<List<DocumentSnapshot>> snapshot) {
+                  if (!snapshot.hasData) {
+                    return circularProgress(context);
+                  }
 
-                if (snapshot.hasError) {
-                  Utils.buildErrorDialog(
-                      context, "Error fetching data, please try again later!");
-                }
+                  if (snapshot.hasError) {
+                    Utils.buildErrorDialog(context,
+                        "Error fetching data, please try again later!");
+                  }
 
-                if (snapshot.data.length == 0) {
-                  return Center(
-                    child: Text(
-                        "No musicians in your area, please try again later!"),
+                  if (snapshot.data.length == 0) {
+                    return Center(
+                      child: Text(
+                          "No musicians in your area, please try again later!"),
+                    );
+                  }
+
+                  return ListView.builder(
+                    padding: EdgeInsets.only(top: 30),
+                    itemCount: snapshot.data.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      User user = User.fromDocument(snapshot.data[index]);
+                      if (user.uid == currentUser.uid) {
+                        return Container();
+                      }
+                      return buildUserCard(user, context);
+                    },
                   );
-                }
-
-                return ListView.builder(
-                  padding: EdgeInsets.only(top: 30),
-                  itemCount: snapshot.data.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    User user = User.fromDocument(snapshot.data[index]);
-                    if (user.uid == currentUser.uid) {
-                      return Container();
-                    }
-                    return buildUserCard(user, context);
-                  },
-                );
-              },
-            )
-          : ListView.builder(
-              padding: EdgeInsets.only(top: 30),
-              itemCount: _usersList.length,
-              itemBuilder: (BuildContext context, int index) {
-                return buildUserCard(_usersList[index], context);
-              },
-            ),
-    );
-  }
-
-  buildChipInputs() {
-    return Container(
-      height: 50,
-      child: ListView(
-        shrinkWrap: true,
-        scrollDirection: Axis.horizontal,
-        children: <Widget>[
-          Transform(
-            transform: new Matrix4.identity()..scale(0.9),
-            child: Chip(
-              elevation: 10,
-              backgroundColor: Colors.white,
-              label: DropdownButton(
-                hint: Text("Transportation"),
-                items: [
-                  DropdownMenuItem(
-                    child: Text("Has"),
-                    value: true,
-                  ),
-                  DropdownMenuItem(
-                    child: Text("Has Not"),
-                    value: false,
-                  ),
-                  DropdownMenuItem(
-                    child: Text("None"),
-                    value: null,
-                  )
-                ],
-                onChanged: (value) {
-                  setState(() {
-                    //selectedInstrument = value;
-                  });
-                  _searchUsers();
                 },
-              ),
-            ),
-          ),
-          Transform(
-            transform: new Matrix4.identity()..scale(0.9),
-            child: Chip(
-              elevation: 10,
-              backgroundColor: Colors.white,
-              label: SearchableDropdown(
-                hint: Text("Practice Space"),
-                items: instruments,
-                onChanged: (value) {
-                  setState(() {
-                    //selectedInstrument = value;
-                  });
-                  _searchUsers();
-                },
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _searchName(String query) async {
-    setState(() {
-      _isLoading = true;
-    });
-    List<User> results = [];
-    await Firestore.instance
-        .collection('users')
-        .where("name", isGreaterThanOrEqualTo: query.toUpperCase())
-        .getDocuments()
-        .then((QuerySnapshot snapshot) {
-      snapshot.documents.forEach((doc) => results.add(User.fromDocument(doc)));
-    });
-
-    setState(() {
-      _usersList = results;
-      _isLoading = false;
-    });
-  }
-
-  void _searchUsers() async {
-    setState(() {
-      _isLoading = true;
-    });
-    Query query = Firestore.instance.collection("users");
-
-    if (selectedInstrument != null) {
-      query = query.where("instruments.$selectedInstrument", isEqualTo: true);
-    }
-    if (selectedGenre != null) {
-      query = query.where("genres.$selectedGenre", isEqualTo: true);
-    }
-
-    QuerySnapshot snapshot = await query.getDocuments();
-
-    List<User> results = [];
-    snapshot.documents.forEach((doc) {
-      results.add(User.fromDocument(doc));
-    });
-
-    setState(() {
-      _usersList = results;
-      _isLoading = false;
-    });
+              )
+            : _isLoading
+                ? Center(child: circularProgress(context))
+                : ListView.builder(
+                    controller: _scrollController,
+                    padding: EdgeInsets.only(top: 30),
+                    itemCount: _usersList.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      User user = _usersList[index];
+                      if (user.uid == currentUser.uid) {
+                        return Container();
+                      }
+                      return buildUserCard(user, context);
+                    },
+                  ));
   }
 
   buildUserCard(User user, BuildContext context) {
@@ -407,6 +355,7 @@ class _MusiciansSearchScreenState extends State<MusiciansSearchScreen> {
                   mainAxisSize: MainAxisSize.max,
                   children: <Widget>[
                     CircleAvatar(
+                      backgroundColor: Theme.of(context).primaryColor,
                       radius: 35,
                       backgroundImage: user.photoUrl == null
                           ? AssetImage('assets/images/user-placeholder.png')
@@ -432,9 +381,8 @@ class _MusiciansSearchScreenState extends State<MusiciansSearchScreen> {
                                     .distance(
                                         lat: currentUser.location.latitude,
                                         lng: currentUser.location.longitude)
-                                    .round()
-                                    .toString() +
-                                "km away",
+                                    .toStringAsFixed(1) +
+                                " km away",
                             style: TextStyle(fontStyle: FontStyle.italic),
                           )
                         ],
@@ -452,34 +400,33 @@ class _MusiciansSearchScreenState extends State<MusiciansSearchScreen> {
                 SizedBox(
                   height: 5,
                 ),
-                user.instruments.keys.length > 8
+                user.instruments.length > 3
                     ? Row(
                         children: <Widget>[
-                          for (String inst
-                              in user.instruments.keys.toList().sublist(0, 8))
-                            Container(
-                              margin: EdgeInsets.symmetric(horizontal: 2),
-                              child: Icon(
-                                Utils.valueToIcon(inst),
-                                size: 30,
+                          for (String inst in user.instruments.sublist(0, 3))
+                            Flexible(
+                              child: Container(
+                                margin: EdgeInsets.symmetric(horizontal: 2),
+                                child: Chip(
+                                  label: Text(inst),
+                                ),
                               ),
                             ),
                           SizedBox(
                             width: 8,
                           ),
                           Text("+" +
-                              (user.instruments.keys.length - 8).toString() +
+                              (user.instruments.length - 3).toString() +
                               " More"),
                         ],
                       )
                     : Row(
                         children: <Widget>[
-                          for (String inst in user.instruments.keys)
+                          for (String inst in user.instruments)
                             Container(
                               margin: EdgeInsets.symmetric(horizontal: 2),
-                              child: Icon(
-                                Utils.valueToIcon(inst),
-                                size: 30,
+                              child: Chip(
+                                label: Text(inst),
                               ),
                             )
                         ],
@@ -494,11 +441,10 @@ class _MusiciansSearchScreenState extends State<MusiciansSearchScreen> {
                 SizedBox(
                   height: 5,
                 ),
-                user.genres.keys.length > 3
+                user.genres.length > 3
                     ? Row(
                         children: <Widget>[
-                          for (String genre
-                              in user.genres.keys.toList().sublist(0, 3))
+                          for (String genre in user.genres.sublist(0, 3))
                             Container(
                               margin: EdgeInsets.symmetric(horizontal: 2),
                               child: Chip(
@@ -510,14 +456,14 @@ class _MusiciansSearchScreenState extends State<MusiciansSearchScreen> {
                           ),
                           Text(
                             ("+" +
-                                (user.genres.keys.length - 3).toString() +
+                                (user.genres.length - 3).toString() +
                                 " More"),
                           ),
                         ],
                       )
                     : Row(
                         children: <Widget>[
-                          for (String genre in user.genres.keys)
+                          for (String genre in user.genres)
                             Container(
                               margin: EdgeInsets.symmetric(horizontal: 2),
                               child: Chip(

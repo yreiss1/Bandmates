@@ -11,6 +11,7 @@ import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:xml2json/xml2json.dart';
 import 'package:image/image.dart' as Im;
+import 'package:intl/intl.dart';
 
 class Utils {
   static final List<Instrument> instrumentList = [
@@ -153,65 +154,71 @@ class Utils {
 
   static IconData valueToIcon(String value) {
     switch (value) {
-      case "guitar":
+      case "Guitar":
         return InstrumentIcons.electric_guitar;
         break;
-      case "bass":
+      case "Acoustic Guitar":
+        return InstrumentIcons.acoustic_guitar;
+        break;
+      case "Electric Guitar":
+        return InstrumentIcons.electric_guitar_2;
+        break;
+      case "Bass":
         return InstrumentIcons.bass_guitar;
         break;
-      case "drums":
+      case "Drums":
         return InstrumentIcons.drum_set;
         break;
-      case "piano":
+      case "Piano":
         return InstrumentIcons.piano;
         break;
-      case "flute":
+      case "Flute":
         return InstrumentIcons.flute;
         break;
-      case "harp":
+      case "Harp":
         return InstrumentIcons.harp;
         break;
-      case "harmonica":
+      case "Harmonica":
         return InstrumentIcons.harmonica;
         break;
-      case "violin":
+      case "Violin":
         return InstrumentIcons.violin;
         break;
-      case "ukelele":
+      case "Ukelele":
         return InstrumentIcons.ukelele;
         break;
-      case "xylophone":
+      case "Xylophone":
         return InstrumentIcons.xylophone;
         break;
-      case "saxaphone":
+      case "Saxaphone":
         return InstrumentIcons.saxophone;
         break;
-      case "banjo":
+      case "Banjo":
         return InstrumentIcons.banjo;
         break;
-      case "vocals":
+      case "Vocals":
         return InstrumentIcons.microphone;
         break;
-      case "accordion":
+      case "Accordion":
         return InstrumentIcons.accordion;
         break;
-      case "trumpet":
+      case "Trumpet":
         return InstrumentIcons.trumpet;
         break;
-      case "contrabass":
+      case "Contrabass":
         return InstrumentIcons.contrabass;
         break;
-      case "trombone":
+      case "Trombone":
         return InstrumentIcons.trombone;
         break;
-      case "turntable":
+      case "Turntable":
         return InstrumentIcons.turntable;
         break;
-      case "harp":
+      case "Harp":
         return InstrumentIcons.harp;
         break;
       default:
-        return InstrumentIcons.musical_notes;
+        return null;
     }
   }
 
@@ -263,5 +270,32 @@ class Utils {
     final compressedImageFile = File('$path/img_$uid.jpg')
       ..writeAsBytesSync(Im.encodeJpg(imageFile, quality: 85));
     return compressedImageFile;
+  }
+
+  static String formateDateTime(DateTime start, DateTime end) {
+    if (end == null) {
+      return DateFormat.jm().add_yMEd().format(start) + ' - Whenever';
+    }
+    if (start.year == end.year) {
+      if (start.month == end.month) {
+        if (start.day == end.day) {
+          return DateFormat.jm().format(start) +
+              ' - ' +
+              DateFormat.jm().add_yMEd().format(end);
+        } else {
+          return DateFormat.jm().add_MEd().format(start) +
+              ' - ' +
+              DateFormat.jm().add_yMEd().format(end);
+        }
+      } else {
+        return DateFormat.jm().add_MEd().format(start) +
+            ' - ' +
+            DateFormat.jm().add_yMEd().format(end);
+      }
+    } else {
+      return DateFormat.jm().add_yMEd().format(start) +
+          ' - ' +
+          DateFormat.jm().add_yMEd().format(end);
+    }
   }
 }

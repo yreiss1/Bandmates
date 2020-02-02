@@ -1,3 +1,4 @@
+import 'package:bandmates/Utils.dart';
 import 'package:bandmates/views/HomeScreen.dart';
 import 'package:bandmates/views/UI/Progress.dart';
 import 'package:flutter/material.dart';
@@ -143,9 +144,8 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
 
   _compressVideo() async {
     final _flutterVideoCompress = FlutterVideoCompress();
-
     final info = await _flutterVideoCompress.compressVideo(_uploadFile.path,
-        quality: VideoQuality.LowQuality,
+        quality: VideoQuality.DefaultQuality,
         deleteOrigin: false,
         includeAudio: true);
     print("[PostUploadScreen] video title: " + info.title);
@@ -164,33 +164,43 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
         await _compressImage();
       }
 
+      if (_uploadFile != null && _fileType == 1) {
+        await _compressVideo();
+      }
+
       if (_uploadFile != null && _fileType == 2) {
         await _compressVideo();
       }
 
       User userObject = currentUser;
-      String downloadURL =
-          await Provider.of<PostProvider>(context, listen: false)
-              .uploadMedia(_uploadFile, _postID);
+      try {
+        String downloadURL =
+            await Provider.of<PostProvider>(context, listen: false)
+                .uploadMedia(_uploadFile, _postID);
 
-      Post post = new Post(
-        type: _fileType,
-        postId: _postID,
-        title: _fbKey.currentState.value['title'],
-        text: _fbKey.currentState.value['text'],
-        ownerId: currentUser.uid,
-        avatar: currentUser.photoUrl,
-        username: currentUser.name,
-        mediaUrl: downloadURL,
-        time: DateTime.now(),
-        likes: {},
-      );
-      await Provider.of<PostProvider>(context, listen: false).uploadPost(
-          post: post,
+        Post post = new Post(
+          type: _fileType,
           postId: _postID,
-          uid: userObject.uid,
-          name: userObject.name);
-
+          title: _fbKey.currentState.value['title'],
+          text: _fbKey.currentState.value['text'],
+          ownerId: currentUser.uid,
+          avatar: currentUser.photoUrl,
+          username: currentUser.name,
+          mediaUrl: downloadURL,
+          time: DateTime.now(),
+          likes: {},
+        );
+        await Provider.of<PostProvider>(context, listen: false).uploadPost(
+            post: post,
+            postId: _postID,
+            uid: userObject.uid,
+            name: userObject.name);
+      } catch (error) {
+        setState(() {
+          _isUploading = false;
+          Utils.buildErrorDialog(context, error.message);
+        });
+      }
       setState(() {
         _isUploading = false;
         _uploadFile = null;
@@ -394,6 +404,8 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
 
                             if (result != 1) {
                               //TODO: Display error
+                              Utils.buildErrorDialog(
+                                  context, "Could not play audio file");
                             }
 
                             setState(() {

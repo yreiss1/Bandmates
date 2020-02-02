@@ -2,10 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
 import 'package:search_map_place/search_map_place.dart';
+import 'package:geocoder/geocoder.dart' as geocoder;
 
 class MapScreen extends StatefulWidget {
   static const routeName = '/map-screen';
@@ -97,6 +99,44 @@ class _MapScreenState extends State<MapScreen> {
       body: Stack(
         children: <Widget>[
           GoogleMap(
+            onTap: (latlng) async {
+              final GoogleMapController controller =
+                  await _mapController.future;
+
+              // List<geocoder.Address> list = await geocoder.Geocoder.google(
+              //         "AIzaSyBVY9wwL0hnzcoEN7HTKh41o92PzHZe0wI")
+              //     .findAddressesFromCoordinates(new geocoder.Coordinates(
+              //         latlng.latitude, latlng.longitude));
+
+              controller.animateCamera(CameraUpdate.newCameraPosition(
+                  CameraPosition(target: latlng, zoom: 12)));
+
+              controller.animateCamera(CameraUpdate.newLatLngZoom(latlng, 12));
+              setState(() {
+                _setLocation = latlng;
+                if (widget.isEvent) {
+                  markers.clear();
+                  markers.add(
+                    Marker(
+                        markerId: MarkerId('Event Location'),
+                        position: latlng,
+                        infoWindow: InfoWindow(title: "Event Location"),
+                        visible: true),
+                  );
+                } else {
+                  circles.clear();
+                  circles.add(
+                    Circle(
+                        strokeWidth: 1,
+                        radius: 1750,
+                        fillColor:
+                            Theme.of(context).primaryColor.withOpacity(0.4),
+                        circleId: CircleId("Your Location"),
+                        center: latlng),
+                  );
+                }
+              });
+            },
             myLocationEnabled: true,
             scrollGesturesEnabled: true,
             zoomGesturesEnabled: true,
@@ -113,69 +153,68 @@ class _MapScreenState extends State<MapScreen> {
           ),
           Positioned(
             top: 50,
-            left: MediaQuery.of(context).size.width * 0.01,
+            left: 5,
+            child: IconButton(
+              icon: Icon(
+                Icons.clear,
+                size: 32,
+              ),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
+          Positioned(
+            top: 50,
+            left: MediaQuery.of(context).size.width * 0.15,
             right: MediaQuery.of(context).size.width * 0.04,
             child: Center(
-              child: Row(children: <Widget>[
-                IconButton(
-                  icon: Icon(
-                    Icons.clear,
-                    size: 32,
-                  ),
-                  onPressed: () => Navigator.pop(context),
-                ),
-                Flexible(
-                  child: SearchMapPlaceWidget(
-                    apiKey: "AIzaSyBVY9wwL0hnzcoEN7HTKh41o92PzHZe0wI",
-                    location: _initialCamera.target,
-                    radius: 30000,
-                    placeholder: "Set Your Home Location",
-                    onSelected: (place) async {
-                      final geolocation = await place.geolocation;
-                      setState(() {
-                        if (widget.isEvent) {
-                          markers.clear();
-                          markers.add(
-                            Marker(
-                              markerId: MarkerId('Event Location'),
-                              position: geolocation.coordinates,
-                            ),
-                          );
-                        } else {
-                          circles.clear();
-                          circles.add(
-                            Circle(
-                                strokeWidth: 1,
-                                radius: 1500,
-                                fillColor: Theme.of(context)
-                                    .primaryColor
-                                    .withOpacity(0.4),
-                                circleId: CircleId("Your Location"),
-                                center: geolocation.coordinates),
-                          );
-                        }
-                      });
+              child: SearchMapPlaceWidget(
+                apiKey: "AIzaSyBVY9wwL0hnzcoEN7HTKh41o92PzHZe0wI",
+                location: _initialCamera.target,
+                radius: 30000,
+                placeholder: "Set Your Home Location",
+                onSelected: (place) async {
+                  final geolocation = await place.geolocation;
+                  setState(() {
+                    if (widget.isEvent) {
+                      markers.clear();
+                      markers.add(
+                        Marker(
+                            markerId: MarkerId('Event Location'),
+                            position: geolocation.coordinates,
+                            infoWindow: InfoWindow(title: 'Event Location')),
+                      );
+                    } else {
+                      circles.clear();
+                      circles.add(
+                        Circle(
+                            strokeWidth: 1,
+                            radius: 1750,
+                            fillColor:
+                                Theme.of(context).primaryColor.withOpacity(0.4),
+                            circleId: CircleId("Your Location"),
+                            center: geolocation.coordinates),
+                      );
+                    }
+                  });
 
-                      final GoogleMapController controller =
-                          await _mapController.future;
+                  final GoogleMapController controller =
+                      await _mapController.future;
 
-                      controller.animateCamera(CameraUpdate.newCameraPosition(
-                          CameraPosition(
-                              target: geolocation.coordinates, zoom: 12)));
+                  controller.animateCamera(CameraUpdate.newCameraPosition(
+                      CameraPosition(
+                          target: geolocation.coordinates, zoom: 12)));
 
-                      controller.animateCamera(CameraUpdate.newLatLngZoom(
-                          geolocation.coordinates, 12));
+                  controller.animateCamera(
+                      CameraUpdate.newLatLngZoom(geolocation.coordinates, 12));
 
-                      controller.animateCamera(
-                          CameraUpdate.newLatLngBounds(geolocation.bounds, 50));
+                  controller.animateCamera(
+                      CameraUpdate.newLatLngBounds(geolocation.bounds, 50));
 
-                      setState(() {
-                        _setLocation = geolocation.coordinates;
-                      });
-                    },
-                  ),
-                ),
-              ]),
+                  setState(() {
+                    _setLocation = geolocation.coordinates;
+                  });
+                },
+              ),
             ),
           ),
           Positioned.fill(

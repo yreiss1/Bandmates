@@ -289,11 +289,17 @@ class EventScreen extends StatelessWidget {
                         decoration: BoxDecoration(
                             border: Border.all(
                                 color: Theme.of(context).accentColor)),
-                        child: Text(
-                          DateFormat.yMMMd().add_jm().format(event.time),
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Theme.of(context).accentColor),
+                        child: FittedBox(
+                          child: Text(
+                            event.end == null
+                                ? DateFormat.jm()
+                                    .add_yMMMd()
+                                    .format(event.start)
+                                : Utils.formateDateTime(event.start, event.end),
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).accentColor),
+                          ),
                         ),
                       ),
                       StreamBuilder<QuerySnapshot>(

@@ -10,6 +10,7 @@ import 'package:bandmates/views/UI/OnboardingSelections/ImageSelection.dart';
 import 'package:bandmates/views/UI/OnboardingSelections/InfluenceSelection.dart';
 import 'package:bandmates/views/UI/OnboardingSelections/InfoSelection.dart';
 import 'package:bandmates/views/UI/OnboardingSelections/InstrumentSelection.dart';
+import 'package:bandmates/views/UI/Progress.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -23,6 +24,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:geocoder/geocoder.dart' as geocoder;
 import 'package:location/location.dart';
+import 'package:modal_progress_hud/modal_progress_hud.dart';
 import 'package:provider/provider.dart';
 import '../Utils.dart';
 import 'HomeScreen.dart';
@@ -61,6 +63,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Set<Circle> _circles = Set<Circle>();
 
   Geoflutterfire geo = Geoflutterfire();
+  bool _isLoading = false;
 
   File _imageFile;
 
@@ -91,8 +94,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       'bio': "",
       'transportation': false,
       'practice': false,
-      'genres': {},
-      'instruments': {},
+      'genres': [],
+      'instruments': [],
       'influences': [],
       'location': null,
       'photoUrl': null,
@@ -215,6 +218,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   _createUser() async {
+    setState(() {
+      _isLoading = true;
+    });
     var uid = Provider.of<FirebaseUser>(context).uid;
     String downloadUrl;
     if (_imageFile != null) {
@@ -241,6 +247,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
 
     //print("[OnboardingScreen] New User: " + newUser.toJson().toString());
+
     await Provider.of<UserProvider>(context).uploadUser(uid, newUser);
   }
 
@@ -248,29 +255,36 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget build(BuildContext context) {
     return SafeArea(
       top: false,
+      bottom: false,
       child: Scaffold(
         backgroundColor: Colors.white,
-        body: Stack(
-          children: <Widget>[
-            _buildHeader(),
-            _buildSwiperArea(),
-            if (_lastCard)
-              Positioned.fill(
-                bottom: 16,
-                child: Align(
-                  alignment: Alignment.bottomCenter,
-                  child: FloatingActionButton.extended(
-                      heroTag: 'onboarding',
-                      backgroundColor: Theme.of(context).primaryColor,
-                      label: Text(
-                        "Create User",
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      icon: Icon(Icons.person),
-                      onPressed: () => _createUser()),
+        body: ModalProgressHUD(
+          inAsyncCall: _isLoading,
+          progressIndicator: circularProgress(context),
+          opacity: .5,
+          dismissible: false,
+          child: Stack(
+            children: <Widget>[
+              _buildHeader(),
+              _buildSwiperArea(),
+              if (_lastCard)
+                Positioned.fill(
+                  bottom: 16,
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: FloatingActionButton.extended(
+                        heroTag: 'onboarding',
+                        backgroundColor: Theme.of(context).primaryColor,
+                        label: Text(
+                          "Create User",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        icon: Icon(Icons.person),
+                        onPressed: () => _createUser()),
+                  ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );

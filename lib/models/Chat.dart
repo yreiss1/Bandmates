@@ -45,23 +45,24 @@ class ChatProvider with ChangeNotifier {
 
   Future<void> sendMessage(
       {String text, int type, String chatID, String userID}) async {
-    Firestore.instance.runTransaction((transaction) async {
-      transaction.set(
-          Firestore.instance
-              .collection("chats")
-              .document(chatID)
-              .collection('msgs')
-              .document(),
-          {
-            "user": userID,
-            "content": text,
-            "time": DateTime.now(),
-            "type": type
-          });
-      transaction.update(
-          Firestore.instance.collection("chats").document(chatID),
-          {'lastMsg': text, 'time': DateTime.now()});
-    }).catchError((error) => print("There was an error: $error"));
+    WriteBatch batch = Firestore.instance.batch();
+    batch.setData(
+        Firestore.instance
+            .collection("chats")
+            .document(chatID)
+            .collection('msgs')
+            .document(),
+        {
+          "user": userID,
+          "content": text,
+          "time": DateTime.now(),
+          "type": type
+        });
+
+    batch.updateData(Firestore.instance.collection("chats").document(chatID),
+        {'lastMsg': text, 'time': DateTime.now()});
+
+    batch.commit().catchError((error) => print(error.toString()));
   }
 
   Stream<QuerySnapshot> getChats(String uid) {

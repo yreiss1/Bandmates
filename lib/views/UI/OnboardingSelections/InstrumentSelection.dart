@@ -74,9 +74,9 @@ class InstrumentSelection extends StatelessWidget {
                       );
                     },
                     onChanged: () {
-                      _selectedInstruments.forEach((inst) {
-                        userData['instruments'][inst.name] = true;
-                      });
+                      userData['instruments'] = _selectedInstruments
+                          .map((inst) => inst.name)
+                          .toList();
                     },
                   ),
                 ],
@@ -134,6 +134,7 @@ class InstrumentSelection extends StatelessWidget {
     );
   }
 
+  //TODO: Remove this
   Future<List<Instrument>> searchInstruments(String query) async {
     await Future.delayed(Duration(milliseconds: 300), null);
     return Utils.instrumentList

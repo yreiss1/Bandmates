@@ -49,6 +49,7 @@ class Attending extends StatelessWidget {
               arguments: ProfileScreenArguments(userId: userId)),
           child: ListTile(
             leading: CircleAvatar(
+              backgroundColor: Theme.of(context).primaryColor,
               backgroundImage: avatar != null
                   ? CachedNetworkImageProvider(avatar)
                   : AssetImage("assets/images/user-placeholder.png"),

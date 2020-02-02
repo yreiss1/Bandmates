@@ -372,6 +372,8 @@ PODS:
     - Flutter
   - Protobuf (3.11.2)
   - Regift (1.5.0)
+  - screen (0.0.1):
+    - Flutter
   - searchable_dropdown (0.0.1):
     - Flutter
   - sqflite (0.0.1):
@@ -409,6 +411,7 @@ DEPENDENCIES:
   - location (from `.symlinks/plugins/location/ios`)
   - location_permissions (from `.symlinks/plugins/location_permissions/ios`)
   - path_provider (from `.symlinks/plugins/path_provider/ios`)
+  - screen (from `.symlinks/plugins/screen/ios`)
   - searchable_dropdown (from `.symlinks/plugins/searchable_dropdown/ios`)
   - sqflite (from `.symlinks/plugins/sqflite/ios`)
   - video_player (from `.symlinks/plugins/video_player/ios`)
@@ -494,6 +497,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/location_permissions/ios"
   path_provider:
     :path: ".symlinks/plugins/path_provider/ios"
+  screen:
+    :path: ".symlinks/plugins/screen/ios"
   searchable_dropdown:
     :path: ".symlinks/plugins/searchable_dropdown/ios"
   sqflite:
@@ -557,6 +562,7 @@ SPEC CHECKSUMS:
   path_provider: fb74bd0465e96b594bb3b5088ee4a4e7bb1f2a9d
   Protobuf: dd1aaea7140debfe4dd0683fb8ef208e527ae153
   Regift: d097afd401021f4f42b102ee125ceeb125a38caf
+  screen: abd91ca7bf3426e1cc3646d27e9b2358d6bf07b0
   searchable_dropdown: b3fd8c1d4c5704ff51b21f4c99a9f73b057269ee
   sqflite: 4001a31ff81d210346b500c55b17f4d6c7589dd0
   TOCropViewController: e9da34f484aedd4e5d5a8ab230ba217cfe16c729

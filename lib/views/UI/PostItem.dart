@@ -38,7 +38,7 @@ class PostItem extends StatelessWidget {
         backgroundImage: post.avatar != null
             ? CachedNetworkImageProvider(post.avatar)
             : AssetImage('assets/images/user-placeholder.png'),
-        backgroundColor: Colors.grey,
+        backgroundColor: Theme.of(context).primaryColor,
       ),
       title: GestureDetector(
         onTap: () => Navigator.pushNamed(context, ProfileScreen.routeName,

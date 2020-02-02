@@ -4,6 +4,7 @@ import 'package:bandmates/models/Genre.dart';
 import 'package:bandmates/views/HomeScreen.dart';
 import 'package:bandmates/views/MapScreen.dart';
 import 'package:bandmates/views/UI/Progress.dart';
+import 'package:device_calendar/device_calendar.dart' as calendar;
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
@@ -12,7 +13,6 @@ import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:geocoder/geocoder.dart' as geocoder;
 
-import 'package:intl/intl.dart';
 import 'package:bandmates/models/Event.dart';
 
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -25,6 +25,7 @@ import '../../Utils.dart';
 import '../../models/Event.dart';
 import 'package:uuid/uuid.dart';
 import '../../models/Instrument.dart';
+import 'package:f_datetimerangepicker/f_datetimerangepicker.dart';
 
 import 'dart:async';
 
@@ -44,9 +45,15 @@ class _EventUploadScreenState extends State<EventUploadScreen> {
   Geoflutterfire geo = Geoflutterfire();
   bool _isAudition = false;
   bool _isUploading = false;
+  DateTime _startTime;
+  DateTime _endTime;
   File _imageFile;
   int index = 0;
   String _eventID = Uuid().v4();
+
+  TextEditingController _textEditingController;
+  calendar.DeviceCalendarPlugin _deviceCalendarPlugin;
+  List<calendar.Calendar> _calendars;
 
   FocusNode _titleFocusNode = FocusNode();
   FocusNode _textFocusNode = FocusNode();
@@ -62,6 +69,9 @@ class _EventUploadScreenState extends State<EventUploadScreen> {
   void initState() {
     super.initState();
     _isVisible = true;
+    _textEditingController = TextEditingController();
+    _deviceCalendarPlugin = calendar.DeviceCalendarPlugin();
+    _calendars = List<calendar.Calendar>();
 
     KeyboardVisibilityNotification().addNewListener(
       onChange: (bool visible) {
@@ -147,6 +157,28 @@ class _EventUploadScreenState extends State<EventUploadScreen> {
         Marker(markerId: MarkerId("Event Location"), position: setLocation));
   }
 
+  _openDateTimePicker() {
+    DateTimeRangePicker(
+        initialStartTime: _startTime == null ? DateTime.now() : _startTime,
+        mode: DateTimeRangePickerMode.dateAndTime,
+        initialEndTime: _endTime == null
+            ? DateTime.now().add(Duration(hours: 2))
+            : _endTime,
+        onConfirm: (start, end) {
+          if (start.isAfter(end)) {
+            Utils.buildErrorDialog(
+                context, "Event end time must come after start time!");
+            return;
+          }
+          _startTime = start;
+          _endTime = end;
+          _textEditingController.text = Utils.formateDateTime(start, end);
+
+          print(start);
+          print(end);
+        }).showPicker(context);
+  }
+
   _handleSubmit() async {
     FocusScope.of(context).unfocus();
     setState(() {
@@ -162,7 +194,29 @@ class _EventUploadScreenState extends State<EventUploadScreen> {
       return;
     }
 
+    if (_endTime == null || _startTime == null) {
+      Utils.buildErrorDialog(
+          context, "You must set a start and end time to your event!");
+      setState(() {
+        _isUploading = false;
+      });
+      return;
+    }
+
     if (_fbKey.currentState.saveAndValidate() && _eventType != null) {
+      var permissionGranted = await _deviceCalendarPlugin.hasPermissions();
+      if (permissionGranted.isSuccess && !permissionGranted.data) {
+        permissionGranted = await _deviceCalendarPlugin.requestPermissions();
+        if (!permissionGranted.isSuccess || !permissionGranted.data) {
+          setState(() {
+            _isUploading = false;
+          });
+          return;
+        }
+      }
+      final calendarsResult = await _deviceCalendarPlugin.retrieveCalendars();
+      _calendars = calendarsResult?.data;
+
       if (_imageFile != null) {}
 
       List<dynamic> audition = _isAudition == false
@@ -188,10 +242,15 @@ class _EventUploadScreenState extends State<EventUploadScreen> {
         text: _fbKey.currentState.value['text'],
         location: GeoFirePoint(_coordinates.latitude, _coordinates.longitude),
         type: _eventType,
-        time: _fbKey.currentState.value['event-time'],
+        start: _startTime,
+        end: _endTime,
         audition: audition,
       );
       await Provider.of<EventProvider>(context).uploadEvent(event);
+
+      calendar.Event calEvent =
+          calendar.Event(_calendars[0].id, start: _startTime, end: _endTime);
+      await _deviceCalendarPlugin.createOrUpdateEvent(calEvent);
 
       setState(() {
         _isUploading = false;
@@ -241,10 +300,10 @@ class _EventUploadScreenState extends State<EventUploadScreen> {
                                 fontWeight: FontWeight.bold),
                           ),
                         ),
-                        SliverFillRemaining(
-                          fillOverscroll: false,
-                          hasScrollBody: false,
-                          child: _buildEventUploadCard(),
+                        SliverList(
+                          delegate: SliverChildListDelegate([
+                            _buildEventUploadCard(),
+                          ]),
                         ),
                         SliverPadding(
                           padding: EdgeInsets.all(60),
@@ -307,6 +366,7 @@ class _EventUploadScreenState extends State<EventUploadScreen> {
         child: Container(
           padding: EdgeInsets.all(25),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
               GestureDetector(
@@ -414,6 +474,7 @@ class _EventUploadScreenState extends State<EventUploadScreen> {
               FormBuilder(
                 key: _fbKey,
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
                     FormBuilderTextField(
                       attribute: 'title',
@@ -455,26 +516,26 @@ class _EventUploadScreenState extends State<EventUploadScreen> {
                     SizedBox(
                       height: 16,
                     ),
-                    FormBuilderDateTimePicker(
-                      focusNode: _timeFocusNode,
-                      onFieldSubmitted: (val) => {},
-                      attribute: "event-time",
-                      inputType: InputType.both,
-                      format: DateFormat.yMMMd().add_jm(),
-                      decoration: InputDecoration(
+                    TextField(
+                      controller: _textEditingController,
+                      onTap: () => _openDateTimePicker(),
+                      decoration: new InputDecoration(
                         focusColor: Theme.of(context).primaryColor,
-                        border: new OutlineInputBorder(
-                          borderRadius: const BorderRadius.all(
-                            const Radius.circular(15.0),
-                          ),
-                        ),
-                        hintText: "Event Date/Time",
+                        hintText: "Choose a Date and Time",
                       ),
-                      cursorColor: Theme.of(context).primaryColor,
-                      validators: [
-                        FormBuilderValidators.required(),
-                      ],
-                      textInputAction: TextInputAction.done,
+                    ),
+                    FlatButton.icon(
+                      label: Text("Choose a time and date"),
+                      icon: Icon(LineIcons.calendar),
+                      shape: RoundedRectangleBorder(
+                          side: BorderSide(
+                              color: Colors.white,
+                              width: 1,
+                              style: BorderStyle.solid),
+                          borderRadius: BorderRadius.circular(50)),
+                      color: Theme.of(context).primaryColor,
+                      textColor: Colors.white,
+                      onPressed: () => _openDateTimePicker(),
                     ),
                     SizedBox(
                       height: 16,

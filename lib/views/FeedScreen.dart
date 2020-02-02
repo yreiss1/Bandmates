@@ -2,9 +2,6 @@ import 'package:bandmates/Utils.dart';
 import 'package:bandmates/views/HomeScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:bandmates/views/UI/Progress.dart';
-import 'package:line_icons/line_icons.dart';
-import '../models/User.dart';
-import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import './UI/FeedItem.dart';
 
@@ -35,34 +32,39 @@ class FeedScreen extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.only(
               topLeft: Radius.circular(30), topRight: Radius.circular(30))),
-      height: MediaQuery.of(context).size.height,
+      height: MediaQuery.of(context).size.height * 0.8,
       width: double.infinity,
-      child: Container(
+      child: ClipRRect(
+        borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(30), topRight: Radius.circular(30)),
+        child: Container(
           child: StreamBuilder<QuerySnapshot>(
-        stream: getActivityFeed(context),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return circularProgress(context);
-          }
-          if (snapshot.hasError) {
-            Utils.buildErrorDialog(context,
-                "Cannot access activity feed items, please try again later!");
-            print("[FeedScreen] error: " + snapshot.error.toString());
-          }
+            stream: getActivityFeed(context),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return circularProgress(context);
+              }
+              if (snapshot.hasError) {
+                Utils.buildErrorDialog(context,
+                    "Cannot access activity feed items, please try again later!");
+                print("[FeedScreen] error: " + snapshot.error.toString());
+              }
 
-          if (snapshot.data.documents.length == 0) {
-            return Center(
-              child: Text("No activity feed items to display"),
-            );
-          }
+              if (snapshot.data.documents.length == 0) {
+                return Center(
+                  child: Text("No activity feed items to display"),
+                );
+              }
 
-          List<FeedItem> feedItems = [];
-          snapshot.data.documents
-              .forEach((doc) => feedItems.add(FeedItem.fromDocument(doc)));
+              List<FeedItem> feedItems = [];
+              snapshot.data.documents
+                  .forEach((doc) => feedItems.add(FeedItem.fromDocument(doc)));
 
-          return ListView(shrinkWrap: true, children: feedItems);
-        },
-      )),
+              return ListView(shrinkWrap: true, children: feedItems);
+            },
+          ),
+        ),
+      ),
     );
   }
 

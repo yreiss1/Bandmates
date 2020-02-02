@@ -227,6 +227,7 @@ class _FeedItemState extends State<FeedItem> {
               ),
             ),
             leading: CircleAvatar(
+              backgroundColor: Theme.of(context).primaryColor,
               radius: 26,
               backgroundImage: widget.avatar != null
                   ? CachedNetworkImageProvider(widget.avatar)

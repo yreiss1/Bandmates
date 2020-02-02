@@ -154,18 +154,15 @@ class LoginScreen extends StatelessWidget {
                                                       .value['email'],
                                                   password: _fbKey.currentState
                                                       .value['password']);
-
-                                      User user =
-                                          await Provider.of<UserProvider>(
-                                                  context)
-                                              .getUser(result.uid);
-                                      /*
-                                      Provider.of<UserProvider>(context)
-                                          .setCurrentUser(user);*/
                                     } on AuthException catch (error) {
+                                      print("[LoginScreen] error: " +
+                                          error.message);
                                       Utils.buildErrorDialog(
                                           context, error.message);
                                     } on Exception catch (error) {
+                                      print("[LoginScreen] error: " +
+                                          error.toString());
+
                                       Utils.buildErrorDialog(
                                           context, error.toString());
                                     }

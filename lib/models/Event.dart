@@ -1,9 +1,7 @@
 import 'dart:io';
 
-import 'package:bandmates/models/Attending.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -14,7 +12,8 @@ class Event {
   final String ownerId;
   final String eventId;
   final String name;
-  final DateTime time;
+  final DateTime start;
+  final DateTime end;
   final GeoFirePoint location;
   final String text;
   final int type;
@@ -25,7 +24,8 @@ class Event {
   final Map<dynamic, dynamic> attending;
 
   Event(
-      {this.time,
+      {this.start,
+      this.end,
       this.title,
       this.text,
       this.location,
@@ -59,7 +59,8 @@ class Event {
         text: doc.data['text'],
         type: doc.data['type'],
         genres: doc.data['genres'],
-        time: doc.data['time'].toDate(),
+        start: doc.data['start'].toDate(),
+        end: doc.data['end'] != null ? doc.data['end'].toDate() : null,
         eventId: doc.documentID,
         audition: doc.data['audition'],
         ownerId: doc.data['ownerId'],
@@ -89,7 +90,8 @@ class EventProvider with ChangeNotifier {
       "type": event.type,
       "text": event.text,
       "loc": event.location == null ? null : event.location.data,
-      "time": event.time,
+      "start": event.start,
+      "end": event.end,
       "audtion": event.audition,
       "photoUrl": event.photoUrl,
       "attending": {}
@@ -113,10 +115,18 @@ class EventProvider with ChangeNotifier {
     return downloadUrl;
   }
 
-  Stream<List<DocumentSnapshot>> getClosest(GeoFirePoint center) {
+  Stream<List<DocumentSnapshot>> getClosest(
+      GeoFirePoint center, int radius, int type) {
     return geo
-        .collection(collectionRef: eventsRef)
-        .within(center: center, radius: 100, field: 'loc', strictMode: true);
+        .collection(
+            collectionRef: type == null
+                ? eventsRef
+                : eventsRef.where('type', isEqualTo: type))
+        .within(
+            center: center,
+            radius: radius.toDouble(),
+            field: 'loc',
+            strictMode: true);
   }
 
   Stream<QuerySnapshot> getAttending(String eventId) {
@@ -132,29 +142,29 @@ class EventProvider with ChangeNotifier {
       String avatar,
       String ownerId,
       String mediaUrl) async {
-    Firestore.instance.runTransaction((Transaction transaction) async {
-      transaction.set(
-          attendingRef
-              .document(eventId)
-              .collection("attending")
-              .document(userId),
-          {'name': username, 'avatar': avatar, 'loc': location.data});
-      transaction.set(
-          Firestore.instance
-              .collection("feed")
-              .document(ownerId)
-              .collection('feedItems')
-              .document(),
-          {
-            'avatar': avatar,
-            'type': 2,
-            'time': DateTime.now(),
-            'user': username,
-            'userId': userId,
-            'eventId': eventId,
-            'text': eventTitle,
-            'mediaUrl': mediaUrl
-          });
-    });
+    WriteBatch batch = Firestore.instance.batch();
+
+    batch.setData(
+        attendingRef.document(eventId).collection("attending").document(userId),
+        {'name': username, 'avatar': avatar, 'loc': location.data});
+
+    batch.setData(
+        Firestore.instance
+            .collection("feed")
+            .document(ownerId)
+            .collection('feedItems')
+            .document(),
+        {
+          'avatar': avatar,
+          'type': 2,
+          'time': DateTime.now(),
+          'user': username,
+          'userId': userId,
+          'eventId': eventId,
+          'text': eventTitle,
+          'mediaUrl': mediaUrl
+        });
+
+    batch.commit().catchError((error) => print(error.toString()));
   }
 }

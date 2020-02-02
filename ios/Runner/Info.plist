@@ -32,6 +32,8 @@
 	<string>LaunchScreen</string>
 	<key>io.flutter.embedded_views_preview</key>
 	<string>YES</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>Add or remove Bandmate events from your calendar</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 	<key>NSAllowsArbitraryLoads</key>

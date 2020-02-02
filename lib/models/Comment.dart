@@ -31,6 +31,7 @@ class Comment extends StatelessWidget {
         ListTile(
           title: Text(text),
           leading: CircleAvatar(
+            backgroundColor: Theme.of(context).primaryColor,
             backgroundImage: avatar != null
                 ? CachedNetworkImageProvider(avatar)
                 : AssetImage("assets/images/user-placeholder.png"),

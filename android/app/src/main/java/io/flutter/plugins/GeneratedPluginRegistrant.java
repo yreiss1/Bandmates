@@ -3,6 +3,7 @@ package io.flutter.plugins;
 import io.flutter.plugin.common.PluginRegistry;
 import xyz.luan.audioplayers.AudioplayersPlugin;
 import io.flutter.plugins.firebase.cloudfirestore.CloudFirestorePlugin;
+import com.builttoroam.devicecalendar.DeviceCalendarPlugin;
 import com.mr.flutter.plugin.filepicker.FilePickerPlugin;
 import io.flutter.plugins.firebaseauth.FirebaseAuthPlugin;
 import io.flutter.plugins.firebase.core.FirebaseCorePlugin;
@@ -21,6 +22,7 @@ import io.flutter.plugins.imagepicker.ImagePickerPlugin;
 import com.lyokone.location.LocationPlugin;
 import com.baseflow.location_permissions.LocationPermissionsPlugin;
 import io.flutter.plugins.pathprovider.PathProviderPlugin;
+import flutter.plugins.screen.screen.ScreenPlugin;
 import com.bobbystenly.searchable_dropdown.SearchableDropdownPlugin;
 import com.tekartik.sqflite.SqflitePlugin;
 import io.flutter.plugins.videoplayer.VideoPlayerPlugin;
@@ -36,6 +38,7 @@ public final class GeneratedPluginRegistrant {
     }
     AudioplayersPlugin.registerWith(registry.registrarFor("xyz.luan.audioplayers.AudioplayersPlugin"));
     CloudFirestorePlugin.registerWith(registry.registrarFor("io.flutter.plugins.firebase.cloudfirestore.CloudFirestorePlugin"));
+    DeviceCalendarPlugin.registerWith(registry.registrarFor("com.builttoroam.devicecalendar.DeviceCalendarPlugin"));
     FilePickerPlugin.registerWith(registry.registrarFor("com.mr.flutter.plugin.filepicker.FilePickerPlugin"));
     FirebaseAuthPlugin.registerWith(registry.registrarFor("io.flutter.plugins.firebaseauth.FirebaseAuthPlugin"));
     FirebaseCorePlugin.registerWith(registry.registrarFor("io.flutter.plugins.firebase.core.FirebaseCorePlugin"));
@@ -54,6 +57,7 @@ public final class GeneratedPluginRegistrant {
     LocationPlugin.registerWith(registry.registrarFor("com.lyokone.location.LocationPlugin"));
     LocationPermissionsPlugin.registerWith(registry.registrarFor("com.baseflow.location_permissions.LocationPermissionsPlugin"));
     PathProviderPlugin.registerWith(registry.registrarFor("io.flutter.plugins.pathprovider.PathProviderPlugin"));
+    ScreenPlugin.registerWith(registry.registrarFor("flutter.plugins.screen.screen.ScreenPlugin"));
     SearchableDropdownPlugin.registerWith(registry.registrarFor("com.bobbystenly.searchable_dropdown.SearchableDropdownPlugin"));
     SqflitePlugin.registerWith(registry.registrarFor("com.tekartik.sqflite.SqflitePlugin"));
     VideoPlayerPlugin.registerWith(registry.registrarFor("io.flutter.plugins.videoplayer.VideoPlayerPlugin"));
