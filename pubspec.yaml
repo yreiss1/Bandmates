@@ -72,6 +72,7 @@ dependencies:
   chewie:
   f_datetimerangepicker:
   device_calendar:
+  map_launcher:
 
 flutter_icons:
   image_path: "assets/launcher_icons/launcher_icon.png"

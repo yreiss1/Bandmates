@@ -1,3 +1,4 @@
+import 'package:badges/badges.dart';
 import 'package:bandmates/models/ProfileScreenArguments.dart';
 import 'package:bandmates/views/FeedScreen.dart';
 import 'package:bandmates/views/ProfileScreen.dart';
@@ -186,7 +187,18 @@ class _HomeScreenState extends State<HomeScreen>
                     activeColor: Theme.of(context).primaryColor,
                     items: [
                       BottomNavigationBarItem(icon: Icon(Icons.today)),
-                      BottomNavigationBarItem(icon: Icon(LineIcons.comments_o)),
+                      BottomNavigationBarItem(
+                        icon: Badge(
+                          showBadge: pageIndex != 1,
+                          toAnimate: false,
+                          child: Icon(LineIcons.comments_o),
+                          badgeColor: Theme.of(context).primaryColor,
+                          badgeContent: Text(
+                            "2",
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ),
                       BottomNavigationBarItem(
                           icon: Icon(
                         InstrumentIcons.hand,

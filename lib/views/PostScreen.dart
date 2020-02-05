@@ -26,17 +26,31 @@ class PostScreen extends StatefulWidget {
 
 class _PostScreenState extends State<PostScreen> {
   AudioPlayer _audioPlayer;
-  bool _isAudioPlaying = true;
+  bool _hasMore = true;
+  DocumentSnapshot _lastDocument;
+  bool _isLoading = false;
+  List<Comment> _commentsList = [];
 
   VideoPlayerController _videoPlayerController;
   ChewieController _chewieController;
   ChewieAudioController _chewieAudioController;
-  bool _isVideoPlaying = true;
+  ScrollController _scrollController;
 
   TextEditingController _textEditingController = new TextEditingController();
 
   @override
   void initState() {
+    _scrollController = ScrollController();
+    _scrollController.addListener(() {
+      double maxScroll = _scrollController.position.maxScrollExtent;
+      double currentScroll = _scrollController.position.pixels;
+      double delta = MediaQuery.of(context).size.height * 0.2;
+
+      if (maxScroll - currentScroll <= delta) {
+        _getComments();
+      }
+    });
+    _getComments();
     super.initState();
     switch (widget.post.type) {
       case 0:
@@ -51,15 +65,14 @@ class _PostScreenState extends State<PostScreen> {
             autoPlay: true,
             showControls: true,
             looping: true);
-        // _audioPlayer = AudioPlayer();
-        // WidgetsBinding.instance.addPostFrameCallback(
-        //     (_) => _audioPlayer.play(widget.post.mediaUrl));
+
         break;
       case 2:
         _videoPlayerController =
             VideoPlayerController.network(widget.post.mediaUrl);
 
         _chewieController = ChewieController(
+            aspectRatio: 3 / 2,
             videoPlayerController: _videoPlayerController,
             autoPlay: true,
             looping: true,
@@ -69,13 +82,54 @@ class _PostScreenState extends State<PostScreen> {
             allowFullScreen: true,
             allowMuting: true,
             showControlsOnInitialize: true);
-        // WidgetsBinding.instance
-        //     .addPostFrameCallback((_) => _videoPlayerController.play());
+
         break;
       default:
         Utils.buildErrorDialog(
             context, "Could not build load post, please try again later");
     }
+  }
+
+  _getComments() async {
+    if (_isLoading) {
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    QuerySnapshot snapshot;
+    if (_lastDocument == null) {
+      snapshot = await Firestore.instance
+          .collection("comments")
+          .document(widget.post.postId)
+          .collection("comments")
+          .orderBy("time", descending: false)
+          .limit(20)
+          .getDocuments();
+    } else {
+      snapshot = await Firestore.instance
+          .collection("comments")
+          .document(widget.post.postId)
+          .collection("comments")
+          .startAfterDocument(_lastDocument)
+          .orderBy("time", descending: false)
+          .limit(20)
+          .getDocuments();
+    }
+
+    if (!snapshot.documents.isEmpty) {
+      _lastDocument = snapshot.documents[snapshot.documents.length - 1];
+    }
+
+    List<Comment> results = [];
+    snapshot.documents.forEach((doc) => results.add(Comment.fromDocument(doc)));
+
+    setState(() {
+      _commentsList.addAll(results);
+      _isLoading = false;
+    });
   }
 
   @override
@@ -141,44 +195,54 @@ class _PostScreenState extends State<PostScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        bottom: false,
         top: false,
         child: Stack(
           children: <Widget>[
             _buildHeader(),
-            CustomScrollView(
-              slivers: <Widget>[
-                widget.post.ownerId == currentUser.uid
-                    ? SliverAppBar(
-                        title: Text(
-                          widget.post.title,
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        expandedHeight: 50,
-                        actions: <Widget>[
-                          IconButton(
-                            icon: Icon(
-                              LineIcons.ellipsis_h,
-                              size: 32,
-                              color: Colors.white,
-                            ),
-                            onPressed: () => print("Edit post"),
+            RefreshIndicator(
+              onRefresh: () => _getComments(),
+              color: Theme.of(context).primaryColor,
+              child: CustomScrollView(
+                controller: _scrollController,
+                slivers: <Widget>[
+                  widget.post.ownerId == currentUser.uid
+                      ? SliverAppBar(
+                          title: Text(
+                            widget.post.title,
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ],
-                      )
-                    : SliverAppBar(
-                        expandedHeight: 50,
-                        title: Text(widget.post.title),
-                      ),
-                SliverList(
-                  delegate: SliverChildListDelegate(
-                      [_buildPostArea(context), _buildCommentArea()]),
-                ),
-                SliverPadding(
-                  padding: EdgeInsets.all(60),
-                )
-              ],
+                          expandedHeight: 50,
+                          actions: <Widget>[
+                            IconButton(
+                              icon: Icon(
+                                LineIcons.ellipsis_h,
+                                size: 32,
+                                color: Colors.white,
+                              ),
+                              onPressed: () => print("Edit post"),
+                            ),
+                          ],
+                        )
+                      : SliverAppBar(
+                          expandedHeight: 50,
+                          title: Text(widget.post.title),
+                        ),
+                  // SliverList(
+                  //   delegate: SliverChildListDelegate(
+                  //       [_buildPostArea(context), _buildCommentArea()]),
+                  // ),
+                  SliverToBoxAdapter(
+                    child: _buildPostArea(context),
+                  ),
+                  SliverToBoxAdapter(
+                    child: _buildCommentArea(),
+                  ),
+                  SliverPadding(
+                    padding: EdgeInsets.all(60),
+                  )
+                ],
+              ),
             ),
             Positioned(child: _buildTextField(), bottom: 0)
           ],
@@ -368,6 +432,7 @@ class _PostScreenState extends State<PostScreen> {
         child: Container(
           padding: EdgeInsets.all(15),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(
@@ -377,37 +442,24 @@ class _PostScreenState extends State<PostScreen> {
               SizedBox(
                 height: 8,
               ),
-              StreamBuilder(
-                  stream: Firestore.instance
-                      .collection("comments")
-                      .document(widget.post.postId)
-                      .collection("comments")
-                      .orderBy("time", descending: false)
-                      .limit(20)
-                      .snapshots(),
-                  //TODO: Add limit to number of comments pulled
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData) {
-                      return circularProgress(context);
-                    }
-
-                    if (snapshot.data.documents.isEmpty) {
-                      return Center(
-                        child: Text("No Comments"),
-                      );
-                    }
-
-                    List<Comment> comments = [];
-
-                    snapshot.data.documents.forEach((doc) {
-                      comments.add(Comment.fromDocument(doc));
-                    });
-
-                    return Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: comments,
-                    );
-                  }),
+              _commentsList.isEmpty
+                  ? Padding(
+                      padding: EdgeInsets.all(15),
+                      child: Center(
+                        child: Text("Be the first to leave a comment"),
+                      ),
+                    )
+                  : Flexible(
+                      fit: FlexFit.loose,
+                      child: ListView.builder(
+                        physics: NeverScrollableScrollPhysics(),
+                        shrinkWrap: true,
+                        itemCount: _commentsList.length,
+                        itemBuilder: (context, index) {
+                          return _commentsList[index];
+                        },
+                      ),
+                    )
             ],
           ),
         ),

@@ -11,35 +11,175 @@ import 'package:like_button/like_button.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:geocoder/geocoder.dart' as geocoder;
 import 'package:provider/provider.dart';
+import 'package:map_launcher/map_launcher.dart' as mapLauncher;
 
 import '../Utils.dart';
 
-class EventScreen extends StatelessWidget {
+class EventScreen extends StatefulWidget {
   final Event event;
   EventScreen({this.event});
+
+  @override
+  _EventScreenState createState() => _EventScreenState();
+}
+
+class _EventScreenState extends State<EventScreen> {
+  DocumentSnapshot _lastDocument;
+
+  bool _isLoading = false;
+  List<Attending> _attendingList = [];
+  ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+
+    _scrollController.addListener(() {
+      double maxScroll = _scrollController.position.maxScrollExtent;
+      double currentScroll = _scrollController.position.pixels;
+      double delta = MediaQuery.of(context).size.height * 0.2;
+
+      if (maxScroll - currentScroll <= delta) {
+        _getAttendees();
+      }
+    });
+
+    _getAttendees();
+  }
+
+  _getAttendees() async {
+    if (_isLoading) {
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    QuerySnapshot snapshot;
+    if (_lastDocument == null) {
+      snapshot = await Firestore.instance
+          .collection("attending")
+          .document(widget.event.eventId)
+          .collection("attending")
+          .orderBy('loc.geohash')
+          .limit(20)
+          .getDocuments();
+    } else {
+      snapshot = await Firestore.instance
+          .collection("attending")
+          .document(widget.event.eventId)
+          .collection("attending")
+          .startAfterDocument(_lastDocument)
+          .orderBy('loc.geohash')
+          .limit(20)
+          .getDocuments();
+    }
+
+    if (!snapshot.documents.isEmpty) {
+      _lastDocument = snapshot.documents[snapshot.documents.length - 1];
+    }
+    List<Attending> results = [];
+    snapshot.documents
+        .forEach((doc) => results.add(Attending.fromDocument(doc)));
+
+    if (_attendingList.any((attendee) => attendee.userId == currentUser.uid)) {
+      results.removeWhere((attendee) => attendee.userId == currentUser.uid);
+    }
+
+    setState(() {
+      _attendingList.addAll(results);
+      // _attendingList.sort((a1, a2) {
+      //   return a1.location.distance(lat: a2.location.latitude, lng: a2.location.longitude).round();
+      // });
+      _isLoading = false;
+    });
+  }
 
   Future<bool> _onAttendingButtonTapped(bool isLiked) async {
     if (!isLiked) {
       await Firestore.instance
           .collection("attending")
-          .document(event.eventId)
+          .document(widget.event.eventId)
           .collection('attending')
           .document(currentUser.uid)
           .setData({
         'name': currentUser.name,
         'avatar': currentUser.photoUrl,
         'loc': currentUser.location.data
+      }).then((result) {
+        setState(() {
+          _attendingList.add(Attending(
+            avatar: currentUser.photoUrl,
+            userId: currentUser.uid,
+            username: currentUser.name,
+            location: currentUser.location,
+          ));
+        });
+      }).catchError((error) {
+        Utils.buildErrorDialog(context, "Could not attend this event");
       });
     } else {
       await Firestore.instance
           .collection("attending")
-          .document(event.eventId)
+          .document(widget.event.eventId)
           .collection('attending')
           .document(currentUser.uid)
-          .delete();
+          .delete()
+          .then((result) {
+        setState(() {
+          _attendingList
+              .removeWhere((attendee) => attendee.userId == currentUser.uid);
+        });
+      }).catchError((error) {
+        Utils.buildErrorDialog(
+            context, "Unable to connect to database, please try again later!");
+      });
     }
 
     return !isLiked;
+  }
+
+  _openMapSheet() async {
+    try {
+      final title = widget.event.title;
+      final description = widget.event.text;
+      final coords = mapLauncher.Coords(
+          widget.event.location.latitude, widget.event.location.longitude);
+      final availableMaps = await mapLauncher.MapLauncher.installedMaps;
+
+      showModalBottomSheet(
+          context: context,
+          builder: (BuildContext context) {
+            return SafeArea(
+              child: SingleChildScrollView(
+                child: Container(
+                  child: Wrap(
+                    children: <Widget>[
+                      for (var map in availableMaps)
+                        ListTile(
+                          onTap: () => map.showMarker(
+                            coords: coords,
+                            title: title,
+                            description: description,
+                          ),
+                          title: Text(map.mapName),
+                          leading: Image(
+                            image: map.icon,
+                            height: 30.0,
+                            width: 30.0,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          });
+    } catch (e) {
+      print(e);
+    }
   }
 
   @override
@@ -51,25 +191,31 @@ class EventScreen extends StatelessWidget {
         child: Stack(
           children: <Widget>[
             _buildHeader(context),
-            CustomScrollView(
-              slivers: <Widget>[
-                SliverAppBar(
-                  forceElevated: false,
-                  actions: <Widget>[],
-                  title: Text(
-                    event.title,
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold),
+            RefreshIndicator(
+              color: Theme.of(context).primaryColor,
+              onRefresh: () => _getAttendees(),
+              child: CustomScrollView(
+                slivers: <Widget>[
+                  SliverAppBar(
+                    forceElevated: false,
+                    actions: <Widget>[],
+                    title: Text(
+                      widget.event.title,
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold),
+                    ),
                   ),
-                ),
-                SliverList(
-                  delegate: SliverChildListDelegate(
-                      [_buildEventCard(context), _buildAttendingList(context)]),
-                ),
-              ],
-            )
+                  SliverToBoxAdapter(
+                    child: _buildEventCard(context),
+                  ),
+                  SliverToBoxAdapter(
+                    child: _buildAttendingList(context),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -102,50 +248,41 @@ class EventScreen extends StatelessWidget {
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: <
                   Widget>[
-            event.photoUrl != null
-                ? Card(
-                    elevation: 5,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
-                    child: Container(
-                      height: 180,
-                      width: double.infinity,
-                      child: customNetworkImage(event.photoUrl),
+            Container(
+              height: 200,
+              child: ClipRRect(
+                borderRadius: BorderRadius.all(Radius.circular(20)),
+                child: Card(
+                  elevation: 5,
+                  child: GoogleMap(
+                    onTap: (_) => _openMapSheet(),
+                    scrollGesturesEnabled: false,
+                    zoomGesturesEnabled: false,
+                    myLocationButtonEnabled: false,
+                    buildingsEnabled: false,
+                    compassEnabled: false,
+                    mapToolbarEnabled: false,
+                    mapType: MapType.normal,
+                    initialCameraPosition: CameraPosition(
+                      target: LatLng(widget.event.location.coords.latitude,
+                          widget.event.location.coords.longitude),
+                      zoom: 12.0000,
                     ),
-                  )
-                : Container(
-                    height: 200,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.all(Radius.circular(20)),
-                      child: Card(
-                        elevation: 5,
-                        child: GoogleMap(
-                          scrollGesturesEnabled: true,
-                          zoomGesturesEnabled: true,
-                          myLocationButtonEnabled: false,
-                          buildingsEnabled: false,
-                          compassEnabled: false,
-                          mapToolbarEnabled: false,
-                          mapType: MapType.normal,
-                          initialCameraPosition: CameraPosition(
-                            target: LatLng(event.location.coords.latitude,
-                                event.location.coords.longitude),
-                            zoom: 12.0000,
+                    markers: {
+                      Marker(
+                          infoWindow: InfoWindow(
+                            title: widget.event.title,
+                            /*snippet: event.type.toString()*/
                           ),
-                          markers: {
-                            Marker(
-                                infoWindow: InfoWindow(
-                                  title: event.title,
-                                  /*snippet: event.type.toString()*/
-                                ),
-                                markerId: MarkerId(event.title),
-                                position: LatLng(event.location.coords.latitude,
-                                    event.location.coords.longitude))
-                          },
-                        ),
-                      ),
-                    ),
+                          markerId: MarkerId(widget.event.title),
+                          position: LatLng(
+                              widget.event.location.coords.latitude,
+                              widget.event.location.coords.longitude))
+                    },
                   ),
+                ),
+              ),
+            ),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 6),
               child: Column(
@@ -164,8 +301,8 @@ class EventScreen extends StatelessWidget {
                                   "AIzaSyBVY9wwL0hnzcoEN7HTKh41o92PzHZe0wI")
                               .findAddressesFromCoordinates(
                                   geocoder.Coordinates(
-                                      event.location.coords.latitude,
-                                      event.location.coords.longitude)),
+                                      widget.event.location.coords.latitude,
+                                      widget.event.location.coords.longitude)),
                           builder: (context, snapshot) {
                             if (!snapshot.hasData) {
                               return Text("Loading...");
@@ -197,7 +334,7 @@ class EventScreen extends StatelessWidget {
                     children: <Widget>[
                       Flexible(
                         child: Text(
-                          event.title,
+                          widget.event.title,
                           overflow: TextOverflow.visible,
                           style: TextStyle(
                               fontWeight: FontWeight.bold, fontSize: 20),
@@ -209,7 +346,7 @@ class EventScreen extends StatelessWidget {
                             border: Border.all(
                                 color: Theme.of(context).primaryColor)),
                         child: Text(
-                          Utils.deserializeEventType(event.type),
+                          Utils.deserializeEventType(widget.event.type),
                           style: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: Theme.of(context).primaryColor),
@@ -221,19 +358,19 @@ class EventScreen extends StatelessWidget {
                     height: 2,
                   ),
                   Text(
-                    "Hosted By: " + event.name,
+                    "Hosted By: " + widget.event.name,
                     style: TextStyle(fontStyle: FontStyle.italic),
                   ),
                   SizedBox(
                     height: 16,
                   ),
                   Text(
-                    event.text,
+                    widget.event.text,
                     style: TextStyle(fontWeight: FontWeight.w500, fontSize: 16),
                   ),
-                  if (event.audition != null &&
-                      event.audition.isNotEmpty &&
-                      event.type == 1)
+                  if (widget.event.audition != null &&
+                      widget.event.audition.isNotEmpty &&
+                      widget.event.type == 1)
                     Column(
                       children: <Widget>[
                         Text(
@@ -246,7 +383,7 @@ class EventScreen extends StatelessWidget {
                             runSpacing: 0,
                             spacing: 4,
                             children: [
-                              for (String audition in event.audition)
+                              for (String audition in widget.event.audition)
                                 Chip(
                                   label: Text(audition),
                                 )
@@ -255,7 +392,8 @@ class EventScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                  if (event.genres != null && event.genres.isNotEmpty)
+                  if (widget.event.genres != null &&
+                      widget.event.genres.isNotEmpty)
                     Column(
                       children: <Widget>[
                         Divider(),
@@ -269,7 +407,7 @@ class EventScreen extends StatelessWidget {
                             runSpacing: 0,
                             spacing: 4,
                             children: [
-                              for (String genre in event.genres)
+                              for (String genre in widget.event.genres)
                                 Chip(
                                   label: Text(genre),
                                 )
@@ -291,11 +429,12 @@ class EventScreen extends StatelessWidget {
                                 color: Theme.of(context).accentColor)),
                         child: FittedBox(
                           child: Text(
-                            event.end == null
+                            widget.event.end == null
                                 ? DateFormat.jm()
                                     .add_yMMMd()
-                                    .format(event.start)
-                                : Utils.formateDateTime(event.start, event.end),
+                                    .format(widget.event.start)
+                                : Utils.formateDateTime(
+                                    widget.event.start, widget.event.end),
                             style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: Theme.of(context).accentColor),
@@ -304,7 +443,7 @@ class EventScreen extends StatelessWidget {
                       ),
                       StreamBuilder<QuerySnapshot>(
                         stream: Provider.of<EventProvider>(context)
-                            .getAttending(event.eventId),
+                            .getAttending(widget.event.eventId),
                         builder: (context, snapshot) {
                           if (snapshot.hasData && !snapshot.hasError) {
                             return LikeButton(
@@ -377,6 +516,7 @@ class EventScreen extends StatelessWidget {
         child: Container(
           padding: EdgeInsets.all(15),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(
@@ -386,39 +526,24 @@ class EventScreen extends StatelessWidget {
               SizedBox(
                 height: 8,
               ),
-              StreamBuilder<QuerySnapshot>(
-                stream: Provider.of<EventProvider>(context)
-                    .getAttending(event.eventId),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
-                    return Center(
-                      child: circularProgress(context),
-                    );
-                  }
-
-                  if (snapshot.hasError) {
-                    Utils.buildErrorDialog(context,
-                        "Cannot obtain attending list, please try again soon!");
-                  }
-
-                  if (snapshot.data.documents.isEmpty) {
-                    return Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(16),
-                        child: Text("No attendees currently"),
+              _attendingList.isEmpty
+                  ? Padding(
+                      padding: EdgeInsets.all(15),
+                      child: Center(
+                        child: Text("No one attending yet, be the first!"),
                       ),
-                    );
-                  }
-                  List<Attending> attending = [];
-
-                  snapshot.data.documents.forEach((doc) {
-                    attending.add(Attending.fromDocument(doc));
-                  });
-
-                  return Column(
-                      mainAxisSize: MainAxisSize.min, children: attending);
-                },
-              ),
+                    )
+                  : Flexible(
+                      fit: FlexFit.loose,
+                      child: ListView.builder(
+                        physics: NeverScrollableScrollPhysics(),
+                        shrinkWrap: true,
+                        itemCount: _attendingList.length,
+                        itemBuilder: (context, index) {
+                          return _attendingList[index];
+                        },
+                      ),
+                    ),
             ],
           ),
         ),

@@ -1,6 +1,8 @@
 import 'package:bandmates/Utils.dart';
 import 'package:bandmates/views/HomeScreen.dart';
 import 'package:bandmates/views/UI/Progress.dart';
+import 'package:chewie/chewie.dart';
+import 'package:chewie_audio/chewie_audio.dart';
 import 'package:flutter/material.dart';
 import 'package:bandmates/models/Post.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
@@ -46,13 +48,14 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
   Geoflutterfire geo = Geoflutterfire();
   Location location = new Location();
   VideoPlayerController _controller;
-  Future<void> _initializeVideoPlayerFuture;
-  AudioPlayer _audioPlayer;
-  bool _isAudioPlaying;
+
   String _postID = Uuid().v4();
 
   final _textFocusNode = FocusNode();
   final _titleFocusNode = FocusNode();
+
+  ChewieController _chewieController;
+  ChewieAudioController _chewieAudioController;
 
   bool _isUploading = false;
 
@@ -86,42 +89,15 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
       _controller.dispose();
     }
 
-    if (_audioPlayer != null) {
-      _audioPlayer.dispose();
+    if (_chewieAudioController != null) {
+      _chewieAudioController.dispose();
     }
+
+    if (_chewieController != null) {
+      _chewieController.dispose();
+    }
+
     super.dispose();
-  }
-
-  Future<void> _playVideo() async {
-    if (mounted) {
-      //await _disposeVideoController();
-
-      setState(() {
-        _controller.play();
-      });
-    }
-  }
-
-  _pauseVideo() async {
-    setState(() {
-      _controller.pause();
-    });
-  }
-
-  _playAudio() async {
-    if (mounted) {
-      setState(() {
-        _audioPlayer.resume();
-        _isAudioPlaying = true;
-      });
-    }
-  }
-
-  _pauseAudio() async {
-    setState(() {
-      _audioPlayer.pause();
-      _isAudioPlaying = false;
-    });
   }
 
   Future<void> _disposeVideoController() async {
@@ -165,7 +141,7 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
       }
 
       if (_uploadFile != null && _fileType == 1) {
-        await _compressVideo();
+        //await _compressVideo();
       }
 
       if (_uploadFile != null && _fileType == 2) {
@@ -173,6 +149,17 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
       }
 
       User userObject = currentUser;
+
+      int size = await _uploadFile.length();
+      print("[PostUploadScreen] size: " + size.toString());
+      if (size > 10000000) {
+        setState(() {
+          _isUploading = false;
+        });
+        Utils.buildErrorDialog(
+            context, "File is too big, please upload something under 10 MB");
+        return;
+      }
       try {
         String downloadURL =
             await Provider.of<PostProvider>(context, listen: false)
@@ -221,16 +208,21 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
 
   /// Remove image
   void _clear() {
-    if (_audioPlayer != null) {
-      _audioPlayer.stop();
-      _audioPlayer.release();
-      _audioPlayer.dispose();
+    if (_fileType == 1) {
+      _chewieAudioController.pause();
+      _chewieAudioController.dispose();
+      _chewieAudioController = null;
     }
 
-    if (_controller.value.isPlaying) {
-      _controller.pause();
+    if (_fileType == 2) {
+      _chewieController.pause();
+      _chewieController.dispose();
+      _chewieController = null;
     }
-    setState(() => _uploadFile = null);
+    setState(() {
+      _fileType = null;
+      _uploadFile = null;
+    });
   }
 
   @override
@@ -313,9 +305,33 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
         return _buildImageFilePreview();
       } else if (_fileType == 1) {
         //Audio
+        _controller = VideoPlayerController.file(_uploadFile);
+        _chewieAudioController = ChewieAudioController(
+            videoPlayerController: _controller,
+            allowMuting: true,
+            autoPlay: true,
+            errorBuilder: (context, error) {
+              return Text("Could not play audio: " + error);
+            },
+            showControls: true,
+            looping: true);
         return _buildAudioFilePreview();
       } else if (_fileType == 2) {
         //Video
+
+        _controller = VideoPlayerController.file(_uploadFile);
+
+        _chewieController = ChewieController(
+            aspectRatio: 3 / 2,
+            videoPlayerController: _controller,
+            autoPlay: true,
+            looping: true,
+            errorBuilder: (context, error) {
+              return Text("Cannot play video: " + error);
+            },
+            allowFullScreen: true,
+            allowMuting: true,
+            showControlsOnInitialize: true);
         return _buildVideoFilePreview();
       }
     }
@@ -394,23 +410,6 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
                               _fileType = 1;
                               _uploadFile = file;
                             });
-
-                            _audioPlayer = AudioPlayer();
-                            await _audioPlayer.setReleaseMode(ReleaseMode
-                                .STOP); // set release mode so that it never releases
-
-                            int result = await _audioPlayer.play(file.path,
-                                isLocal: true);
-
-                            if (result != 1) {
-                              //TODO: Display error
-                              Utils.buildErrorDialog(
-                                  context, "Could not play audio file");
-                            }
-
-                            setState(() {
-                              _isAudioPlaying = true;
-                            });
                           }
                         },
                       ),
@@ -442,17 +441,9 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
 
                           if (file != null) {
                             setState(() {
-                              _controller = VideoPlayerController.file(file);
                               _fileType = 2;
                               _uploadFile = file;
                             });
-
-                            _initializeVideoPlayerFuture =
-                                _controller.initialize();
-                            _controller.setVolume(1.0);
-                            _controller.setLooping(true);
-
-                            await _controller.play();
                           }
                         },
                       ),
@@ -502,7 +493,7 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
               Container(
-                height: 300,
+                height: 330,
                 child: _uploadFile == null
                     ? _buildFileSelection()
                     : _buildFilePreview(),
@@ -618,15 +609,8 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
         AspectRatio(
           aspectRatio: 3 / 2,
           child: Container(
-            child: FutureBuilder(
-              future: _initializeVideoPlayerFuture,
-              builder: (BuildContext context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.done) {
-                  return VideoPlayer(_controller);
-                } else {
-                  return circularProgress(context);
-                }
-              },
+            child: Chewie(
+              controller: _chewieController,
             ),
           ),
         ),
@@ -636,33 +620,6 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
-            _controller.value.isPlaying == false
-                ? FlatButton.icon(
-                    shape: RoundedRectangleBorder(
-                        side: BorderSide(
-                            color: Colors.white,
-                            width: 1,
-                            style: BorderStyle.solid),
-                        borderRadius: BorderRadius.circular(50)),
-                    color: Theme.of(context).primaryColor,
-                    icon: Icon(LineIcons.play),
-                    textColor: Colors.white,
-                    label: Text("Play"),
-                    onPressed: () => _playVideo(),
-                  )
-                : FlatButton.icon(
-                    shape: RoundedRectangleBorder(
-                        side: BorderSide(
-                            color: Colors.white,
-                            width: 1,
-                            style: BorderStyle.solid),
-                        borderRadius: BorderRadius.circular(50)),
-                    color: Theme.of(context).primaryColor,
-                    icon: Icon(LineIcons.pause),
-                    textColor: Colors.white,
-                    label: Text("Pause"),
-                    onPressed: () => _pauseVideo(),
-                  ),
             FlatButton.icon(
               icon: Icon(LineIcons.refresh),
               shape: RoundedRectangleBorder(
@@ -695,39 +652,15 @@ class _PostUploadScreenState extends State<PostUploadScreen> {
             ),
           ),
         ),
+        ChewieAudio(
+          controller: _chewieAudioController,
+        ),
         SizedBox(
           height: 8,
         ),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
-            _isAudioPlaying == false
-                ? FlatButton.icon(
-                    shape: RoundedRectangleBorder(
-                        side: BorderSide(
-                            color: Colors.white,
-                            width: 1,
-                            style: BorderStyle.solid),
-                        borderRadius: BorderRadius.circular(50)),
-                    color: Theme.of(context).primaryColor,
-                    icon: Icon(LineIcons.play),
-                    textColor: Colors.white,
-                    label: Text("Play"),
-                    onPressed: () => _playAudio(),
-                  )
-                : FlatButton.icon(
-                    shape: RoundedRectangleBorder(
-                        side: BorderSide(
-                            color: Colors.white,
-                            width: 1,
-                            style: BorderStyle.solid),
-                        borderRadius: BorderRadius.circular(50)),
-                    color: Theme.of(context).primaryColor,
-                    icon: Icon(LineIcons.pause),
-                    textColor: Colors.white,
-                    label: Text("Pause"),
-                    onPressed: () => _pauseAudio(),
-                  ),
             FlatButton.icon(
               icon: Icon(LineIcons.refresh),
               shape: RoundedRectangleBorder(

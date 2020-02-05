@@ -4,11 +4,14 @@ import 'dart:io';
 import 'package:bandmates/models/Genre.dart';
 import 'package:bandmates/models/Influence.dart';
 import 'package:bandmates/models/Instrument.dart';
+import 'package:bandmates/models/Post.dart';
 import 'package:bandmates/models/User.dart';
 import 'package:bandmates/views/HomeScreen.dart';
 import 'package:bandmates/views/MapScreen.dart';
+import 'package:bandmates/views/PostScreen.dart';
 import 'package:bandmates/views/UI/Progress.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
@@ -21,8 +24,10 @@ import 'package:line_icons/line_icons.dart';
 import 'package:geocoder/geocoder.dart' as geocoder;
 import 'package:location/location.dart';
 import 'package:badges/badges.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:modal_progress_hud/modal_progress_hud.dart';
+import 'package:video_thumbnail/video_thumbnail.dart';
 
 import '../Utils.dart';
 
@@ -49,6 +54,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   List<Influence> _selectedInfluences;
   Map<String, dynamic> _userData;
   Geoflutterfire geo = Geoflutterfire();
+  String _tempDir;
 
   bool _isLoading = false;
 
@@ -58,6 +64,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   void initState() {
     super.initState();
+    getTemporaryDirectory().then((d) => _tempDir = d.path);
+
     _userData = {
       'name': currentUser.name,
       'bio': currentUser.bio,
@@ -234,10 +242,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                 fontWeight: FontWeight.bold),
                           ),
                         ),
-                        SliverFillRemaining(
-                          fillOverscroll: false,
-                          hasScrollBody: false,
-                          child: _buildProfileEditCard(),
+                        SliverList(
+                          delegate: SliverChildListDelegate(
+                              [_buildProfileEditCard(), _buildPostCard()]),
                         ),
                         SliverPadding(
                           padding: EdgeInsets.all(60),
@@ -723,6 +730,247 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         _userData['influences'] =
             _selectedInfluences.map((influence) => influence.name).toList();
       },
+    );
+  }
+
+  _buildPostCard() {
+    return Container(
+      constraints: BoxConstraints(minHeight: 100),
+      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      child: Card(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        elevation: 10,
+        child: Container(
+          padding: EdgeInsets.all(10),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              currentUser.uid == widget.user.uid
+                  ? Text(
+                      "Your Posts",
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                    )
+                  : Text(
+                      widget.user.name + "'s Posts",
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                    ),
+              Divider(),
+              FutureBuilder<List<DocumentSnapshot>>(
+                future: Provider.of<PostProvider>(context)
+                    .getUsersPosts(widget.user.uid),
+                builder: (BuildContext context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return circularProgress(context);
+                  }
+
+                  if (snapshot.data.length == 0) {
+                    return Center(
+                      child: Text("No posts to display"),
+                    );
+                  }
+
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Text(
+                          "Unable to get users posts, please try again later"),
+                    );
+                  }
+
+                  return GridView.builder(
+                    shrinkWrap: true,
+                    physics: NeverScrollableScrollPhysics(),
+                    itemCount: snapshot.data.length,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        crossAxisSpacing: 10,
+                        mainAxisSpacing: 10),
+                    itemBuilder: (BuildContext context, int index) {
+                      Post post = Post.fromDocument(snapshot.data[index]);
+                      if (post.type == 0) {
+                        return GestureDetector(
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PostScreen(post: post),
+                            ),
+                          ),
+                          child: Badge(
+                            position: BadgePosition.topRight(),
+                            elevation: 5,
+                            badgeContent: GestureDetector(
+                              onTap: () async {
+                                bool delete = await showDialog<bool>(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return AlertDialog(
+                                        title: new Text("Delete Post?"),
+                                        content: new Text(
+                                            "This will permanently delete this post"),
+                                        actions: <Widget>[
+                                          // usually buttons at the bottom of the dialog
+                                          FlatButton(
+                                            child: new Text("Close"),
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                            },
+                                          ),
+                                        ],
+                                      );
+                                    });
+                              },
+                              child: Icon(
+                                Icons.clear,
+                                size: 20,
+                              ),
+                            ),
+                            badgeColor: Colors.grey[400],
+                            child: GridTile(
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  image: DecorationImage(
+                                      fit: BoxFit.cover,
+                                      image: NetworkImage(post
+                                          .mediaUrl) // customNetworkImage(post.mediaUrl),
+                                      ),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(10)),
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      } else if (post.type == 1) {
+                        return Badge(
+                          elevation: 5,
+                          badgeContent: GestureDetector(
+                            onTap: () async {
+                              bool delete = await showDialog<bool>(
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    return AlertDialog(
+                                      title: new Text("Delete Post?"),
+                                      content: new Text(
+                                          "This will permanently delete this post"),
+                                      actions: <Widget>[
+                                        // usually buttons at the bottom of the dialog
+                                        FlatButton(
+                                          child: new Text("Close"),
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                          },
+                                        ),
+                                      ],
+                                    );
+                                  });
+                            },
+                            child: Icon(
+                              Icons.clear,
+                              size: 20,
+                            ),
+                          ),
+                          badgeColor: Colors.grey[400],
+                          child: GestureDetector(
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => PostScreen(post: post),
+                              ),
+                            ),
+                            child: GridTile(
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  image: DecorationImage(
+                                    fit: BoxFit.cover,
+                                    image: AssetImage(
+                                        'assets/images/audio-placeholder.png'),
+                                  ),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(10)),
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      } else if (post.type == 2) {
+                        return FutureBuilder(
+                          future: VideoThumbnail.thumbnailFile(
+                            video: post.mediaUrl,
+                            thumbnailPath: _tempDir,
+                            imageFormat: ImageFormat.JPEG,
+                            maxHeight: 100,
+                            maxWidth: 100,
+                            quality: 75,
+                          ),
+                          builder: (BuildContext context, snapshot) {
+                            if (!snapshot.hasData) {
+                              return circularProgress(context);
+                            }
+
+                            if (snapshot.hasError) {
+                              return Container();
+                            }
+
+                            return Badge(
+                              elevation: 5,
+                              badgeContent: GestureDetector(
+                                onTap: () async {
+                                  bool delete = await showDialog<bool>(
+                                      context: context,
+                                      builder: (BuildContext context) {
+                                        return AlertDialog(
+                                          title: new Text("Delete Post?"),
+                                          content: new Text(
+                                              "This will permanently delete this post"),
+                                          actions: <Widget>[
+                                            // usually buttons at the bottom of the dialog
+                                            FlatButton(
+                                              child: new Text("Close"),
+                                              onPressed: () {
+                                                Navigator.of(context).pop();
+                                              },
+                                            ),
+                                          ],
+                                        );
+                                      });
+                                },
+                                child: Icon(Icons.clear, size: 20),
+                              ),
+                              badgeColor: Colors.grey[400],
+                              child: GestureDetector(
+                                onTap: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        PostScreen(post: post),
+                                  ),
+                                ),
+                                child: GridTile(
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      image: DecorationImage(
+                                        fit: BoxFit.cover,
+                                        image: FileImage(File(snapshot.data)),
+                                      ),
+                                      borderRadius:
+                                          BorderRadius.all(Radius.circular(10)),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      }
+                    },
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

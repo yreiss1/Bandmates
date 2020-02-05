@@ -1,7 +1,11 @@
+import 'package:bandmates/models/ProfileScreenArguments.dart';
+import 'package:bandmates/views/ProfileScreen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import './User.dart';
 
 class Comment extends StatelessWidget {
   final String user;
@@ -21,6 +25,12 @@ class Comment extends StatelessWidget {
         time: doc['time'].toDate());
   }
 
+  showProfile(context) async {
+    User user = await Provider.of<UserProvider>(context).getUser(uid);
+    Navigator.pushNamed(context, ProfileScreen.routeName,
+        arguments: ProfileScreenArguments(userId: user.uid));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -29,7 +39,19 @@ class Comment extends StatelessWidget {
           height: 0,
         ),
         ListTile(
-          title: Text(text),
+          title: GestureDetector(
+            onTap: () => showProfile(context),
+            child: RichText(
+              textWidthBasis: TextWidthBasis.parent,
+              text: TextSpan(style: TextStyle(color: Colors.black), children: [
+                TextSpan(
+                  text: user,
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                TextSpan(text: ' $text')
+              ]),
+            ),
+          ),
           leading: CircleAvatar(
             backgroundColor: Theme.of(context).primaryColor,
             backgroundImage: avatar != null
