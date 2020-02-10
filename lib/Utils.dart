@@ -152,6 +152,23 @@ class Utils {
     }
   }
 
+  static String deserializeClassifiedType(int value) {
+    switch (value) {
+      case 0:
+        return "Selling";
+        break;
+      case 1:
+        return "Buying";
+        break;
+      case 2:
+        return "Looking For";
+        break;
+
+      default:
+        return "Unkown";
+    }
+  }
+
   static IconData valueToIcon(String value) {
     switch (value) {
       case "Guitar":

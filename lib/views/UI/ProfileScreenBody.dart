@@ -10,6 +10,7 @@ import 'package:bandmates/views/UI/Progress.dart';
 import 'package:bandmates/views/UploadScreens/EventUploadScreen.dart';
 import 'package:bandmates/views/UploadScreens/PostUploadScreen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:bandmates/views/HomeScreen.dart' as prefix0;
 import 'package:bandmates/views/UI/PostItem.dart';
@@ -30,6 +31,9 @@ import 'package:pk_skeleton/pk_skeleton.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geocoder/geocoder.dart' as geocoder;
 import '../../Utils.dart';
+import 'package:app_settings/app_settings.dart';
+
+enum ConfirmAction { CANCEL, ACCEPT }
 
 class ProfileScreenBody extends StatefulWidget {
   final User user;
@@ -110,8 +114,40 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody>
                   size: 28,
                 ),
                 title: Text("Change Password"),
-                onTap: () {
-                  Navigator.pop(context);
+                onTap: () async {
+                  ConfirmAction action = await showDialog<ConfirmAction>(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: Text("Reset Password?"),
+                          content: Text(
+                              "You will recieve an email with a link to reset your password."),
+                          actions: <Widget>[
+                            FlatButton(
+                              child: Text("Cancel"),
+                              onPressed: () {
+                                Navigator.of(context).pop(ConfirmAction.CANCEL);
+                              },
+                            ),
+                            FlatButton(
+                              child: const Text('Send Link'),
+                              onPressed: () {
+                                Navigator.of(context).pop(ConfirmAction.ACCEPT);
+                              },
+                            )
+                          ],
+                        );
+                      });
+
+                  if (action == ConfirmAction.ACCEPT) {
+                    FirebaseAuth.instance.sendPasswordResetEmail(
+                        email: Provider.of<FirebaseUser>(context).email);
+                    Scaffold.of(context).showSnackBar(SnackBar(
+                      duration: Duration(seconds: 3),
+                      content: Text("A password reset link sent to your email"),
+                    ));
+                    Navigator.pop(context);
+                  }
                 },
               ),
               ListTile(
@@ -121,7 +157,9 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody>
                   size: 28,
                 ),
                 title: Text("Settings"),
-                onTap: () {
+                onTap: () async {
+                  await AppSettings.openAppSettings();
+
                   Navigator.pop(context);
                 },
               ),
@@ -169,15 +207,6 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody>
                             onPressed: () =>
                                 _scaffoldKey.currentState.openEndDrawer(),
                           ),
-                          // IconButton(
-                          //   icon: Icon(
-                          //     LineIcons.sign_out,
-                          //     size: 32,
-                          //     color: Colors.white,
-                          //   ),
-                          //   onPressed: () =>
-                          //       Provider.of<AuthService>(context).signOut(),
-                          // ),
                         ],
                       )
                     : SliverAppBar(

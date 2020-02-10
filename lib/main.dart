@@ -1,6 +1,5 @@
-import 'package:bandmates/views/EventsSearchScreen.dart';
-import 'package:bandmates/views/MapScreen.dart';
-import 'package:bandmates/views/MusiciansSearchScreen.dart';
+import 'package:bandmates/views/SearchScreens/EventsSearchScreen.dart';
+import 'package:bandmates/views/SearchScreens/MusiciansSearchScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:bandmates/models/Chat.dart';
 import 'package:bandmates/models/Follow.dart';

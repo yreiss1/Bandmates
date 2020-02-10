@@ -141,7 +141,6 @@ class _MapScreenState extends State<MapScreen> {
             scrollGesturesEnabled: true,
             zoomGesturesEnabled: true,
             myLocationButtonEnabled: true,
-            minMaxZoomPreference: MinMaxZoomPreference(12, 12),
             mapType: MapType.normal,
             initialCameraPosition: _initialCamera,
             compassEnabled: true,

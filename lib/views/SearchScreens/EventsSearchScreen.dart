@@ -11,8 +11,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_icons/flutter_icons.dart';
 import 'package:geoflutterfire/geoflutterfire.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:line_icons/line_icons.dart';
+
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
@@ -127,58 +126,59 @@ class _EventsSearchScreenState extends State<EventsSearchScreen> {
   @override
   Widget build(BuildContext context) {
     return Container(
-        color: Theme.of(context).primaryColor,
-        child: SafeArea(
-          bottom: false,
-          child: Scaffold(
-            backgroundColor: Colors.white,
-            body: Container(
-              width: double.infinity,
-              child: Stack(
-                children: <Widget>[
-                  ListView(
-                      physics: NeverScrollableScrollPhysics(),
-                      children: <Widget>[
-                        Stack(
-                          children: <Widget>[
-                            SingleChildScrollView(
-                              child: Column(
-                                children: <Widget>[
-                                  buildSearchHeader(context),
-                                  buildMainArea(context),
-                                ],
-                              ),
+      color: Theme.of(context).primaryColor,
+      child: SafeArea(
+        bottom: false,
+        child: Scaffold(
+          backgroundColor: Colors.white,
+          body: Container(
+            width: double.infinity,
+            child: Stack(
+              children: <Widget>[
+                ListView(
+                    physics: NeverScrollableScrollPhysics(),
+                    children: <Widget>[
+                      Stack(
+                        children: <Widget>[
+                          SingleChildScrollView(
+                            child: Column(
+                              children: <Widget>[
+                                buildSearchHeader(context),
+                                buildMainArea(context),
+                              ],
                             ),
-                            Positioned(
-                              left: MediaQuery.of(context).size.width * 0.05,
-                              top: 140,
-                              child: Container(
-                                height: 60,
-                                width: MediaQuery.of(context).size.width * 0.9,
-                                child: Chip(
-                                  backgroundColor: Colors.white,
-                                  elevation: 10,
-                                  label: TextField(
-                                    onChanged: (value) {
-                                      _onChangeHandler(value);
-                                    },
-                                    decoration: InputDecoration(
-                                        border: InputBorder.none,
-                                        icon: Icon(Icons.search),
-                                        hintText: "Search by name"),
-                                    keyboardType: TextInputType.text,
-                                  ),
+                          ),
+                          Positioned(
+                            left: MediaQuery.of(context).size.width * 0.05,
+                            top: 140,
+                            child: Container(
+                              height: 60,
+                              width: MediaQuery.of(context).size.width * 0.9,
+                              child: Chip(
+                                backgroundColor: Colors.white,
+                                elevation: 10,
+                                label: TextField(
+                                  onChanged: (value) {
+                                    _onChangeHandler(value);
+                                  },
+                                  decoration: InputDecoration(
+                                      border: InputBorder.none,
+                                      icon: Icon(Icons.search),
+                                      hintText: "Search by name"),
+                                  keyboardType: TextInputType.text,
                                 ),
                               ),
                             ),
-                          ],
-                        ),
-                      ]),
-                ],
-              ),
+                          ),
+                        ],
+                      ),
+                    ]),
+              ],
             ),
           ),
-        ));
+        ),
+      ),
+    );
   }
 
   buildSearchHeader(context) {

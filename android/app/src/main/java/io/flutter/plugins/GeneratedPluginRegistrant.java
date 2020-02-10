@@ -1,6 +1,7 @@
 package io.flutter.plugins;
 
 import io.flutter.plugin.common.PluginRegistry;
+import com.example.appsettings.AppSettingsPlugin;
 import xyz.luan.audioplayers.AudioplayersPlugin;
 import io.flutter.plugins.firebase.cloudfirestore.CloudFirestorePlugin;
 import com.builttoroam.devicecalendar.DeviceCalendarPlugin;
@@ -25,6 +26,7 @@ import com.alexmiller.map_launcher.MapLauncherPlugin;
 import io.flutter.plugins.pathprovider.PathProviderPlugin;
 import flutter.plugins.screen.screen.ScreenPlugin;
 import com.bobbystenly.searchable_dropdown.SearchableDropdownPlugin;
+import io.flutter.plugins.sharedpreferences.SharedPreferencesPlugin;
 import com.tekartik.sqflite.SqflitePlugin;
 import io.flutter.plugins.videoplayer.VideoPlayerPlugin;
 import xyz.justsoft.video_thumbnail.VideoThumbnailPlugin;
@@ -37,6 +39,7 @@ public final class GeneratedPluginRegistrant {
     if (alreadyRegisteredWith(registry)) {
       return;
     }
+    AppSettingsPlugin.registerWith(registry.registrarFor("com.example.appsettings.AppSettingsPlugin"));
     AudioplayersPlugin.registerWith(registry.registrarFor("xyz.luan.audioplayers.AudioplayersPlugin"));
     CloudFirestorePlugin.registerWith(registry.registrarFor("io.flutter.plugins.firebase.cloudfirestore.CloudFirestorePlugin"));
     DeviceCalendarPlugin.registerWith(registry.registrarFor("com.builttoroam.devicecalendar.DeviceCalendarPlugin"));
@@ -61,6 +64,7 @@ public final class GeneratedPluginRegistrant {
     PathProviderPlugin.registerWith(registry.registrarFor("io.flutter.plugins.pathprovider.PathProviderPlugin"));
     ScreenPlugin.registerWith(registry.registrarFor("flutter.plugins.screen.screen.ScreenPlugin"));
     SearchableDropdownPlugin.registerWith(registry.registrarFor("com.bobbystenly.searchable_dropdown.SearchableDropdownPlugin"));
+    SharedPreferencesPlugin.registerWith(registry.registrarFor("io.flutter.plugins.sharedpreferences.SharedPreferencesPlugin"));
     SqflitePlugin.registerWith(registry.registrarFor("com.tekartik.sqflite.SqflitePlugin"));
     VideoPlayerPlugin.registerWith(registry.registrarFor("io.flutter.plugins.videoplayer.VideoPlayerPlugin"));
     VideoThumbnailPlugin.registerWith(registry.registrarFor("xyz.justsoft.video_thumbnail.VideoThumbnailPlugin"));

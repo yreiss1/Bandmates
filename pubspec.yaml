@@ -73,6 +73,8 @@ dependencies:
   f_datetimerangepicker:
   device_calendar:
   map_launcher:
+  shared_preferences:
+  app_settings:
 
 flutter_icons:
   image_path: "assets/launcher_icons/launcher_icon.png"

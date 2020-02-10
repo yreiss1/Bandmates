@@ -14,11 +14,14 @@ import './UploadScreen.dart';
 import './TimelineScreen.dart';
 import './UI/Progress.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../models/User.dart';
 import 'dart:async';
 import 'dart:io';
 
 User currentUser;
+String locationString;
 
 class HomeScreen extends StatefulWidget {
   static const routeName = '/home-screen';
@@ -52,6 +55,7 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void initState() {
     super.initState();
+    _getLocationString();
     _getUserStream = getStream(widget.uid);
 
     _pageController = PageController(keepPage: false);
@@ -62,6 +66,11 @@ class _HomeScreenState extends State<HomeScreen>
     _uploadScreen = UploadScreen();
     _feedScreen = FeedScreen();
     _profileScreen = ProfileScreen(ProfileScreenArguments(userId: widget.uid));
+  }
+
+  _getLocationString() async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    locationString = sharedPreferences.getString("location");
   }
 
   Stream<DocumentSnapshot> getStream(String uid) {

@@ -171,7 +171,7 @@ class SignupScreen extends StatelessWidget {
                                   if (_fbKey.currentState.saveAndValidate()) {
                                     print(_fbKey.currentState.value);
                                     try {
-                                      FirebaseUser result =
+                                      FirebaseUser user =
                                           await Provider.of<AuthService>(
                                                   context,
                                                   listen: false)
@@ -182,7 +182,10 @@ class SignupScreen extends StatelessWidget {
                                                       .value["password"],
                                                   context: context);
 
-                                      print(result);
+                                      await user.sendEmailVerification();
+
+                                      Utils.buildErrorDialog(context,
+                                          "A verification email was sent to your email, please verify your email to continue!");
                                     } on AuthException catch (error) {
                                       Utils.buildErrorDialog(
                                           context, error.message);
