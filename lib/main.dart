@@ -1,5 +1,7 @@
+import 'package:bandmates/views/SearchScreens/ClassifiedSearchScreen.dart';
 import 'package:bandmates/views/SearchScreens/EventsSearchScreen.dart';
 import 'package:bandmates/views/SearchScreens/MusiciansSearchScreen.dart';
+import 'package:bandmates/views/UploadScreens/ClassifiedUploadScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:bandmates/models/Chat.dart';
 import 'package:bandmates/models/Follow.dart';
@@ -17,6 +19,7 @@ import './models/Event.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import './AuthService.dart';
+import 'models/Classified.dart';
 
 void main() => runApp(
       MyApp(),
@@ -60,6 +63,11 @@ class MyApp extends StatelessWidget {
           create: (_) {
             return FollowProvider();
           },
+        ),
+        ChangeNotifierProvider<ClassifiedProvider>(
+          create: (_) {
+            return ClassifiedProvider();
+          },
         )
       ],
       child: MaterialApp(
@@ -84,6 +92,8 @@ class MyApp extends StatelessWidget {
           EventUploadScreen.routeName: (ctx) => EventUploadScreen(),
           MusiciansSearchScreen.routeName: (ctx) => MusiciansSearchScreen(),
           EventsSearchScreen.routeName: (ctx) => EventsSearchScreen(),
+          ClassifiedUploadScreen.routeName: (ctx) => ClassifiedUploadScreen(),
+          ClassifiedSearchScreen.routeName: (ctx) => ClassifiedSearchScreen(),
         },
       ),
     );

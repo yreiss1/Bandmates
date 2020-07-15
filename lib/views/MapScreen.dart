@@ -173,6 +173,9 @@ class _MapScreenState extends State<MapScreen> {
                 placeholder: "Set Your Home Location",
                 onSelected: (place) async {
                   final geolocation = await place.geolocation;
+                  if (!mounted) {
+                    return;
+                  }
                   setState(() {
                     if (widget.isEvent) {
                       markers.clear();

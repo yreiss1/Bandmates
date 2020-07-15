@@ -1,7 +1,9 @@
 import 'package:bandmates/views/SearchScreens/EventsSearchScreen.dart';
 import 'package:bandmates/views/SearchScreens/MusiciansSearchScreen.dart';
+import 'package:bandmates/views/UploadScreens/ClassifiedUploadScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:bandmates/views/UploadScreens/PostUploadScreen.dart';
+import 'SearchScreens/ClassifiedSearchScreen.dart';
 import 'UploadScreens/EventUploadScreen.dart';
 
 class UploadScreen extends StatelessWidget {
@@ -16,6 +18,8 @@ class UploadScreen extends StatelessWidget {
 }
 
 buildMainArea(context) {
+  double _borderRadius = 20;
+
   double buttonSize = MediaQuery.of(context).size.height * 0.17;
   return Container(
     decoration: BoxDecoration(
@@ -27,12 +31,13 @@ buildMainArea(context) {
     child: ClipRRect(
       borderRadius: BorderRadius.only(
           topLeft: Radius.circular(30), topRight: Radius.circular(30)),
-      child: ListView(
-        padding: EdgeInsets.only(left: 8, right: 8),
+      child: GridView(
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 4,
+        ),
+        padding: EdgeInsets.only(left: 8, right: 8, top: 16),
         children: <Widget>[
-          SizedBox(
-            height: 16,
-          ),
           GestureDetector(
             onTap: () =>
                 Navigator.pushNamed(context, PostUploadScreen.routeName),
@@ -42,7 +47,7 @@ buildMainArea(context) {
               child: Card(
                 elevation: 10,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
+                    borderRadius: BorderRadius.circular(_borderRadius)),
                 child: Container(
                   child: const Padding(
                     padding: EdgeInsets.all(10),
@@ -56,7 +61,7 @@ buildMainArea(context) {
                     ),
                   ),
                   decoration: new BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(_borderRadius),
                       image: new DecorationImage(
                           fit: BoxFit.cover,
                           colorFilter: new ColorFilter.mode(
@@ -77,7 +82,7 @@ buildMainArea(context) {
               child: Card(
                 elevation: 10,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
+                    borderRadius: BorderRadius.circular(_borderRadius)),
                 child: Container(
                   child: const Padding(
                     padding: EdgeInsets.all(10),
@@ -91,7 +96,7 @@ buildMainArea(context) {
                     ),
                   ),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(_borderRadius),
                     image: DecorationImage(
                       fit: BoxFit.cover,
                       colorFilter: ColorFilter.mode(
@@ -114,7 +119,7 @@ buildMainArea(context) {
               child: Card(
                 elevation: 10,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
+                    borderRadius: BorderRadius.circular(_borderRadius)),
                 child: Container(
                   child: const Padding(
                     padding: EdgeInsets.all(10),
@@ -128,7 +133,7 @@ buildMainArea(context) {
                     ),
                   ),
                   decoration: new BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(_borderRadius),
                       image: new DecorationImage(
                           fit: BoxFit.cover,
                           colorFilter: new ColorFilter.mode(
@@ -151,7 +156,7 @@ buildMainArea(context) {
               child: Card(
                 elevation: 10,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
+                    borderRadius: BorderRadius.circular(_borderRadius)),
                 child: Container(
                   child: const Padding(
                     padding: EdgeInsets.all(10),
@@ -165,13 +170,86 @@ buildMainArea(context) {
                     ),
                   ),
                   decoration: new BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(_borderRadius),
                       image: new DecorationImage(
                           fit: BoxFit.cover,
                           colorFilter: new ColorFilter.mode(
                               Colors.black.withOpacity(0.6),
                               BlendMode.hardLight),
                           image: const AssetImage('assets/images/singer.jpg'))),
+                ),
+              ),
+            ),
+          ),
+          GestureDetector(
+            onTap: () => Navigator.pushNamed(
+              context,
+              ClassifiedUploadScreen.routeName,
+            ),
+            child: Container(
+              height: buttonSize,
+              margin: EdgeInsets.only(bottom: 5),
+              child: Card(
+                elevation: 10,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(_borderRadius)),
+                child: Container(
+                  child: const Padding(
+                    padding: EdgeInsets.all(10),
+                    child: const Text(
+                      "Upload Classified",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  decoration: new BoxDecoration(
+                      borderRadius: BorderRadius.circular(_borderRadius),
+                      image: new DecorationImage(
+                          fit: BoxFit.cover,
+                          colorFilter: new ColorFilter.mode(
+                              Colors.black.withOpacity(0.6),
+                              BlendMode.hardLight),
+                          image:
+                              const AssetImage('assets/images/ad-wall.jpg'))),
+                ),
+              ),
+            ),
+          ),
+          GestureDetector(
+            onTap: () => Navigator.pushNamed(
+              context,
+              ClassifiedSearchScreen.routeName,
+            ),
+            child: Container(
+              height: buttonSize,
+              margin: EdgeInsets.only(bottom: 5),
+              child: Card(
+                elevation: 10,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(_borderRadius)),
+                child: Container(
+                  child: const Padding(
+                    padding: EdgeInsets.all(10),
+                    child: const Text(
+                      "Search Classified",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  decoration: new BoxDecoration(
+                      borderRadius: BorderRadius.circular(_borderRadius),
+                      image: new DecorationImage(
+                          fit: BoxFit.cover,
+                          colorFilter: new ColorFilter.mode(
+                              Colors.black.withOpacity(0.6),
+                              BlendMode.hardLight),
+                          image: const AssetImage('assets/images/ads.jpg'))),
                 ),
               ),
             ),

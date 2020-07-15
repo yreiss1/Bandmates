@@ -16,6 +16,8 @@ import 'package:provider/provider.dart';
 import '../HomeScreen.dart';
 
 class ClassifiedSearchScreen extends StatefulWidget {
+  static const routeName = '/classified-search-screen';
+
   @override
   _ClassifiedSearchScreenState createState() => _ClassifiedSearchScreenState();
 }

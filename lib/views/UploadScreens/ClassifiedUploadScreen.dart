@@ -16,6 +16,8 @@ import 'package:geocoder/geocoder.dart' as geocoder;
 import '../HomeScreen.dart';
 
 class ClassifiedUploadScreen extends StatefulWidget {
+  static const routeName = '/classified-upload-screen';
+
   @override
   _ClassifiedUploadScreenState createState() => _ClassifiedUploadScreenState();
 }

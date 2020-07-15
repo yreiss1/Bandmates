@@ -88,7 +88,7 @@ class TimelineScreen extends StatelessWidget {
                     print("[TimelineScreen] Ran FutureBuilder");
                     SharedPreferences.getInstance().then((prefs) {
                       prefs.setString(
-                        "location",
+                        currentUser.uid + "-location",
                         snapshot.data.first.locality +
                             ", " +
                             snapshot.data.first.adminArea,
@@ -173,7 +173,7 @@ class TimelineScreen extends StatelessWidget {
   buildEventsList(context) {
     return Container(
       width: double.infinity,
-      height: 500,
+      height: 400,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
@@ -321,36 +321,31 @@ class TimelineScreen extends StatelessWidget {
                                                     ),
                                                   ),
                                                 )
-                                              :
-                                              /* GoogleMap(
-                                        scrollGesturesEnabled: false,
-                                        zoomGesturesEnabled: false,
-                                        myLocationButtonEnabled: false,
-                                        mapType: MapType.normal,
-                                        initialCameraPosition: CameraPosition(
-                                          target: LatLng(
-                                              event
-                                                  .location
-                                                  .latitude,
-                                              event
-                                                  .location
-                                                  .longitude),
-                                          zoom: 14.0000,
-                                        ),
-                                        markers: {
-                                          Marker(
-                                              markerId:
-                                                  MarkerId("Event Location"),
-                                              position: LatLng(
-                                                  event
-                                                      .location
-                                                      .latitude,
-                                                  event
-                                                      .location
-                                                      .longitude))
-                                        },
-                                      ), */
-                                              Container(),
+                                              : GoogleMap(
+                                                  scrollGesturesEnabled: false,
+                                                  zoomGesturesEnabled: false,
+                                                  myLocationButtonEnabled:
+                                                      false,
+                                                  mapType: MapType.normal,
+                                                  initialCameraPosition:
+                                                      CameraPosition(
+                                                    target: LatLng(
+                                                        event.location.latitude,
+                                                        event.location
+                                                            .longitude),
+                                                    zoom: 14.0000,
+                                                  ),
+                                                  markers: {
+                                                    Marker(
+                                                        markerId: MarkerId(
+                                                            "Event Location"),
+                                                        position: LatLng(
+                                                            event.location
+                                                                .latitude,
+                                                            event.location
+                                                                .longitude))
+                                                  },
+                                                ),
                                         ),
                                       ),
                                     ),
@@ -419,7 +414,7 @@ class TimelineScreen extends StatelessWidget {
   buildClassifiedList(context) {
     return Container(
       width: double.infinity,
-      height: 500,
+      height: 250,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
@@ -569,36 +564,32 @@ class TimelineScreen extends StatelessWidget {
                                                     ),
                                                   ),
                                                 )
-                                              :
-                                              /* GoogleMap(
-                                        scrollGesturesEnabled: false,
-                                        zoomGesturesEnabled: false,
-                                        myLocationButtonEnabled: false,
-                                        mapType: MapType.normal,
-                                        initialCameraPosition: CameraPosition(
-                                          target: LatLng(
-                                              event
-                                                  .location
-                                                  .latitude,
-                                              event
-                                                  .location
-                                                  .longitude),
-                                          zoom: 14.0000,
-                                        ),
-                                        markers: {
-                                          Marker(
-                                              markerId:
-                                                  MarkerId("Event Location"),
-                                              position: LatLng(
-                                                  event
-                                                      .location
-                                                      .latitude,
-                                                  event
-                                                      .location
-                                                      .longitude))
-                                        },
-                                      ), */
-                                              Container(),
+                                              : GoogleMap(
+                                                  scrollGesturesEnabled: false,
+                                                  zoomGesturesEnabled: false,
+                                                  myLocationButtonEnabled:
+                                                      false,
+                                                  mapType: MapType.normal,
+                                                  initialCameraPosition:
+                                                      CameraPosition(
+                                                    target: LatLng(
+                                                        classified
+                                                            .location.latitude,
+                                                        classified.location
+                                                            .longitude),
+                                                    zoom: 14.0000,
+                                                  ),
+                                                  markers: {
+                                                    Marker(
+                                                        markerId: MarkerId(
+                                                            "Advertisers Location"),
+                                                        position: LatLng(
+                                                            classified.location
+                                                                .latitude,
+                                                            classified.location
+                                                                .longitude))
+                                                  },
+                                                ),
                                         ),
                                       ),
                                     ),
@@ -842,6 +833,7 @@ class TimelineScreen extends StatelessWidget {
             topLeft: Radius.circular(30), topRight: Radius.circular(30)),
         child: ListView(
           children: <Widget>[
+            buildClassifiedList(context),
             buildUsersList(context),
             buildEventsList(context),
           ],

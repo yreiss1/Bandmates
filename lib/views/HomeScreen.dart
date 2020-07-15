@@ -70,7 +70,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   _getLocationString() async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    locationString = sharedPreferences.getString("location");
+    locationString = sharedPreferences.getString(currentUser.uid + "-location");
   }
 
   Stream<DocumentSnapshot> getStream(String uid) {

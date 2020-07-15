@@ -449,8 +449,7 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody>
                     borderRadius: BorderRadius.all(Radius.circular(20)),
                     child: Card(
                       elevation: 5,
-                      child:
-                          /* GoogleMap(
+                      child: GoogleMap(
                         scrollGesturesEnabled: false,
                         zoomGesturesEnabled: false,
                         myLocationButtonEnabled: false,
@@ -471,8 +470,7 @@ class _ProfileScreenBodyState extends State<ProfileScreenBody>
                               center: LatLng(widget.user.location.latitude,
                                   widget.user.location.longitude))
                         },
-                      ), */
-                          Container(),
+                      ),
                     ),
                   ),
                 ),

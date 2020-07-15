@@ -109,6 +109,8 @@ flutter:
     - assets/images/silhouette.jpg
     - assets/images/musicians.jpg
     - assets/images/singer.jpg
+    - assets/images/ads.jpg
+    - assets/images/ad-wall.jpg
     - assets/images/audio-placeholder.png
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.

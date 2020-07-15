@@ -411,51 +411,52 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       borderRadius: BorderRadius.all(Radius.circular(20)),
                       child: Card(
                         elevation: 5,
-                        // child: Container(), GoogleMap(
-                        //   onTap: (latlng) => Navigator.push(
-                        //     context,
-                        //     MaterialPageRoute(
-                        //       builder: (context) => MapScreen(
-                        //         isEvent: false,
-                        //         paramFunction: changeLocation,
-                        //         currentLocation: _coordinates == null
-                        //             ? LatLng(_currentLocation.latitude,
-                        //                 _currentLocation.longitude)
-                        //             : LatLng(_coordinates.latitude,
-                        //                 _coordinates.longitude),
-                        //       ),
-                        //     ),
-                        //   ),
-                        //   scrollGesturesEnabled: false,
-                        //   zoomGesturesEnabled: false,
-                        //   myLocationButtonEnabled: false,
-                        //   mapType: MapType.normal,
-                        //   onMapCreated: (GoogleMapController controller) {
-                        //     if (_mapController.isCompleted == false) {
-                        //       _mapController.complete(controller);
-                        //     }
-                        //   },
-                        //   initialCameraPosition: CameraPosition(
-                        //     target: _coordinates == null
-                        //         ? LatLng(_currentLocation.latitude,
-                        //             _currentLocation.longitude)
-                        //         : LatLng(
-                        //             _coordinates.latitude, _coordinates.longitude),
-                        //     zoom: 13.0000,
-                        //   ),
-                        //   circles: _coordinates != null
-                        //       ? {
-                        //           Circle(
-                        //             strokeWidth: 1,
-                        //             radius: 1000,
-                        //             fillColor: Color(0xff53172c).withOpacity(0.4),
-                        //             circleId: CircleId("Set Location"),
-                        //             center: LatLng(_coordinates.latitude,
-                        //                 _coordinates.longitude),
-                        //           ),
-                        //         }
-                        //       : null,
-                        // ),
+                        child: GoogleMap(
+                          onTap: (latlng) => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => MapScreen(
+                                isEvent: false,
+                                paramFunction: changeLocation,
+                                currentLocation: _coordinates == null
+                                    ? LatLng(_currentLocation.latitude,
+                                        _currentLocation.longitude)
+                                    : LatLng(_coordinates.latitude,
+                                        _coordinates.longitude),
+                              ),
+                            ),
+                          ),
+                          scrollGesturesEnabled: false,
+                          zoomGesturesEnabled: false,
+                          myLocationButtonEnabled: false,
+                          mapType: MapType.normal,
+                          onMapCreated: (GoogleMapController controller) {
+                            if (_mapController.isCompleted == false) {
+                              _mapController.complete(controller);
+                            }
+                          },
+                          initialCameraPosition: CameraPosition(
+                            target: _coordinates == null
+                                ? LatLng(_currentLocation.latitude,
+                                    _currentLocation.longitude)
+                                : LatLng(_coordinates.latitude,
+                                    _coordinates.longitude),
+                            zoom: 13.0000,
+                          ),
+                          circles: _coordinates != null
+                              ? {
+                                  Circle(
+                                    strokeWidth: 1,
+                                    radius: 1000,
+                                    fillColor:
+                                        Color(0xff53172c).withOpacity(0.4),
+                                    circleId: CircleId("Set Location"),
+                                    center: LatLng(_coordinates.latitude,
+                                        _coordinates.longitude),
+                                  ),
+                                }
+                              : null,
+                        ),
                       ),
                     ),
                   ),
